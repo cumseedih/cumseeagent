@@ -8,6 +8,11 @@ const config: Config = {
         primary: "var(--primary)",
         accent: "var(--accent)",
       },
+      fontFamily: {
+        body: ["Delvin Roboto Slab", "Georgia", "serif"],
+        display: ["Delvin Oswald", "Impact", "sans-serif"],
+        ui: ["Delvin Roboto", "Arial", "sans-serif"],
+      },
     },
   },
   plugins: [],

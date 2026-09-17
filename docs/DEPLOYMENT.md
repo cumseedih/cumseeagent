@@ -32,13 +32,13 @@ JWT_SECRET=$(openssl rand -base64 48)      # 64 hex or base64
 ENCRYPTION_KEY=$(openssl rand -hex 16)     # 32 hex
 WORKSPACE_ROOT=/home/agent/workspaces
 AGENT_USER=agent
-PRODUCT_NAME="My Agent"
+PRODUCT_NAME="Delvin"
 PRODUCT_DOMAIN="your.domain.com"
 OMNIROUTE_BASE_URL="http://127.0.0.1:20128/v1"
 # set real provider keys via EnvironmentFile, never in repo
 
 # /home/agent/cumsee-platform/apps/web/.env
-NEXT_PUBLIC_PRODUCT_NAME="My Agent"
+NEXT_PUBLIC_PRODUCT_NAME="Delvin"
 NEXT_PUBLIC_API_URL="https://your.domain.com/api"
 ```
 

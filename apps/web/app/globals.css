@@ -7,6 +7,39 @@
   --accent: #06b6d4;
 }
 
+@font-face {
+  font-family: "Delvin Roboto Slab";
+  src: url("/assets/fonts/RobotoSlab/RobotoSlab-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Delvin Oswald";
+  src: url("/assets/fonts/Oswald/Oswald-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Delvin Roboto";
+  src: url("/assets/fonts/Roboto/Roboto-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: "Delvin Roboto Slab", Georgia, serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Delvin Oswald", Impact, sans-serif;
+  letter-spacing: 0.015em;
+}
+
+button, input, textarea, select {
+  font-family: "Delvin Roboto", Arial, sans-serif;
 }

@@ -1,8 +1,8 @@
-# My Agent — AI Coding Agent Platform
+# Delvin — AI Coding Agent Platform
 
 Branded AI coding-agent workspace built from an Arena-style frontend, now powered by your own backend/services. Full-stack, isolated VPS terminal, approval-gated dangerous commands, SSE streaming, and provider-agnostic LLM routing.
 
-> **Branding:** All names/domains/colors are env-driven via `branding.config.ts` + `PRODUCT_*` env. Defaults: `My Agent`, `localhost`, `#0ea5e9 / #06b6d4`.
+> **Branding:** Delvin uses the supplied field-mask logo, Roboto Slab body text, Oswald headings, and the existing Arena-inspired dark/cyan visual system. Names/domains/colors remain env-driven via `branding.config.ts` + `PRODUCT_*` env.
 
 ## Monorepo
 
@@ -51,10 +51,10 @@ ENCRYPTION_KEY="change-me-32-hex"
 PORT=4000
 HOST=0.0.0.0
 NODE_ENV=development
-PRODUCT_NAME="My Agent"
-PRODUCT_DOMAIN="localhost"
-LOGO_PATH="/assets/logo.svg"
-FAVICON_PATH="/assets/favicon.ico"
+PRODUCT_NAME="Delvin"
+PRODUCT_DOMAIN="delvin.local"
+LOGO_PATH="/assets/delvin-logo.jpg"
+FAVICON_PATH="/assets/delvin-logo.jpg"
 PRIMARY_COLOR="#0ea5e9"
 ACCENT_COLOR="#06b6d4"
 OMNIROUTE_BASE_URL="http://127.0.0.1:20128/v1"
@@ -70,10 +70,10 @@ AGENT_USER="agent"
 
 ### apps/web/.env.example
 ```ini
-NEXT_PUBLIC_PRODUCT_NAME="My Agent"
-NEXT_PUBLIC_PRODUCT_DOMAIN="localhost"
-NEXT_PUBLIC_LOGO_PATH="/assets/logo.svg"
-NEXT_PUBLIC_FAVICON_PATH="/assets/favicon.ico"
+NEXT_PUBLIC_PRODUCT_NAME="Delvin"
+NEXT_PUBLIC_PRODUCT_DOMAIN="delvin.local"
+NEXT_PUBLIC_LOGO_PATH="/assets/delvin-logo.jpg"
+NEXT_PUBLIC_FAVICON_PATH="/assets/delvin-logo.jpg"
 NEXT_PUBLIC_PRIMARY_COLOR="#0ea5e9"
 NEXT_PUBLIC_ACCENT_COLOR="#06b6d4"
 NEXT_PUBLIC_API_URL="http://localhost:4000"
