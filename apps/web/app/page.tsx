@@ -146,7 +146,7 @@ export default function AgentPage() {
         {/* Header with branding */}
         <header className="flex items-center justify-between border-b border-[#1e2433] bg-[#0b0e14] px-4 py-2">
           <div className="flex items-center gap-3">
-            <img src={BRANDING.LOGO_PATH} alt="logo" className="h-6 w-6" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+            <img src={BRANDING.LOGO_PATH} alt="Delvin logo" className="h-7 w-7 rounded-md object-cover object-center ring-1 ring-[#39452a]" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
             <h1 className="text-sm font-semibold">{BRANDING.PRODUCT_NAME}</h1>
             <span className="rounded bg-[#1a2032] px-2 py-0.5 text-xs text-[#9aa0b2]">{BRANDING.PRODUCT_DOMAIN}</span>
             <span className={`rounded px-2 py-0.5 text-xs ${status === "running" ? "bg-[#f59e0b] text-black" : status === "completed" ? "bg-[#10b981] text-black" : status === "failed" ? "bg-[#ef4444] text-white" : "bg-[#1e2433] text-[#9aa0b2]"}`}>{status}</span>
