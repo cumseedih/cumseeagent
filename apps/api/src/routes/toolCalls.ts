@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { getUserId } from "./auth.js";
 import { eventBus } from "../lib/events.js";
+import { agentEngine } from "../lib/agentEngine.js";
 
 const toolCreateSchema = z.object({
   toolName: z.string().min(1),
@@ -53,6 +54,7 @@ export async function toolCallRoutes(app: FastifyInstance) {
     await eventBus.emitEvent(session.id, "tool.approved", { toolCallId, toolName: tc.toolName });
     await eventBus.emitEvent(session.id, "tool.started", { toolCallId, toolName: tc.toolName });
     await prisma.auditLog.create({ data: { userId, sessionId: session.id, action: "tool.approve", metadataJson: JSON.stringify({ toolCallId }), ipAddress: req.ip } });
+    agentEngine.start(tc.agentRunId);
     return { toolCall: { ...updated, argumentsJson: JSON.parse(updated.argumentsJson) } };
   });
 
@@ -67,7 +69,8 @@ export async function toolCallRoutes(app: FastifyInstance) {
     const session = await prisma.session.findUnique({ where: { id: tc.agentRun.sessionId } });
     if (!session || session.userId !== userId) return reply.code(403).send({ error: "Forbidden" });
 
-    const updated = await prisma.toolCall.update({ where: { id: toolCallId }, data: { approvalStatus: "rejected", executionStatus: "failed", errorMessage: reason || "Rejected by user", completedAt: new Date() } });
+    const rejection = { rejected: true, reason: reason || "Rejected by user" };
+    const updated = await prisma.toolCall.update({ where: { id: toolCallId }, data: { approvalStatus: "rejected", executionStatus: "failed", resultJson: JSON.stringify(rejection), errorMessage: rejection.reason, completedAt: new Date() } });
     await prisma.approval.upsert({
       where: { toolCallId },
       create: { toolCallId, decision: "rejected", reason, resolvedBy: userId, resolvedAt: new Date() },
@@ -76,6 +79,8 @@ export async function toolCallRoutes(app: FastifyInstance) {
     await eventBus.emitEvent(session.id, "tool.rejected", { toolCallId, toolName: tc.toolName, reason });
     await eventBus.emitEvent(session.id, "tool.failed", { toolCallId, toolName: tc.toolName, error: reason });
     await prisma.auditLog.create({ data: { userId, sessionId: session.id, action: "tool.reject", metadataJson: JSON.stringify({ toolCallId, reason }), ipAddress: req.ip } });
+    await prisma.agentRun.update({ where: { id: tc.agentRunId }, data: { status: "running", currentStep: "model" } });
+    agentEngine.start(tc.agentRunId);
     return { toolCall: { ...updated, argumentsJson: JSON.parse(updated.argumentsJson) } };
   });
 

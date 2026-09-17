@@ -2,6 +2,7 @@ import { buildApp } from "./app.js";
 import { config } from "./lib/config.js";
 import { prisma } from "./lib/prisma.js";
 import fs from "fs/promises";
+import { agentEngine } from "./lib/agentEngine.js";
 
 async function ensureWorkspaceRoot() {
   try {
@@ -25,6 +26,7 @@ async function main() {
   }
 
   const app = await buildApp();
+  await agentEngine.recover();
 
   // Graceful shutdown
   const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"];

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { getUserId } from "./auth.js";
 import { eventBus } from "../lib/events.js";
+import { agentEngine } from "../lib/agentEngine.js";
 
 export async function runRoutes(app: FastifyInstance) {
   // POST /api/sessions/:sessionId/runs
@@ -69,6 +70,7 @@ export async function runRoutes(app: FastifyInstance) {
 
     const updated = await prisma.agentRun.update({ where: { id: runId }, data: { status: "running" } });
     await eventBus.emitEvent(run.sessionId, "agent.resumed", { agentRunId: runId });
+    agentEngine.start(runId);
     return { run: updated };
   });
 

@@ -14,6 +14,7 @@
 - `src/lib/pathValidator.ts` — `validateWorkspacePath(root, requested)` — resolves, blocks `..`, absolute outside, null bytes; maps `"/"`→ root
 - `src/lib/approvalPolicy.ts` — `classifyRisk(cmd)` → `HIGH` if `rm -rf`, `sudo`, `systemctl`, `chmod 777`, `curl|bash`, fork bombs; `SAFE_PATTERNS` (ls, cat, git status/diff/log, npm test, echo, sleep) → `low` auto-approved, chained `&&` only if all parts safe
 - `src/lib/terminalRunner.ts` — `spawn("bash",["-c",cmd])`, timeout 30s, 1MB cap, `redactSecrets` (`sk-*`, `ghp_*`, `Bearer`, `password`, `api_key`, `token`), sandboxed env `HOME=workspaceRoot`
+- `src/lib/agentEngine.ts` — bounded provider/tool loop; accumulates streamed tool calls, persists results, pauses for approvals, resumes approved/rejected calls, and recovers running jobs after API restart
 - `src/lib/providers/*` — `Provider` interface + `MockProvider` + `OpenAICompatible` (OmniRoute/Opencode/OpenAI) + `registry` (listModels merges mock+opencode+omniroute, 401 fallback)
 
 ## DB (Prisma SQLite)

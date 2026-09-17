@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { getUserId } from "./auth.js";
 import { eventBus } from "../lib/events.js";
-import { providerRegistry } from "../lib/providers/registry.js";
+import { agentEngine } from "../lib/agentEngine.js";
 
 const createSchema = z.object({
   role: z.enum(["user", "assistant", "system"]).default("user"),
@@ -59,65 +59,14 @@ export async function messageRoutes(app: FastifyInstance) {
       await eventBus.emitEvent(sessionId, "agent.thinking", { agentRunId: agentRun.id, step: "Analyzing your request..." });
       await eventBus.emitEvent(sessionId, "agent.plan.created", { agentRunId: agentRun.id, plan: JSON.parse(planJson) });
 
-      // Simulate agent thinking + trigger provider (mock) streaming in background
-      // For now, create an assistant message that will be streamed via SSE
-      // We do not block the response — frontend will get events via SSE
-
       // Update session title if first message
       if (session.title === "New Session") {
         const title = content.slice(0, 60);
-        await prisma.session.update({ where: { id: sessionId }, data: { title } });
+        await prisma.session.update({ where: { id: sessionId }, data: { title, selectedModel, selectedProvider, status: "active", completedAt: null } });
+      } else if (selectedModel || selectedProvider) {
+        await prisma.session.update({ where: { id: sessionId }, data: { selectedModel, selectedProvider, status: "active", completedAt: null } });
       }
-
-      // Kick off async agent completion (non-blocking)
-      setImmediate(async () => {
-        try {
-          const providerId = selectedProvider || session.selectedProvider || "mock";
-          const model = selectedModel || session.selectedModel || "mock-gpt-4o";
-          const provider = providerRegistry.get(providerId) || providerRegistry.get("mock")!;
-          const history = await prisma.message.findMany({ where: { sessionId }, orderBy: { createdAt: "asc" }, take: 20 });
-
-          await eventBus.emitEvent(sessionId, "agent.thinking", { agentRunId: agentRun!.id, model, providerId });
-
-          const stream = await provider.chat({
-            model,
-            messages: history.map((m) => ({ role: m.role as any, content: m.content })),
-            stream: true,
-          });
-
-          let fullContent = "";
-          for await (const chunk of stream) {
-            const delta = chunk.choices[0]?.delta?.content || "";
-            if (delta) {
-              fullContent += delta;
-              // Emit thinking chunks
-              await eventBus.emitEvent(sessionId, "agent.thinking", { agentRunId: agentRun!.id, delta });
-            }
-          }
-
-          // Save final assistant message
-          const assistantMsg = await prisma.message.create({
-            data: { sessionId, role: "assistant", content: fullContent || "Task completed (mock).", status: "completed" },
-          });
-
-          // Update agent run
-          await prisma.agentRun.update({
-            where: { id: agentRun!.id },
-            data: { status: "completed", completedAt: new Date(), currentStep: "completed" },
-          });
-          await prisma.plan.updateMany({ where: { agentRunId: agentRun!.id }, data: { status: "completed" } });
-
-          await eventBus.emitEvent(sessionId, "agent.completed", { agentRunId: agentRun!.id, messageId: assistantMsg.id });
-          await eventBus.emitEvent(sessionId, "notification.created", { title: "Task completed", body: fullContent.slice(0, 100) });
-
-          // Mark session completed
-          await prisma.session.update({ where: { id: sessionId }, data: { status: "completed", completedAt: new Date() } });
-        } catch (e: any) {
-          console.error("Agent run failed:", e);
-          await prisma.agentRun.update({ where: { id: agentRun!.id }, data: { status: "failed", errorMessage: e.message, completedAt: new Date() } });
-          await eventBus.emitEvent(sessionId, "agent.failed", { agentRunId: agentRun!.id, error: e.message });
-        }
-      });
+      agentEngine.start(agentRun.id);
     }
 
     await prisma.auditLog.create({ data: { userId, sessionId, action: "message.create", ipAddress: req.ip } });

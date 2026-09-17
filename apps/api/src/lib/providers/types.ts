@@ -37,6 +37,12 @@ export interface ChatChunk {
   }>;
 }
 
+export interface CollectedToolCall {
+  id: string;
+  name: string;
+  arguments: string;
+}
+
 export interface Provider {
   id: string;
   name: string;

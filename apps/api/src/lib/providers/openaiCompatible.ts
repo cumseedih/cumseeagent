@@ -40,9 +40,9 @@ export class OpenAICompatibleProvider extends BaseProvider {
 
   async listModels(): Promise<Model[]> {
     return this.withRetry(async () => {
-      const res = await fetch(`${this.baseUrl}/models`, {
+      const res = await this.withTimeout(fetch(`${this.baseUrl}/models`, {
         headers: this.apiKey ? { Authorization: `Bearer ${this.apiKey}` } : {},
-      });
+      }), 3000);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${await res.text()}`);
       }
@@ -57,7 +57,7 @@ export class OpenAICompatibleProvider extends BaseProvider {
         contextLength: m.context_length || 128000,
         capabilities: m.capabilities || [],
       }));
-    });
+    }, 0);
   }
 
   async chat(request: ChatRequest): Promise<AsyncIterable<ChatChunk>> {

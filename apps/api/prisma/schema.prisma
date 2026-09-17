@@ -92,7 +92,9 @@ model ToolCall {
   agentRunId      String
   agentRun        AgentRun @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
   toolName        String
+  providerCallId  String?
   argumentsJson   String   // JSON string
+  resultJson      String?
   riskLevel       String   @default("low")
   approvalStatus  String   @default("auto_approved")
   executionStatus String   @default("pending")

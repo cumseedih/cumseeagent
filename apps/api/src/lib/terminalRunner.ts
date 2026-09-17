@@ -12,6 +12,7 @@ export interface RunOptions {
   timeoutMs?: number;
   maxOutputBytes?: number;
   env?: Record<string, string>;
+  approvalGranted?: boolean;
 }
 
 export interface RunResult {
@@ -58,7 +59,7 @@ export class TerminalRunner {
 
     // Classify risk
     const classification = classifyRisk(command);
-    if (classification.requiresApproval) {
+    if (classification.requiresApproval && !options.approvalGranted) {
       throw new Error(`Command requires approval: ${classification.reason}`);
     }
 
@@ -177,7 +178,7 @@ export class TerminalRunner {
     await fs.mkdir(validatedCwd, { recursive: true });
 
     const classification = classifyRisk(command);
-    if (classification.requiresApproval) {
+    if (classification.requiresApproval && !options.approvalGranted) {
       throw new Error(`Command requires approval: ${classification.reason}`);
     }
 

@@ -63,6 +63,7 @@ OPENCODE_BASE_URL="https://opencode.ai/zen/v1"
 OPENCODE_API_KEY=""
 OPENAI_BASE_URL="https://api.openai.com/v1"
 OPENAI_API_KEY=""
+AGENT_MAX_ITERATIONS=20
 WORKSPACE_ROOT="/tmp/cumsee-workspaces"
 AGENT_USER="agent"
 ```
@@ -99,7 +100,9 @@ See `docs/API.md` and `docs/ARCHITECTURE.md`. Highlights:
 
 Approval policy: `apps/api/src/lib/approvalPolicy.ts` (high-risk: `rm -rf`, `sudo`, `systemctl`, `curl|bash`, etc. → approval; safe: `ls`, `cat`, `git status`, `echo`, `sleep` → auto).
 
-Terminal: `apps/api/src/lib/terminalRunner.ts` (spawn `bash -c`, 30s timeout, 1M output cap, secret redaction `sk-*`, `ghp_*`, `Bearer`, `password`, `api_key`, `token`, sandboxed `HOME=workspaceRoot`).
+Agent engine: `apps/api/src/lib/agentEngine.ts` runs an iterative OpenAI-compatible tool loop with persistent tool calls/results, terminal approvals, file tools, SSE progress, bounded iterations, and restart recovery for interrupted runs.
+
+Terminal: `apps/api/src/lib/terminalRunner.ts` (spawn `bash -c`, 30s timeout, 1M output cap, secret redaction `sk-*`, `ghp_*`, `Bearer`, `password`, `api_key`, `token`, sandboxed `HOME=workspaceRoot`). Approved high-risk commands run only after the approval endpoint resumes the agent.
 
 ## Frontend
 
