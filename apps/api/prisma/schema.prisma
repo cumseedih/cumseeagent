@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+  // For production, switch to:
+  // provider = "postgresql"
+  // url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  username       String?  @unique
+  passwordHash   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  projects       Project[]
+  sessions       Session[]
+  auditLogs      AuditLog[]
+}
+
+model Project {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  workspacePath String   @unique
+  repositoryUrl String?
+  defaultBranch String   @default("main")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  sessions      Session[]
+}
+
+model Session {
+  id               String   @id @default(cuid())
+  projectId        String?
+  project          Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title            String   @default("New Session")
+  status           String   @default("active")
+  selectedModel    String?
+  selectedProvider String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  completedAt      DateTime?
+  messages         Message[]
+  agentRuns        AgentRun[]
+  events           Event[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  status    String   @default("completed")
+  createdAt DateTime @default(now())
+}
+
+model AgentRun {
+  id           String   @id @default(cuid())
+  sessionId    String
+  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  status       String   @default("running")
+  goal         String?
+  currentStep  String?
+  startedAt    DateTime @default(now())
+  completedAt  DateTime?
+  errorMessage String?
+  plans        Plan[]
+  toolCalls    ToolCall[]
+  fileChanges  FileChange[]
+}
+
+model Plan {
+  id         String   @id @default(cuid())
+  agentRunId String
+  agentRun   AgentRun @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
+  planJson   String   // JSON string
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+}
+
+model ToolCall {
+  id              String   @id @default(cuid())
+  agentRunId      String
+  agentRun        AgentRun @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
+  toolName        String
+  argumentsJson   String   // JSON string
+  riskLevel       String   @default("low")
+  approvalStatus  String   @default("auto_approved")
+  executionStatus String   @default("pending")
+  startedAt       DateTime?
+  completedAt     DateTime?
+  exitCode        Int?
+  errorMessage    String?
+  approvals       Approval[]
+  terminalCommands TerminalCommand[]
+}
+
+model TerminalCommand {
+  id               String   @id @default(cuid())
+  toolCallId       String?
+  toolCall         ToolCall? @relation(fields: [toolCallId], references: [id], onDelete: SetNull)
+  sessionId        String?
+  commandDisplay   String
+  workingDirectory String
+  stdout           String?
+  stderr           String?
+  exitCode         Int?
+  startedAt        DateTime @default(now())
+  completedAt      DateTime?
+}
+
+model FileChange {
+  id         String   @id @default(cuid())
+  agentRunId String
+  agentRun   AgentRun @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
+  path       String
+  changeType String
+  diff       String?
+  createdAt  DateTime @default(now())
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  eventType   String
+  payloadJson String   // JSON string
+  createdAt   DateTime @default(now())
+}
+
+model Approval {
+  id          String    @id @default(cuid())
+  toolCallId  String    @unique
+  toolCall    ToolCall  @relation(fields: [toolCallId], references: [id], onDelete: Cascade)
+  requestedAt DateTime  @default(now())
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  decision    String?
+  reason      String?
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sessionId    String?
+  action       String
+  metadataJson String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+}

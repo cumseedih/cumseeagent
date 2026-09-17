@@ -1,0 +1,30 @@
+[Unit]
+Description=Cumsee Web - My Agent Frontend
+After=network.target cumsee-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=agent
+Group=agent
+WorkingDirectory=/home/agent/cumsee-platform/apps/web
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=0.0.0.0
+EnvironmentFile=/home/agent/cumsee-platform/apps/web/.env
+ExecStart=/usr/bin/pnpm start
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cumsee-web
+LimitNOFILE=65535
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/agent/cumsee-platform/apps/web/.next /home/agent/cumsee-platform/apps/web/.env /tmp
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

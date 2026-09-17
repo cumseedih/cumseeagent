@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Builds
+dist/
+build/
+.next/
+out/
+.turbo/
+.cache/
+.parcel-cache/
+
+# Environment & secrets — NEVER commit real secrets
+.env
+.env.production
+.env.local
+.env.development.local
+.env.test.local
+.env.*.local
+*.pem
+*.key
+*.crt
+id_rsa*
+id_ed25519*
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Logs & OS
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+.DS_Store
+Thumbs.db
+tmp/
+temp/
+workspaces/
+coverage/
+.nyc_output/
+.vscode/
+.idea/
+*.tsbuildinfo
+
+# Keep example env (safe placeholders only)
+!.env.example
+
+# Keep empty dirs with .gitkeep where needed

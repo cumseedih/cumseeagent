@@ -1,0 +1,32 @@
+{
+	log {
+		output file /var/log/caddy/caddy.log {
+			roll_size 10MB
+			roll_keep 10
+			roll_keep_for 720h
+		}
+	}
+}
+
+:21968 {
+	handle /qdJRhVXpv2t3o1FNh00ORkkG {
+		root * /etc/xray
+		try_files /sub.txt
+		file_server browse
+		header Content-Type "text/plain; charset=utf-8"
+	}
+	handle {
+		respond "404 Not Found" 404
+	}
+}
+
+example.com {
+	reverse_proxy 127.0.0.1:58627
+}
+
+example.com {
+	tls internal
+	reverse_proxy 127.0.0.1:8080
+}
+
+import /etc/caddy/cumsee.caddy

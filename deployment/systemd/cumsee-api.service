@@ -1,0 +1,30 @@
+[Unit]
+Description=Cumsee API - My Agent Backend
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=agent
+Group=agent
+WorkingDirectory=/home/agent/cumsee-platform/apps/api
+Environment=NODE_ENV=production
+EnvironmentFile=/home/agent/cumsee-platform/apps/api/.env
+ExecStart=/usr/bin/node dist/server.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cumsee-api
+LimitNOFILE=65535
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/agent/workspaces /home/agent/cumsee-platform/apps/api/prisma
+KillMode=mixed
+KillSignal=SIGINT
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,12 @@
+# Cumsee Platform — My Agent (safe template)
+# Copy to /etc/caddy/cumsee.caddy and add `import /etc/caddy/cumsee.caddy` to main Caddyfile
+# Adjust domain to your real domain; nip.io is for demo only (resolves to IP)
+
+my-agent.example.com {
+	handle /api/* {
+		reverse_proxy 127.0.0.1:4000
+	}
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+}
