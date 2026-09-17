@@ -3,11 +3,11 @@ import { BRANDING } from "../branding.config";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: `${BRANDING.PRODUCT_NAME} — AI Coding Agent`,
+  title: `${BRANDING.PRODUCT_NAME} Agent`,
   description: `Chat with ${BRANDING.PRODUCT_NAME} and build projects through a secure VPS terminal.`,
   icons: { icon: BRANDING.FAVICON_PATH },
   openGraph: {
-    title: `${BRANDING.PRODUCT_NAME} — AI Coding Agent`,
+    title: `${BRANDING.PRODUCT_NAME} Agent`,
     description: `Autonomous coding agent workspace powered by ${BRANDING.PRODUCT_NAME}`,
     url: `https://${BRANDING.PRODUCT_DOMAIN}`,
     siteName: BRANDING.PRODUCT_NAME,
