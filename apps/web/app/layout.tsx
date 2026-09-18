@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-[#0b0e14] text-[#e6e8ee] antialiased">
+      <body className="min-h-screen bg-[#fcfaf8] text-[#2e2b29] antialiased">
         <style>{`:root{--primary:${BRANDING.PRIMARY_COLOR};--accent:${BRANDING.ACCENT_COLOR}}`}</style>
         {children}
       </body>

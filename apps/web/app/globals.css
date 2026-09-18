@@ -3,8 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --primary: #0ea5e9;
-  --accent: #06b6d4;
+  --primary: #2e2b29;
+  --accent: #ffc800;
+  --secondary: #6f6862;
+  --tertiary: #f0ebe5;
+  --neutral: #fcfaf8;
+  --surface-muted: #f7f3ef;
+  --border: #e5e7eb;
+  --border-soft: #e1dedb;
+  --on-surface: #2e2b29;
 }
 
 @font-face {
@@ -33,14 +40,15 @@
 
 body {
   font-family: "Delvin Roboto Slab", Georgia, serif;
-  background: #0b0e14;
+  background: #fcfaf8;
+  color: #2e2b29;
 }
 
-* { scrollbar-width: thin; scrollbar-color: #263446 transparent; }
-::selection { background: rgba(106, 227, 255, 0.22); color: #fff; }
+* { scrollbar-width: thin; scrollbar-color: #d5d0ca transparent; }
+::selection { background: rgba(255, 200, 0, 0.28); color: #2e2b29; }
 
 .delvin-main {
-  background-image: radial-gradient(circle at 50% 0%, rgba(22, 71, 87, 0.14), transparent 36rem);
+  background-image: radial-gradient(circle at 50% 0%, rgba(240, 235, 229, 0.72), transparent 36rem);
 }
 
 h1, h2, h3, h4, h5, h6 {

@@ -12,8 +12,8 @@ export const config = {
     productDomain: process.env.PRODUCT_DOMAIN || "delvin.local",
     logoPath: process.env.LOGO_PATH || "/assets/delvin-logo.jpg",
     faviconPath: process.env.FAVICON_PATH || "/assets/delvin-logo.jpg",
-    primaryColor: process.env.PRIMARY_COLOR || "#0ea5e9",
-    accentColor: process.env.ACCENT_COLOR || "#06b6d4",
+    primaryColor: process.env.PRIMARY_COLOR || "#2e2b29",
+    accentColor: process.env.ACCENT_COLOR || "#ffc800",
   },
   providers: {
     omniroute: {

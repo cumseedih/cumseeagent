@@ -23,8 +23,8 @@ export function ModelSelector({ value, onChange }: { value: string; onChange: (v
     })();
   }, []);
 
-  if (loading) return <div className="text-xs text-[#9aa0b2]">Loading models…</div>;
-  if (error) return <div className="text-xs text-[#ffb4b4]">Models unavailable: {error}</div>;
+  if (loading) return <div className="text-xs text-[#6f6862]">Loading models…</div>;
+  if (error) return <div className="text-xs text-[#b42318]">Models unavailable: {error}</div>;
 
   return (
     <div className="flex items-center gap-2">
@@ -35,7 +35,7 @@ export function ModelSelector({ value, onChange }: { value: string; onChange: (v
           const m = models.find((x) => x.id === modelId);
           onChange(modelId, m?.providerId || "mock");
         }}
-        className="rounded border border-[#1e2433] bg-[#0f131d] px-2 py-1.5 text-sm"
+        className="rounded border border-[#e5e7eb] bg-white px-2 py-1.5 text-sm"
       >
         <option value="">Select model</option>
         {models.map((m) => (
@@ -44,7 +44,7 @@ export function ModelSelector({ value, onChange }: { value: string; onChange: (v
           </option>
         ))}
       </select>
-      <span className="text-xs text-[#9aa0b2]">{providers.length} providers</span>
+      <span className="text-xs text-[#6f6862]">{providers.length} providers</span>
     </div>
   );
 }
