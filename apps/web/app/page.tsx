@@ -148,7 +148,7 @@ export default function AgentPage() {
           <div className="flex items-center gap-3">
             <img src={BRANDING.LOGO_PATH} alt="Delvin logo" className="h-7 w-7 rounded-md object-cover object-center ring-1 ring-[#39452a]" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
             <h1 className="text-base font-semibold tracking-wide">{BRANDING.PRODUCT_NAME} Agent</h1>
-            <span className="hidden rounded-full border border-[#263247] bg-[#111827] px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-[#6f6862] sm:inline-flex">{BRANDING.PRODUCT_DOMAIN}</span>
+            <span className="hidden rounded-full border border-[#e1dedb] bg-white px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-[#6f6862] sm:inline-flex">{BRANDING.PRODUCT_DOMAIN}</span>
             <span className={`rounded px-2 py-0.5 text-xs ${status === "running" ? "bg-[#ffc800] text-[#2e2b29]" : status === "completed" ? "bg-[#f0ebe5] text-[#2e2b29]" : status === "failed" ? "bg-[#ef4444] text-white" : "bg-[#f0ebe5] text-[#6f6862]"}`}>{status}</span>
           </div>
           <div className="flex items-center gap-2">
@@ -163,12 +163,20 @@ export default function AgentPage() {
               <div className="mx-auto flex min-h-full max-w-3xl flex-col justify-end space-y-5">
                 {!messages.length && <div className="delvin-welcome mb-auto flex flex-col items-center justify-center px-4 pb-10 pt-12 text-center">
                   <img src={BRANDING.LOGO_PATH} alt="Delvin logo" className="mb-5 h-16 w-16 rounded-2xl object-cover object-center shadow-[0_0_40px_rgba(106,227,255,0.14)] ring-1 ring-[#465a35]" />
-                  <h2 className="text-3xl font-semibold tracking-wide text-[#2e2b29]">What are we building today?</h2>
+                  <h2 className="text-4xl font-semibold tracking-wide text-[#2e2b29]">What are we building today?</h2>
                   <p className="mt-3 max-w-xl text-sm leading-6 text-[#6f6862]">Ask Delvin to inspect, build, fix, or explain your project. Your workspace, terminal actions, and approvals stay visible in one place.</p>
-                  {projectId && <div className="mt-5 rounded-full border border-[#202b3c] bg-[#0f1622] px-3 py-1.5 text-[11px] text-[#6f6862]">Workspace ready · {projectId.slice(0, 8)}…</div>}
+                  <div className="mt-8 grid w-full max-w-2xl gap-3 text-left sm:grid-cols-3">
+                    {[{ title: "Build a feature", text: "Plan and implement a change" }, { title: "Debug a problem", text: "Trace an error and fix it" }, { title: "Explore the repo", text: "Understand an unfamiliar codebase" }].map((card) => (
+                      <button key={card.title} type="button" onClick={() => void sendMessage(card.title)} className="rounded-xl border border-[#e1dedb] bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-[#ffc800] hover:shadow-[0_8px_24px_rgba(46,43,41,0.08)]">
+                        <div className="text-sm font-semibold text-[#2e2b29]">{card.title}</div>
+                        <div className="mt-1 text-xs leading-5 text-[#6f6862]">{card.text}</div>
+                      </button>
+                    ))}
+                  </div>
+                  {projectId && <div className="mt-5 rounded-full border border-[#e1dedb] bg-[#f7f3ef] px-3 py-1.5 text-[11px] text-[#6f6862]">Workspace ready · {projectId.slice(0, 8)}…</div>}
                 </div>}
 
-                {error && <div className="rounded border border-[#e1dedb] bg-[#1d1313] p-3 text-sm text-[#b42318]">{error}</div>}
+                {error && <div className="rounded-lg border border-[#f0c7c2] bg-[#fff5f3] p-3 text-sm text-[#b42318]">{error}</div>}
 
                 {pendingTool && <ApprovalBar toolCall={pendingTool} onResolved={async () => {
                   if (sessionId) {
