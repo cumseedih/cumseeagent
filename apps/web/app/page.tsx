@@ -257,6 +257,8 @@ export default function AgentPage() {
         )}
       >
         <SessionSidebar
+          project={project}
+          onConnectRepository={connectRepository}
           selectedId={sessionId || undefined}
           onSelect={(id) => {
             setSessionId(id);
@@ -320,14 +322,7 @@ export default function AgentPage() {
                   </div>
                 )}
 
-                {!booting && !hasConversation && (
-                  <Hero
-                    onNewSession={() => createSession()}
-                    project={project}
-                    onConnectGitHub={connectRepository}
-                    repoError={null}
-                  />
-                )}
+                {!booting && !hasConversation && <Hero busy={sending} />}
 
                 {error && (
                   <div className="mb-4">

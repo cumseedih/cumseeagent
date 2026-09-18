@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { BRANDING } from "../branding.config";
 import { Button, SkeletonRows, cx } from "./ui";
-import { IconPlusChat, IconRefresh, IconSearch, IconSparkle, IconTrophy } from "./icons";
+import { IconGithub, IconPlusChat, IconRefresh, IconSearch, IconSparkle, IconTrophy } from "./icons";
 import { Mark, Wordmark } from "./Wordmark";
 
 type Session = {
@@ -36,6 +36,8 @@ export function SessionSidebar({
   onToggleCollapse,
   onOpenSearch,
   refreshKey,
+  project,
+  onConnectRepository,
 }: {
   selectedId?: string;
   onSelect: (id: string) => void;
@@ -44,7 +46,10 @@ export function SessionSidebar({
   onToggleCollapse?: () => void;
   onOpenSearch?: () => void;
   refreshKey?: number;
+  project?: { id: string; name: string; defaultBranch?: string } | null;
+  onConnectRepository?: () => void;
 }) {
+  const [promoOpen, setPromoOpen] = useState(true);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -219,6 +224,39 @@ export function SessionSidebar({
           <p className="px-2 py-3 text-xs text-text-muted">No sessions match “{query}”.</p>
         )}
       </div>
+
+      {/* Connector promotion — mirrors the "connect your GitHub" card */}
+      {promoOpen && (
+        <div className="border-t border-sidebar-border p-2">
+          <div className="rounded-panel border border-border-faint bg-surface-secondary p-2.5">
+            <div className="mb-1.5 flex items-start gap-2">
+              <span className="mt-[1px] text-text-tertiary">
+                <IconGithub className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-text-secondary">
+                  {project ? project.name : "Connect your GitHub"}
+                </p>
+                <p className="mt-0.5 truncate font-mono text-[10px] text-text-muted">
+                  {project ? `${project.id.slice(0, 8)} · ${project.defaultBranch || "main"}` : "Clone and push from a session"}
+                </p>
+              </div>
+              <button
+                onClick={() => setPromoOpen(false)}
+                aria-label="Dismiss connectors promotion"
+                title="Dismiss"
+                className="shrink-0 text-text-muted transition-colors hover:text-text-tertiary"
+              >
+                ×
+              </button>
+            </div>
+            <Button variant="secondary" size="sm" className="w-full" onClick={onConnectRepository}>
+              <IconGithub className="h-3.5 w-3.5" />
+              {project ? "Manage repository" : "Connect"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="border-t border-sidebar-border p-2">
