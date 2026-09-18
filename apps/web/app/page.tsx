@@ -1,238 +1,478 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BRANDING } from "../branding.config";
 import { api } from "../lib/api";
 import { connectSSE, CumseeEvent } from "../lib/sse";
 import { SessionSidebar } from "../components/SessionSidebar";
-import { ModelSelector } from "../components/ModelSelector";
+import { WorkspaceHeader } from "../components/WorkspaceHeader";
+import { Hero } from "../components/Hero";
 import { Composer } from "../components/Composer";
 import { MessageList } from "../components/MessageList";
 import { ToolTimeline } from "../components/ToolTimeline";
 import { Terminal } from "../components/Terminal";
-import { ApprovalBar } from "../components/ApprovalBar";
 import { FileViewer } from "../components/FileViewer";
+import { ApprovalBar } from "../components/ApprovalBar";
+import { ErrorNote, Skeleton, cx } from "../components/ui";
+
+type RailTab = "terminal" | "files" | "activity";
 
 export default function AgentPage() {
-  const [projectId, setProjectId] = useState<string | null>(null);
+  const [project, setProject] = useState<{ id: string; name: string; defaultBranch?: string } | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessionTitle, setSessionTitle] = useState<string | undefined>();
+  const [sessionsKey, setSessionsKey] = useState(0);
   const [messages, setMessages] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<CumseeEvent[]>([]);
   const [toolCalls, setToolCalls] = useState<any[]>([]);
-  const [selectedModel, setSelectedModel] = useState("mock-gpt-4o");
-  const [selectedProvider, setSelectedProvider] = useState("mock");
-  const [status, setStatus] = useState<string>("idle");
+  const [model, setModel] = useState("");
+  const [provider, setProvider] = useState("");
+  const [harness, setHarness] = useState("standard");
+  const [branch, setBranch] = useState("main");
+  const [status, setStatus] = useState("idle");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [booting, setBooting] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileNav, setMobileNav] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [railOpen, setRailOpen] = useState(true);
+  const [railTab, setRailTab] = useState<RailTab>("activity");
+  const [branches, setBranches] = useState<string[]>([]);
+  const [toast, setToast] = useState<string | null>(null);
+  const bootRef = useRef(false);
 
-  // Create default project + session on mount if none
+  /* ---------------------------------------------------------------- bootstrap */
   useEffect(() => {
+    if (bootRef.current) return;
+    bootRef.current = true;
     (async () => {
       try {
-        const p = await api.listProjects();
-        if (p.projects.length === 0) {
-          const created = await api.createProject({ name: "My First Project", defaultBranch: "main" });
-          setProjectId(created.project.id);
-        } else {
-          setProjectId(p.projects[0].id);
+        const projects = await api.listProjects().catch(() => ({ projects: [] as any[] }));
+        let active = projects.projects?.[0];
+        if (!active) {
+          const created = await api.createProject({ name: "Workspace", defaultBranch: "main" });
+          active = created.project;
         }
-        const s = await api.listSessions();
-        setSessions(s.sessions || []);
-        if (s.sessions.length > 0) setSessionId(s.sessions[0].id);
+        setProject(active);
+        setBranch(active?.defaultBranch || "main");
+
+        // git branches, when a remote exists
+        api
+          .gitStatus(active.id)
+          .then((s: any) => {
+            const list: string[] = s?.branches || s?.status?.branches || [];
+            if (Array.isArray(list) && list.length) setBranches(list);
+            if (s?.branch) setBranch(s.branch);
+          })
+          .catch(() => undefined);
+
+        const s = await api.listSessions().catch(() => ({ sessions: [] as any[] }));
+        if (s.sessions?.length) {
+          setSessionId(s.sessions[0].id);
+          setSessionTitle(s.sessions[0].title);
+          if (s.sessions[0].selectedModel) setModel(s.sessions[0].selectedModel);
+        }
       } catch (e: any) {
-        setError(e.message);
+        setBootError(e.message || "Backend unreachable");
+      } finally {
+        setBooting(false);
       }
     })();
   }, []);
 
-  // Load messages + events when session changes
+  /* --------------------------------------------------- session data + stream */
   useEffect(() => {
     if (!sessionId) return;
+    let alive = true;
+
     (async () => {
       try {
-        const m = await api.listMessages(sessionId);
+        const [m, e, t] = await Promise.all([
+          api.listMessages(sessionId),
+          api.listEvents(sessionId),
+          api.listToolCalls(sessionId),
+        ]);
+        if (!alive) return;
         setMessages(m.messages || []);
-        const e = await api.listEvents(sessionId);
         setEvents(e.events || []);
-        const t = await api.listToolCalls(sessionId);
         setToolCalls(t.toolCalls || []);
       } catch (e: any) {
-        setError(e.message);
+        if (alive) setError(e.message || "Failed to load session");
       }
     })();
 
-    // SSE
     const disconnect = connectSSE(
       sessionId,
-      (ev: CumseeEvent) => {
-        setEvents((prev) => [...prev, ev]);
-        // Update status based on event
-        if (ev.eventType === "agent.started") setStatus("running");
-        if (ev.eventType === "agent.thinking") setStatus("thinking");
-        if (ev.eventType === "agent.completed") {
+      (ev) => {
+        setEvents((prev) => [...prev.slice(-400), ev]);
+        const type = ev.eventType;
+        if (type === "agent.started") setStatus("running");
+        if (type === "agent.thinking") setStatus("thinking");
+        if (type === "agent.completed") {
           setStatus("completed");
-          // Browser notification
-          if ("Notification" in window && Notification.permission === "granted") {
-            new Notification(`${BRANDING.PRODUCT_NAME}: Task completed`, { body: ev.payload?.title || "Agent finished" });
-          }
-          // Refresh messages
           api.listMessages(sessionId).then((m) => setMessages(m.messages || []));
-        }
-        if (ev.eventType === "agent.failed") setStatus("failed");
-        if (ev.eventType.startsWith("tool.")) {
           api.listToolCalls(sessionId).then((t) => setToolCalls(t.toolCalls || []));
         }
-        if (ev.eventType === "notification.created" && "Notification" in window) {
-          if (Notification.permission === "granted") new Notification(ev.payload.title || "Notification", { body: ev.payload.body });
+        if (type === "agent.failed") setStatus("failed");
+        if (type.startsWith("tool.") || type.startsWith("file.")) {
+          api.listToolCalls(sessionId).then((t) => setToolCalls(t.toolCalls || []));
+          if (type === "tool.requested") setStatus("waiting");
+        }
+        if (type === "notification.created" && typeof window !== "undefined" && "Notification" in window) {
+          if (Notification.permission === "granted") {
+            new Notification(ev.payload?.title || BRANDING.PRODUCT_NAME, { body: ev.payload?.body });
+          }
         }
       },
       (err) => console.warn("SSE error", err)
     );
-    return () => disconnect();
+
+    return () => {
+      alive = false;
+      disconnect();
+    };
   }, [sessionId]);
 
-  // Notification permission
   useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      // defer so it never blocks first paint
+      const t = setTimeout(() => Notification.requestPermission().catch(() => undefined), 2500);
+      return () => clearTimeout(t);
     }
   }, []);
 
-  async function createNewSession() {
+  /* viewport: below md the sidebar becomes an overlay drawer */
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => {
+      setIsMobile(mq.matches);
+      if (!mq.matches) setMobileNav(false);
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  /* ----------------------------------------------------------------- actions */
+  const refreshSessions = useCallback(() => setSessionsKey((k) => k + 1), []);
+
+  async function createSession(title?: string) {
     try {
-      const res = await api.createSession({ projectId: projectId || undefined, title: "New Session", selectedModel, selectedProvider });
+      const res = await api.createSession({
+        projectId: project?.id,
+        title: title || "New session",
+        selectedModel: model || undefined,
+        selectedProvider: provider || undefined,
+      });
       setSessionId(res.session.id);
-      const s = await api.listSessions();
-      setSessions(s.sessions || []);
+      setSessionTitle(res.session.title);
+      setMessages([]);
+      setEvents([]);
+      setToolCalls([]);
+      setStatus("idle");
+      setError(null);
+      refreshSessions();
+      return res.session.id as string;
     } catch (e: any) {
-      setError(e.message);
+      setError(e.message || "Could not create session");
+      return null;
     }
   }
 
-  async function sendMessage(text: string) {
-    if (!sessionId) {
-      // Create session first
-      const s = await api.createSession({ projectId: projectId || undefined, title: text.slice(0, 60), selectedModel, selectedProvider });
-      setSessionId(s.session.id);
-      await api.sendMessage(s.session.id, { role: "user", content: text, selectedModel, selectedProvider });
-      setMessages((prev) => [...prev, { id: Date.now().toString(), role: "user", content: text, status: "completed", createdAt: new Date().toISOString() }]);
-      setStatus("running");
-      return;
-    }
-    setLoading(true);
+  async function sendMessage(text: string, files: { name: string; size: number; content: string }[]) {
+    setSending(true);
     setError(null);
+    const payloadContent = files.length
+      ? `${text}\n\n${files
+          .map((f) => `Attached file: ${f.name}\n\`\`\`\n${f.content}\n\`\`\``)
+          .join("\n\n")}`
+      : text;
     try {
-      const res = await api.sendMessage(sessionId, { role: "user", content: text, selectedModel, selectedProvider });
-      setMessages((prev) => [...prev, res.message]);
+      let target = sessionId;
+      if (!target) target = await createSession(text.slice(0, 60));
+      if (!target) return;
+
+      const res = await api.sendMessage(target, {
+        role: "user",
+        content: payloadContent,
+        selectedModel: model || undefined,
+        selectedProvider: provider || undefined,
+      });
+      setMessages((prev) => [...prev, res.message || { id: `local-${Date.now()}`, role: "user", content: payloadContent, status: "completed", createdAt: new Date().toISOString() }]);
       setStatus("running");
-      // Refresh after a bit
-      setTimeout(async () => {
-        const m = await api.listMessages(sessionId);
-        setMessages(m.messages || []);
-      }, 1000);
+      refreshSessions();
     } catch (e: any) {
-      setError(e.message);
+      setError(e.message || "Message failed to send");
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   }
 
-  const pendingTool = toolCalls.find((t) => t.approvalStatus === "pending");
+  const stopRun = useCallback(async () => {
+    if (!sessionId) return;
+    try {
+      await api.stopSession(sessionId);
+      setStatus("idle");
+      setToast("Run stopped");
+      setTimeout(() => setToast(null), 2200);
+    } catch (e: any) {
+      setError(e.message || "Could not stop run");
+    }
+  }, [sessionId]);
+
+  async function connectRepository() {
+    if (!project) return;
+    try {
+      const s: any = await api.gitStatus(project.id);
+      setToast(s?.remote ? `Remote: ${s.remote}` : "No git remote configured — set one on the server to push");
+    } catch (e: any) {
+      setToast(e.message || "Git status unavailable");
+    }
+    setTimeout(() => setToast(null), 3200);
+  }
+
+  const pendingTool = useMemo(() => toolCalls.find((t) => t.approvalStatus === "pending"), [toolCalls]);
+  const busy = status === "running" || status === "thinking";
+  const hasConversation = messages.length > 0;
 
   return (
-    <div className="delvin-shell flex h-screen overflow-hidden">
-      <SessionSidebar selectedId={sessionId || undefined} onSelect={setSessionId} onNew={createNewSession} />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header with branding */}
-        <header className="delvin-topbar flex items-center justify-between border-b border-[#e5e7eb] bg-[#fcfaf8]/95 px-5 py-3 backdrop-blur">
-          <div className="flex items-center gap-3">
-            <img src={BRANDING.LOGO_PATH} alt="Delvin logo" className="h-7 w-7 rounded-md object-cover object-center ring-1 ring-[#39452a]" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
-            <h1 className="text-base font-semibold tracking-wide">{BRANDING.PRODUCT_NAME} Agent</h1>
-            <span className="hidden rounded-full border border-[#e1dedb] bg-white px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-[#6f6862] sm:inline-flex">{BRANDING.PRODUCT_DOMAIN}</span>
-            <span className={`rounded px-2 py-0.5 text-xs ${status === "running" ? "bg-[#ffc800] text-[#2e2b29]" : status === "completed" ? "bg-[#f0ebe5] text-[#2e2b29]" : status === "failed" ? "bg-[#ef4444] text-white" : "bg-[#f0ebe5] text-[#6f6862]"}`}>{status}</span>
+    <div className="flex h-screen overflow-hidden bg-surface-primary">
+      {/* Mobile: dim backdrop behind the drawer */}
+      {isMobile && mobileNav && (
+        <div
+          className="fixed inset-0 z-40 animate-fade bg-black/60 md:hidden"
+          onClick={() => setMobileNav(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <div
+        className={cx(
+          "h-full shrink-0",
+          isMobile
+            ? cx("fixed inset-y-0 left-0 z-50 transition-transform duration-200", mobileNav ? "translate-x-0" : "-translate-x-full")
+            : "flex"
+        )}
+      >
+        <SessionSidebar
+          selectedId={sessionId || undefined}
+          onSelect={(id) => {
+            setSessionId(id);
+            setSessionTitle(undefined);
+            setStatus("idle");
+            if (isMobile) setMobileNav(false);
+          }}
+          onNew={() => {
+            createSession();
+            if (isMobile) setMobileNav(false);
+          }}
+          collapsed={isMobile ? false : sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+          onOpenSearch={() => (isMobile ? setMobileNav(true) : setSidebarCollapsed(false))}
+          refreshKey={sessionsKey}
+        />
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <WorkspaceHeader
+          status={status}
+          project={project}
+          branch={branch}
+          branches={branches}
+          onBranchChange={setBranch}
+          model={model}
+          providerId={provider}
+          harness={harness}
+          onHarnessChange={setHarness}
+          onModelChange={(m, p) => {
+            setModel(m);
+            setProvider(p);
+          }}
+          onToggleSidebar={() => (isMobile ? setMobileNav((v) => !v) : setSidebarCollapsed((v) => !v))}
+          railOpen={railOpen}
+          onToggleRail={() => setRailOpen((v) => !v)}
+          railTab={railTab}
+          onRailTabChange={setRailTab}
+          sessionTitle={sessionTitle}
+        />
+
+        {bootError && (
+          <div className="px-4 pt-3">
+            <ErrorNote onRetry={() => location.reload()}>
+              Backend unreachable — {bootError}. Check the API service and <code className="font-mono">/api/health</code>.
+            </ErrorNote>
           </div>
-          <div className="flex items-center gap-2">
-            <ModelSelector value={selectedModel} onChange={(m, p) => { setSelectedModel(m); setSelectedProvider(p); }} />
-          </div>
-        </header>
+        )}
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Center */}
-          <div className="delvin-main flex flex-1 flex-col overflow-hidden bg-[#fcfaf8]">
-            <div className="flex-1 overflow-auto px-4 py-8 sm:px-8">
-              <div className="mx-auto flex min-h-full max-w-3xl flex-col justify-end space-y-5">
-                {!messages.length && <div className="delvin-welcome mb-auto flex flex-col items-center justify-center px-4 pb-10 pt-12 text-center">
-                  <img src={BRANDING.LOGO_PATH} alt="Delvin logo" className="mb-5 h-16 w-16 rounded-2xl object-cover object-center shadow-[0_0_40px_rgba(106,227,255,0.14)] ring-1 ring-[#465a35]" />
-                  <h2 className="text-4xl font-semibold tracking-wide text-[#2e2b29]">What are we building today?</h2>
-                  <p className="mt-3 max-w-xl text-sm leading-6 text-[#6f6862]">Ask Delvin to inspect, build, fix, or explain your project. Your workspace, terminal actions, and approvals stay visible in one place.</p>
-                  <div className="mt-8 grid w-full max-w-2xl gap-3 text-left sm:grid-cols-3">
-                    {[{ title: "Build a feature", text: "Plan and implement a change" }, { title: "Debug a problem", text: "Trace an error and fix it" }, { title: "Explore the repo", text: "Understand an unfamiliar codebase" }].map((card) => (
-                      <button key={card.title} type="button" onClick={() => void sendMessage(card.title)} className="rounded-xl border border-[#e1dedb] bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-[#ffc800] hover:shadow-[0_8px_24px_rgba(46,43,41,0.08)]">
-                        <div className="text-sm font-semibold text-[#2e2b29]">{card.title}</div>
-                        <div className="mt-1 text-xs leading-5 text-[#6f6862]">{card.text}</div>
-                      </button>
-                    ))}
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          {/* Conversation column */}
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4">
+              <div className={cx("mx-auto w-full", hasConversation ? "max-w-3xl py-6" : "flex min-h-full max-w-3xl flex-col justify-center py-10")}>
+                {booting && !hasConversation && (
+                  <div className="w-full max-w-xl space-y-3 self-center">
+                    <Skeleton className="mx-auto h-12 w-12 rounded-full" />
+                    <Skeleton className="mx-auto h-8 w-3/5" />
+                    <Skeleton className="mx-auto h-3 w-1/3" />
+                    <Skeleton className="mt-6 h-24 w-full rounded-composer" />
                   </div>
-                  {projectId && <div className="mt-5 rounded-full border border-[#e1dedb] bg-[#f7f3ef] px-3 py-1.5 text-[11px] text-[#6f6862]">Workspace ready · {projectId.slice(0, 8)}…</div>}
-                </div>}
+                )}
 
-                {error && <div className="rounded-lg border border-[#f0c7c2] bg-[#fff5f3] p-3 text-sm text-[#b42318]">{error}</div>}
+                {!booting && !hasConversation && (
+                  <Hero
+                    onNewSession={() => createSession()}
+                    project={project}
+                    onConnectGitHub={connectRepository}
+                    repoError={null}
+                  />
+                )}
 
-                {pendingTool && <ApprovalBar toolCall={pendingTool} onResolved={async () => {
-                  if (sessionId) {
-                    const t = await api.listToolCalls(sessionId);
-                    setToolCalls(t.toolCalls || []);
-                  }
-                }} />}
-
-                <MessageList messages={messages} />
-
-                {loading && <div className="text-sm text-[#6f6862]">Sending…</div>}
-
-                <div className="rounded-2xl border border-[#e1dedb] bg-white p-3 shadow-[0_16px_50px_rgba(0,0,0,0.14)]">
-                  <h3 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6f6862]">Activity</h3>
-                  <ToolTimeline events={events} />
-                </div>
-
-                {projectId && (
-                  <div className="rounded border border-[#e5e7eb] bg-white p-3">
-                    <h3 className="mb-2 text-xs font-semibold tracking-widest text-[#6f6862]">FILES</h3>
-                    <FileViewer projectId={projectId} />
+                {error && (
+                  <div className="mb-4">
+                    <ErrorNote onRetry={() => setError(null)}>{error}</ErrorNote>
                   </div>
+                )}
+
+                {pendingTool && (
+                  <div className="mb-4">
+                    <ApprovalBar
+                      toolCall={pendingTool}
+                      onResolved={async () => {
+                        if (sessionId) {
+                          const t = await api.listToolCalls(sessionId).catch(() => null);
+                          if (t) setToolCalls(t.toolCalls || []);
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+
+                {hasConversation && (
+                  <MessageList messages={messages} thinking={status === "thinking"} streaming={status === "running"} />
                 )}
               </div>
             </div>
 
-            <div className="border-t border-[#e5e7eb] bg-[#fcfaf8]/95 px-4 py-4 backdrop-blur sm:px-8">
-              <div className="mx-auto max-w-3xl">
-                <Composer onSend={sendMessage} disabled={loading} />
-                {!sessionId && <div className="mt-2 text-xs text-[#f59e0b]">No session selected — sending will create one.</div>}
+            {/* Composer dock */}
+            <div className="shrink-0 px-4 pb-4 pt-2">
+              <div className="mx-auto w-full max-w-3xl">
+                <Composer
+                  onSend={sendMessage}
+                  busy={busy}
+                  onStop={stopRun}
+                  disabled={sending}
+                  placeholder={
+                    project
+                      ? `Describe the task for ${project.name} — attach files with the paperclip…`
+                      : "Describe the task — or connect a repository first…"
+                  }
+                />
+                <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-text-muted">
+                  <span>
+                    {BRANDING.PRODUCT_NAME} · {BRANDING.PRODUCT_DOMAIN}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span>Streaming over SSE</span>
+                    <span className="hidden sm:inline">·</span>
+                    <span className="hidden sm:inline">Risky commands require approval</span>
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Right panel: terminal + events */}
-          <div className="hidden w-[340px] flex-col border-l border-[#e5e7eb] bg-[#f7f3ef] xl:flex">
-            <div className="border-b border-[#e5e7eb] p-4">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6f6862]">Workspace terminal</h3>
-              {sessionId ? <Terminal sessionId={sessionId} /> : <div className="text-xs text-[#6f6862]">Select a session to use terminal.</div>}
-            </div>
-            <div className="flex-1 overflow-auto p-3">
-              <h3 className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6f6862]">Recent activity</h3>
-              {toolCalls.length === 0 ? <div className="text-xs text-[#6f6862]">No tool calls yet.</div> : (
-                <div className="space-y-2">
-                  {toolCalls.slice(0, 10).map((t) => (
-                    <div key={t.id} className="rounded border border-[#e5e7eb] bg-white p-2 text-xs">
-                      <div className="font-mono">{t.toolName} • {t.riskLevel} • {t.approvalStatus} • {t.executionStatus}</div>
-                      <div className="text-[#6f6862] truncate">{JSON.stringify(t.argumentsJson || t.arguments_json).slice(0, 200)}</div>
+          {/* Right rail */}
+          {railOpen && (
+            <aside className="hidden w-[380px] shrink-0 flex-col border-l border-border-faint bg-surface-tertiary lg:flex">
+              <div className="flex h-9 shrink-0 items-center gap-1 border-b border-border-faint px-2">
+                {(
+                  [
+                    ["activity", "Activity"],
+                    ["terminal", "Terminal"],
+                    ["files", "Files"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setRailTab(key)}
+                    className={cx(
+                      "h-6 rounded-xs px-2 text-[11px] uppercase tracking-[0.12em] transition-colors",
+                      railTab === key
+                        ? "bg-surface-raised text-interactive-active"
+                        : "text-text-muted hover:text-text-tertiary"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setRailOpen(false)}
+                  className="ml-auto rounded-xs px-1.5 py-1 text-text-muted hover:text-text-tertiary"
+                  title="Hide panel"
+                >
+                  ×
+                </button>
+              </div>
+
+              {railTab === "activity" && (
+                <div className="min-h-0 flex-1 overflow-y-auto p-2">
+                  <ToolTimeline events={events} />
+                  {toolCalls.length > 0 && (
+                    <div className="mt-4 px-1.5">
+                      <p className="mb-1.5 text-[11px] uppercase tracking-[0.14em] text-text-muted">Tool calls</p>
+                      <div className="space-y-1">
+                        {toolCalls.slice(0, 12).map((t) => (
+                          <div
+                            key={t.id}
+                            className="flex items-center gap-2 rounded-sm border border-border-faint bg-surface-primary/60 px-2 py-1.5 font-mono text-[11px]"
+                          >
+                            <span className="truncate text-text-secondary">{t.toolName}</span>
+                            <span className="ml-auto shrink-0 text-text-muted">{t.riskLevel}</span>
+                            <span
+                              className={cx(
+                                "shrink-0",
+                                t.approvalStatus === "pending"
+                                  ? "text-interactive-warning"
+                                  : t.approvalStatus === "rejected"
+                                    ? "text-interactive-negative"
+                                    : "text-interactive-positive"
+                              )}
+                            >
+                              {t.approvalStatus}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
-            </div>
-          </div>
+
+              {railTab === "terminal" &&
+                (sessionId ? (
+                  <Terminal sessionId={sessionId} />
+                ) : (
+                  <p className="p-3 text-xs text-text-muted">Start a session to open the workspace terminal.</p>
+                ))}
+
+              {railTab === "files" &&
+                (project ? (
+                  <FileViewer projectId={project.id} />
+                ) : (
+                  <p className="p-3 text-xs text-text-muted">Connect a repository to browse workspace files.</p>
+                ))}
+            </aside>
+          )}
         </div>
       </div>
+
+      {toast && (
+        <div className="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-slide-up rounded-panel border border-border-medium bg-surface-floating px-3.5 py-2 text-xs text-text-secondary shadow-floating">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

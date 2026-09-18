@@ -2,7 +2,10 @@
 
 Branded AI coding-agent workspace built from an Arena-style frontend, now powered by your own backend/services. Full-stack, isolated VPS terminal, approval-gated dangerous commands, SSE streaming, and provider-agnostic LLM routing.
 
-> **Branding:** Delvin uses the supplied field-mask logo, Roboto Slab body text, Oswald headings, and the existing Arena-inspired dark/cyan visual system. Names/domains/colors remain env-driven via `branding.config.ts` + `PRODUCT_*` env.
+> **Branding:** Delvin keeps its own logo, Oswald/Roboto Slab/Roboto brand fonts and yellow accent, now
+> presented through the agent-workspace visual language: warm graphite dark surfaces, an editorial serif
+> hero headline with a highlight block, sidebar session history, activity rail, approval banner and a
+> workspace terminal. Names, domains and colours stay env-driven via `branding.config.ts` + `PRODUCT_*` env.
 
 ## Monorepo
 
@@ -83,7 +86,18 @@ Real production values live in `/home/agent/cumsee-platform/apps/api/.env` (600,
 
 ## Branding
 
-Central config: `apps/web/branding.config.ts` + `apps/api/src/lib/config.ts` (both read `PRODUCT_*` env, `NEXT_PUBLIC_*` for web). Change once, rebuild web (`NEXT_PUBLIC_*` is baked at build).
+Central config: `apps/web/branding.config.ts` + `apps/api/src/lib/config.ts` (both read `PRODUCT_*` env,
+`NEXT_PUBLIC_*` for web). Change once, rebuild web (`NEXT_PUBLIC_*` is baked at build).
+
+| Knob | Env | Notes |
+| --- | --- | --- |
+| Product name / domain | `PRODUCT_NAME`, `PRODUCT_DOMAIN` | Sidebar, metadata, message attribution |
+| Logo / favicon | `LOGO_PATH`, `FAVICON_PATH` | Served from `apps/web/public/assets/` |
+| Theme channels | `PRIMARY_COLOR`, `ACCENT_COLOR`, `HIGHLIGHT_COLOR` | `"H S% L%"` channels surfaced as CSS vars in `app/globals.css` |
+| Hero copy | `HERO_TITLE_LEAD`, `HERO_TITLE_TAIL`, `HERO_TITLE_HIGHLIGHT`, `HERO_SUBTITLE` | Headline renders `<LEAD> the <HIGHLIGHT>` |
+
+Design tokens live in `apps/web/app/globals.css` (`--surface-*`, `--text-*`, `--border-*`, `--interactive-*`)
+and are mapped in `apps/web/tailwind.config.ts`, so surfaces/typography restyle from one place.
 
 ## API
 
