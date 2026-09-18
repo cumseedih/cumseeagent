@@ -5,6 +5,7 @@ import rateLimit from "@fastify/rate-limit";
 import sensible from "@fastify/sensible";
 import { config } from "./lib/config.js";
 import { healthRoutes } from "./routes/health.js";
+import { usageRoutes, consentRoutes } from "./routes/usage.js";
 import { authRoutes } from "./routes/auth.js";
 import { projectRoutes } from "./routes/projects.js";
 import { sessionRoutes } from "./routes/sessions.js";
@@ -59,6 +60,8 @@ export async function buildApp() {
       await api.register(eventRoutes);
       // Also expose health under /api
       await api.register(healthRoutes);
+      await api.register(usageRoutes);
+      await api.register(consentRoutes, { prefix: "/auth" });
     },
     { prefix: "/api" }
   );

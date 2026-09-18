@@ -6,6 +6,10 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || "dev-jwt-secret-change-me",
   encryptionKey: process.env.ENCRYPTION_KEY || "dev-encryption-key-32-chars",
   workspaceRoot: process.env.WORKSPACE_ROOT || "/tmp/cumsee-workspaces",
+  // Daily agent-run allowance shown as credits; 0 disables the gate
+  dailyRunLimit: parseInt(process.env.DAILY_RUN_LIMIT || "40", 10),
+  // Bump to force re-acceptance of the Terms of Use
+  touVersion: process.env.TOU_VERSION || "1",
   agentUser: process.env.AGENT_USER || "agent",
   branding: {
     productName: process.env.PRODUCT_NAME || "Delvin",

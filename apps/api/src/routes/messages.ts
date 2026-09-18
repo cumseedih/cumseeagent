@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma.js";
 import { getUserId } from "./auth.js";
 import { eventBus } from "../lib/events.js";
 import { agentEngine } from "../lib/agentEngine.js";
+import { config } from "../lib/config.js";
 
 const createSchema = z.object({
   role: z.enum(["user", "assistant", "system"]).default("user"),
@@ -34,6 +35,23 @@ export async function messageRoutes(app: FastifyInstance) {
     // Also create an agent run if user message — start orchestration
     let agentRun = null;
     if (role === "user") {
+      // Daily allowance check — mirrors the "Out of credits for today" gate
+      if (config.dailyRunLimit > 0) {
+        const dayStart = new Date();
+        dayStart.setUTCHours(0, 0, 0, 0);
+        const usedToday = await prisma.agentRun.count({
+          where: { startedAt: { gte: dayStart }, session: { userId } },
+        });
+        if (usedToday >= config.dailyRunLimit) {
+          return reply.code(429).send({
+            error: "Out of credits for today",
+            code: "quota_exhausted",
+            used: usedToday,
+            limit: config.dailyRunLimit,
+          });
+        }
+      }
+
       agentRun = await prisma.agentRun.create({
         data: {
           sessionId,

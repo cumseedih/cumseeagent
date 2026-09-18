@@ -38,6 +38,10 @@ export function SessionSidebar({
   refreshKey,
   project,
   onConnectRepository,
+  onOpenLeaderboard,
+  onOpenConnections,
+  onOpenRepository,
+  onOpenHarness,
 }: {
   selectedId?: string;
   onSelect: (id: string) => void;
@@ -48,6 +52,10 @@ export function SessionSidebar({
   refreshKey?: number;
   project?: { id: string; name: string; defaultBranch?: string } | null;
   onConnectRepository?: () => void;
+  onOpenLeaderboard?: () => void;
+  onOpenConnections?: () => void;
+  onOpenRepository?: () => void;
+  onOpenHarness?: () => void;
 }) {
   const [promoOpen, setPromoOpen] = useState(true);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -115,6 +123,13 @@ export function SessionSidebar({
         >
           <IconSearch className="h-5 w-5" />
         </button>
+        <button
+          onClick={onOpenLeaderboard}
+          title="Leaderboard"
+          className="grid h-8 w-8 place-items-center rounded-md text-text-tertiary transition-colors hover:bg-sidebar-accent hover:text-interactive-active"
+        >
+          <IconTrophy className="h-5 w-5" />
+        </button>
       </nav>
     );
   }
@@ -139,14 +154,10 @@ export function SessionSidebar({
       {/* Primary nav */}
       <div className="px-2">
         <SidebarLink icon={<IconPlusChat className="h-5 w-5" />} label="New Chat" onClick={onNew} />
-        <SidebarLink
-          icon={<IconSparkle className="h-5 w-5" />}
-          label="Harnesses"
-          onClick={() => onOpenSearch?.()}
-          hint="Models & harnesses"
-        />
-        <SidebarLink icon={<IconTrophy className="h-5 w-5" />} label="Runs" hint="Session activity" onClick={load} />
+        <SidebarLink icon={<IconTrophy className="h-5 w-5" />} label="Leaderboard" onClick={onOpenLeaderboard} />
+        <SidebarLink icon={<IconSparkle className="h-5 w-5" />} label="Harnesses" onClick={onOpenHarness} />
         <SidebarLink icon={<IconSearch className="h-5 w-5" />} label="Search" onClick={onOpenSearch} />
+        <SidebarLink icon={<IconGithub className="h-5 w-5" />} label="Connections" onClick={onOpenConnections} />
       </div>
 
       {/* Session search */}
@@ -250,7 +261,12 @@ export function SessionSidebar({
                 ×
               </button>
             </div>
-            <Button variant="secondary" size="sm" className="w-full" onClick={onConnectRepository}>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-full"
+              onClick={onOpenRepository || onConnectRepository}
+            >
               <IconGithub className="h-3.5 w-3.5" />
               {project ? "Manage repository" : "Connect"}
             </Button>

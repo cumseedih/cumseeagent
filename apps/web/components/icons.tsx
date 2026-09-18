@@ -169,6 +169,12 @@ export const IconGithub = ({ className = "h-4 w-4" }: IconProps) => (
   </svg>
 );
 
+export const IconBolt = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M13.5 3.5L6 13.5h5l-.5 7L18 10.5h-5l.5-7z" />
+  </Base>
+);
+
 export const IconClock = (p: IconProps) => (
   <Base {...p}>
     <circle cx="12" cy="12" r="8.5" />

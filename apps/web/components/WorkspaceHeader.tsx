@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { BRANDING } from "../branding.config";
 import { ModelSelector } from "./ModelSelector";
 import { StatusPill, Chip, cx } from "./ui";
-import { IconGitBranch, IconGithub, IconPanelLeft, IconTerminal, IconFolder } from "./icons";
+import { IconBolt, IconChevronDown, IconGitBranch, IconGithub, IconPanelLeft, IconShield, IconTerminal, IconFolder } from "./icons";
 
 /**
  * Top bar: sidebar toggle, repo/branch context pickers, live status,
@@ -14,14 +13,15 @@ export function WorkspaceHeader({
   status,
   project,
   branch,
-  onBranchChange,
-  branches,
   model,
   providerId,
   harness,
-  onHarnessChange,
   onModelChange,
   onToggleSidebar,
+  onOpenRepository,
+  onOpenBranch,
+  onOpenHarness,
+  quota,
   railOpen,
   onToggleRail,
   railTab,
@@ -31,21 +31,21 @@ export function WorkspaceHeader({
   status: string;
   project?: { id: string; name: string } | null;
   branch: string;
-  branches: string[];
-  onBranchChange: (b: string) => void;
   model: string;
   providerId?: string;
   harness: string;
-  onHarnessChange: (h: string) => void;
   onModelChange: (m: string, p: string) => void;
   onToggleSidebar?: () => void;
+  onOpenRepository?: () => void;
+  onOpenBranch?: () => void;
+  onOpenHarness?: () => void;
+  quota?: { remaining: number | null; limit: number; exhausted: boolean; unlimited: boolean } | null;
   railOpen: boolean;
   onToggleRail: () => void;
   railTab: "terminal" | "files" | "activity";
   onRailTabChange: (t: "terminal" | "files" | "activity") => void;
   sessionTitle?: string;
 }) {
-  const [branchOpen, setBranchOpen] = useState(false);
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 overflow-hidden border-b border-border-faint bg-surface-primary/95 px-2 backdrop-blur sm:px-3">
@@ -60,8 +60,10 @@ export function WorkspaceHeader({
       {/* Repository + branch */}
       <div className="flex min-w-0 shrink items-center gap-1.5">
         <Chip
+          onClick={onOpenRepository}
+          data-testid="repo-chip"
           className="hidden max-w-[140px] sm:inline-flex sm:max-w-[240px]"
-          title={project ? `Repository: ${project.name}` : "No repository connected"}
+          title={project ? `Repository: ${project.name}` : "Select a repository"}
         >
           <IconGithub className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">{project?.name || "Connect repository"}</span>
@@ -70,39 +72,15 @@ export function WorkspaceHeader({
           <IconGithub className="h-4 w-4 text-text-tertiary" />
         </span>
 
-        <div className="relative">
-          <Chip
-            onClick={() => setBranchOpen((v) => !v)}
-            title="Branch"
-            className={cx("hidden sm:inline-flex", branchOpen && "border-border-medium bg-surface-raised")}
-          >
-            <IconGitBranch className="h-3.5 w-3.5" />
-            <span className="max-w-[120px] truncate font-mono text-[11px]">{branch || "main"}</span>
-          </Chip>
-
-          {branchOpen && (
-            <div className="absolute left-0 z-40 mt-1.5 w-56 animate-slide-up overflow-hidden rounded-panel border border-border-medium bg-surface-floating py-1 shadow-floating">
-              <p className="px-3 py-1 text-[11px] uppercase tracking-[0.12em] text-text-muted">Branch</p>
-              {(branches.length ? branches : [branch || "main"]).map((b) => (
-                <button
-                  key={b}
-                  onClick={() => {
-                    onBranchChange(b);
-                    setBranchOpen(false);
-                  }}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-xs text-text-tertiary transition-colors hover:bg-surface-raised/60 hover:text-interactive-active"
-                >
-                  {b}
-                </button>
-              ))}
-              {branches.length === 0 && (
-                <p className="px-3 pt-1 text-[10px] leading-relaxed text-text-muted">
-                  Branch list appears once a git remote is connected.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+        <Chip
+          onClick={onOpenBranch}
+          data-testid="branch-chip"
+          title="Branch"
+          className="hidden sm:inline-flex"
+        >
+          <IconGitBranch className="h-3.5 w-3.5" />
+          <span className="max-w-[120px] truncate font-mono text-[11px]">{branch || "main"}</span>
+        </Chip>
       </div>
 
       {sessionTitle && (
@@ -111,16 +89,35 @@ export function WorkspaceHeader({
       {!sessionTitle && <span className="min-w-0 flex-1" />}
 
       <div className="flex shrink-0 items-center gap-2">
+        {quota && !quota.unlimited && (
+          <span
+            title={
+              quota.exhausted
+                ? "Daily allowance used up — resets at UTC midnight"
+                : `${quota.remaining} of ${quota.limit} runs left today`
+            }
+            className={cx(
+              "hidden h-6 items-center gap-1.5 rounded-full border px-2 text-[11px] lg:inline-flex",
+              quota.exhausted
+                ? "border-interactive-negative/40 text-interactive-negative"
+                : "border-border-faint text-text-muted"
+            )}
+          >
+            <IconBolt className="h-3 w-3" />
+            {quota.exhausted ? "Out of credits for today" : `${quota.remaining}/${quota.limit}`}
+          </span>
+        )}
         <span className="hidden sm:inline-flex">
           <StatusPill status={status} />
         </span>
-        <ModelSelector
-          value={model}
-          providerId={providerId}
-          harness={harness}
-          onHarnessChange={onHarnessChange}
-          onChange={onModelChange}
-        />
+        <Chip onClick={onOpenHarness} data-testid="harness-chip" title="Agent harness" className="hidden md:inline-flex">
+          <IconShield className="h-3.5 w-3.5" />
+          <span className="max-w-[120px] truncate">
+            {harness === "fast" ? "Fast harness" : harness === "testing" ? "Harness for testing" : "Standard harness"}
+          </span>
+          <IconChevronDown className="h-3.5 w-3.5" />
+        </Chip>
+        <ModelSelector value={model} providerId={providerId} onChange={onModelChange} />
         <div className="hidden items-center gap-1 rounded-sm border border-border-faint p-0.5 md:flex">
           {(
             [

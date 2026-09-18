@@ -85,6 +85,14 @@ export const api = {
   // Events
   listEvents: (sessionId: string) => request(`/sessions/${sessionId}/events`),
 
+  // Usage / credits
+  getUsage: () => request("/usage"),
+
+  // Terms of use consent
+  getTerms: () => request("/auth/tou"),
+  acceptTerms: (version?: string) =>
+    request("/auth/tou", { method: "PUT", body: JSON.stringify({ version }) }),
+
   // Health
   health: () => request("/health"),
   ready: () => request("/ready"),
