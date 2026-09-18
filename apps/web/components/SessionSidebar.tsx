@@ -25,13 +25,13 @@ export function SessionSidebar({ selectedId, onSelect, onNew }: { selectedId?: s
   }, []);
 
   return (
-    <div className="delvin-sidebar flex h-full w-[260px] shrink-0 flex-col border-r border-[#e5e7eb] bg-[#f7f3ef]">
+    <div className="delvin-sidebar flex h-full w-[280px] shrink-0 flex-col border-r border-[#e1dedb] bg-white">
       <div className="flex items-center justify-between border-b border-[#e1dedb] p-4">
-        <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-[#9bb85a] shadow-[0_0_12px_#9bb85a]" /><h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#c4cbd7]">Delvin Agent</h2></div>
-        <button aria-label="Create new session" onClick={onNew} className="rounded-lg border border-[#2a3a4b] bg-[#f7f3ef] px-2.5 py-1.5 text-xs text-[#2e2b29] transition hover:border-[#6ae3ff] hover:text-white">＋</button>
+        <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-[#ffc800]" /><h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#2e2b29]">Delvin Agent</h2></div>
+        <button aria-label="Create new session" onClick={onNew} className="rounded-lg border border-[#e1dedb] bg-[#f7f3ef] px-2.5 py-1.5 text-xs text-[#2e2b29] transition hover:border-[#ffc800] hover:bg-[#f0ebe5]">＋</button>
       </div>
       <div className="px-3 pb-2">
-        <button onClick={load} className="text-[11px] text-[#6f6862] transition hover:text-[#2e2b29]">Recent sessions <span className="ml-1">↻</span></button>
+        <button onClick={load} className="text-[11px] uppercase tracking-[0.14em] text-[#6f6862] transition hover:text-[#2e2b29]">Recent sessions <span className="ml-1">↻</span></button>
       </div>
       <div className="flex-1 overflow-auto px-2">
         {loading && <div className="p-3 text-sm text-[#6f6862]">Loading…</div>}
@@ -41,7 +41,7 @@ export function SessionSidebar({ selectedId, onSelect, onNew }: { selectedId?: s
           <button
             key={s.id}
             onClick={() => onSelect(s.id)}
-            className={`mb-1 w-full rounded-xl border p-3 text-left text-sm transition hover:border-[#e1dedb] hover:bg-[#f7f3ef] ${selectedId === s.id ? "border-[#385164] bg-[#f0ebe5] shadow-[inset_2px_0_#6ae3ff]" : "border-transparent"}`}
+            className={`mb-1 w-full rounded-lg border p-3 text-left text-sm transition hover:border-[#e1dedb] hover:bg-[#f7f3ef] ${selectedId === s.id ? "border-[#e1dedb] bg-[#f0ebe5] shadow-[inset_3px_0_#ffc800]" : "border-transparent"}`}
           >
             <div className="truncate font-medium">{s.title}</div>
             <div className="mt-1 text-[10px] uppercase tracking-wide text-[#6f6862]">{s.status} · {new Date(s.createdAt).toLocaleDateString()}</div>
