@@ -2,7 +2,9 @@ export const config = {
   port: parseInt(process.env.PORT || "4000", 10),
   host: process.env.HOST || "0.0.0.0",
   nodeEnv: process.env.NODE_ENV || "development",
-  databaseUrl: process.env.DATABASE_URL || "file:./dev.db",
+  databaseUrl:
+    process.env.DATABASE_URL ||
+    "postgresql://delvin_app:change-me@127.0.0.1:5432/delvin?schema=public",
   jwtSecret: process.env.JWT_SECRET || "dev-jwt-secret-change-me",
   encryptionKey: process.env.ENCRYPTION_KEY || "dev-encryption-key-32-chars",
   workspaceRoot: process.env.WORKSPACE_ROOT || "/tmp/cumsee-workspaces",

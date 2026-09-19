@@ -48,7 +48,7 @@ openssl rand -hex 16     # ENCRYPTION_KEY (32 hex chars)
 
 ### apps/api/.env.example
 ```ini
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://delvin_app:change-me@127.0.0.1:5432/delvin?schema=public"
 JWT_SECRET="change-me-please-use-openssl-rand-base64-48"
 ENCRYPTION_KEY="change-me-32-hex"
 PORT=4000
