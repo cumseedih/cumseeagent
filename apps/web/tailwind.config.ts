@@ -69,7 +69,7 @@ const config: Config = {
       borderRadius: {
         xs: "3px",
         sm: "4px",
-        composer: "14px",
+        composer: "20px",
         panel: "10px",
       },
       boxShadow: {

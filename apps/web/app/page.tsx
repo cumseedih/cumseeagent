@@ -8,7 +8,7 @@ import { SessionSidebar } from "../components/SessionSidebar";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { Composer } from "../components/Composer";
 import { ModelSelector } from "../components/ModelSelector";
-import { IconPanelLeft, IconFolder, IconGitBranch } from "../components/icons";
+import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings } from "../components/icons";
 import { MessageList } from "../components/MessageList";
 import { ToolTimeline } from "../components/ToolTimeline";
 import { Terminal } from "../components/Terminal";
@@ -395,9 +395,9 @@ export default function AgentPage() {
           railTab={railTab}
           onRailTabChange={setRailTab}
           sessionTitle={sessionTitle}
-        /> : <header className="flex h-16 shrink-0 items-center justify-between px-4">
-          <button aria-label="Open sessions" onClick={() => isMobile ? setMobileNav(v => !v) : setSidebarCollapsed(v => !v)} className="grid h-11 w-11 place-items-center rounded-lg hover:bg-surface-raised"><IconPanelLeft className="h-5 w-5" /></button>
-          <button aria-label="Open repositories" onClick={() => setRepoPicker(true)} className="grid h-11 w-11 place-items-center rounded-lg text-text-muted hover:bg-surface-raised"><IconFolder className="h-5 w-5" /></button>
+        /> : <header className="flex h-[68px] shrink-0 items-center justify-between px-0 sm:px-5">
+          <button aria-label="Open sessions" onClick={() => isMobile ? setMobileNav(v => !v) : setSidebarCollapsed(v => !v)} className="grid h-11 w-11 place-items-center rounded-lg text-text-primary hover:bg-surface-raised"><IconPanelLeft className="h-[22px] w-[22px]" /></button>
+          <button aria-label="Open repositories" onClick={() => setRepoPicker(true)} className="grid h-11 w-11 place-items-center rounded-lg text-text-placeholder hover:bg-surface-raised"><IconFolder className="h-[23px] w-[23px]" /></button>
         </header>}
 
         {bootError && (
@@ -424,13 +424,13 @@ export default function AgentPage() {
             {/* Bottom-docked composer; the empty-state headline occupies the open canvas. */}
             <div
               className={cx(
-                "shrink-0 px-4",
+                "shrink-0",
                 hasConversation
-                  ? "pb-4 pt-2"
-                  : "relative flex min-h-0 flex-1 flex-col justify-end overflow-y-auto pb-6 pt-4"
+                  ? "px-4 pb-4 pt-2"
+                  : "relative flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 pb-7 pt-4"
               )}
             >
-              {!hasConversation && <div className="pointer-events-none absolute inset-x-3 top-[42%] -translate-y-1/2"><h1 className="text-center font-serif-display text-[clamp(24px,6vw,48px)] font-light tracking-[-0.045em] text-text-tertiary">What would you like to do?</h1></div>}
+              {!hasConversation && <div className="pointer-events-none absolute inset-x-3 top-[40%] -translate-y-1/2"><h1 className="whitespace-nowrap text-center font-serif-display text-[28px] font-light leading-[1.08] tracking-[-0.045em] text-text-tertiary sm:text-[clamp(34px,4vw,48px)]">What would you like to do?</h1></div>}
               <div className="relative mx-auto w-full max-w-2xl">
 
                 {!hasConversation && errorNote}
@@ -441,11 +441,11 @@ export default function AgentPage() {
                   onStop={stopRun}
                   disabled={sending}
                   placeholder="Ask anything…"
-                  controls={<ModelSelector value={model} providerId={provider} onChange={(m, p) => { setModel(m); setProvider(p); }} />}
-                  footer={<div className="flex items-center gap-2 border-t border-border-faint p-2">
-                    <button onClick={() => setRepoPicker(true)} className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md border border-border-faint px-2 text-xs text-text-tertiary"><IconFolder className="h-4 w-4 shrink-0" /><span className="truncate">{project?.name || "Add repositories…"}</span><span className="ml-auto">⌄</span></button>
-                    <button onClick={() => setBranchPicker(true)} className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md border border-border-faint px-2 text-xs text-text-tertiary"><IconGitBranch className="h-4 w-4 shrink-0" /><span className="truncate">{branch || "main"}</span><span className="ml-auto">⌄</span></button>
-                    <button aria-label="Connection settings" onClick={() => setConnections(true)} className="h-10 w-10 shrink-0 rounded-md text-xl text-text-tertiary hover:bg-surface-raised">⚙</button>
+                  controls={<ModelSelector compact value={model} providerId={provider} onChange={(m, p) => { setModel(m); setProvider(p); }} />}
+                  footer={<div className="flex items-center gap-1.5 border-t border-border-faint p-1 sm:gap-2 sm:p-2">
+                    <button onClick={() => setRepoPicker(true)} className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border-faint px-2 text-[12px] text-text-tertiary hover:bg-surface-raised-tertiary sm:h-10 sm:px-3 sm:text-[13px]"><IconFolder className="h-4 w-4 shrink-0 sm:h-[17px] sm:w-[17px]" /><span className="truncate">{project?.name || "Add repositories…"}</span><IconChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-text-muted sm:h-4 sm:w-4" /></button>
+                    <button onClick={() => setBranchPicker(true)} className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border-faint px-2 text-[12px] text-text-tertiary hover:bg-surface-raised-tertiary sm:h-10 sm:px-3 sm:text-[13px]"><IconGitBranch className="h-4 w-4 shrink-0 sm:h-[17px] sm:w-[17px]" /><span className="truncate">{branch || "main"}</span><IconChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-text-muted sm:h-4 sm:w-4" /></button>
+                    <button aria-label="Connection settings" onClick={() => setConnections(true)} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-text-tertiary hover:bg-surface-raised sm:h-10 sm:w-10"><IconSettings className="h-[18px] w-[18px] sm:h-5 sm:w-5" /></button>
                   </div>}
                 />
                 {/* Transcript metadata remains hidden on the minimal landing screen. */}

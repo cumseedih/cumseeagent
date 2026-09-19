@@ -25,10 +25,12 @@ export function ModelSelector({
   value,
   providerId,
   onChange,
+  compact = false,
 }: {
   value: string;
   providerId?: string;
   onChange: (modelId: string, providerId: string) => void;
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [models, setModels] = useState<Model[]>([]);
@@ -69,11 +71,25 @@ export function ModelSelector({
 
   return (
     <>
-      <Chip onClick={() => setOpen(true)} data-testid="model-chip" title="Select model" className="max-w-[150px] sm:max-w-[240px]">
-        <IconCpu className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">{label}</span>
-        <IconChevronDown className="h-3.5 w-3.5 shrink-0" />
-      </Chip>
+      {compact ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          data-testid="model-chip"
+          title={label}
+          aria-label={`Select model: ${label}`}
+          className="inline-flex h-8 items-center gap-1 rounded-lg px-1.5 text-text-secondary transition-colors hover:bg-surface-raised md:h-9"
+        >
+          <IconCpu className="h-[19px] w-[19px] shrink-0" />
+          <IconChevronDown className="h-3.5 w-3.5 shrink-0" />
+        </button>
+      ) : (
+        <Chip onClick={() => setOpen(true)} data-testid="model-chip" title="Select model" className="max-w-[150px] sm:max-w-[240px]">
+          <IconCpu className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{label}</span>
+          <IconChevronDown className="h-3.5 w-3.5 shrink-0" />
+        </Chip>
+      )}
 
       <Dialog
         open={open}

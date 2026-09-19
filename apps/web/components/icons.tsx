@@ -67,6 +67,15 @@ export const IconPaperclip = (p: IconProps) => (
   </Base>
 );
 
+export const IconAppsPlus = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="4" y="4" width="5" height="5" rx="1" />
+    <rect x="15" y="4" width="5" height="5" rx="1" />
+    <rect x="4" y="15" width="5" height="5" rx="1" />
+    <path d="M17.5 14.5v6M14.5 17.5h6" />
+  </Base>
+);
+
 export const IconCloudUpload = (p: IconProps) => (
   <Base {...p}>
     <path d="M12 13v8" />
@@ -186,6 +195,20 @@ export const IconAlert = (p: IconProps) => (
   <Base {...p}>
     <path d="M12 4.5l8.5 14.5h-17L12 4.5z" />
     <path d="M12 10v4M12 16.8v.2" />
+  </Base>
+);
+
+export const IconMonitor = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="3.5" y="4.5" width="17" height="12" rx="2.5" />
+    <path d="M9 20h6M12 16.5V20" />
+  </Base>
+);
+
+export const IconSettings = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6 18 18M18 6l-1.4 1.4M7.4 16.6 6 18" />
   </Base>
 );
 
