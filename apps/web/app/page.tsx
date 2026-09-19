@@ -269,6 +269,28 @@ export default function AgentPage() {
   const busy = status === "running" || status === "thinking";
   const hasConversation = messages.length > 0;
 
+  // Rendered in the transcript when a session is running, and above the
+  // composer on the empty state — one definition, two mount points.
+  const errorNote = error ? (
+    <div className="mb-4">
+      <ErrorNote onRetry={() => setError(null)}>{error}</ErrorNote>
+    </div>
+  ) : null;
+
+  const approvalNote = pendingTool ? (
+    <div className="mb-4">
+      <ApprovalBar
+        toolCall={pendingTool}
+        onResolved={async () => {
+          if (sessionId) {
+            const t = await api.listToolCalls(sessionId).catch(() => null);
+            if (t) setToolCalls(t.toolCalls || []);
+          }
+        }}
+      />
+    </div>
+  ) : null;
+
   return (
     <div className="flex h-screen overflow-hidden bg-surface-primary">
       <TermsGate onAccepted={() => setTermsAccepted(true)} />
@@ -385,48 +407,48 @@ export default function AgentPage() {
         <div className="flex min-h-0 flex-1 overflow-hidden">
           {/* Conversation column */}
           <div className="flex min-w-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 overflow-y-auto px-4">
-              <div className={cx("mx-auto w-full", hasConversation ? "max-w-3xl py-6" : "flex min-h-full max-w-3xl flex-col justify-center py-10")}>
-                {booting && !hasConversation && (
-                  <div className="w-full max-w-xl space-y-3 self-center">
-                    <Skeleton className="mx-auto h-12 w-12 rounded-full" />
-                    <Skeleton className="mx-auto h-8 w-3/5" />
-                    <Skeleton className="mx-auto h-3 w-1/3" />
-                    <Skeleton className="mt-6 h-24 w-full rounded-composer" />
-                  </div>
-                )}
-
-                {!booting && !hasConversation && <Hero busy={sending} />}
-
-                {error && (
-                  <div className="mb-4">
-                    <ErrorNote onRetry={() => setError(null)}>{error}</ErrorNote>
-                  </div>
-                )}
-
-                {pendingTool && (
-                  <div className="mb-4">
-                    <ApprovalBar
-                      toolCall={pendingTool}
-                      onResolved={async () => {
-                        if (sessionId) {
-                          const t = await api.listToolCalls(sessionId).catch(() => null);
-                          if (t) setToolCalls(t.toolCalls || []);
-                        }
-                      }}
-                    />
-                  </div>
-                )}
-
-                {hasConversation && (
+            {hasConversation && (
+              <div className="min-h-0 flex-1 overflow-y-auto px-4">
+                <div className="mx-auto w-full max-w-3xl py-6">
+                  {errorNote}
+                  {approvalNote}
                   <MessageList messages={messages} thinking={status === "thinking"} streaming={status === "running"} />
-                )}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Composer dock */}
-            <div className="shrink-0 px-4 pb-4 pt-2">
-              <div className="mx-auto w-full max-w-3xl">
+            {/* Composer column.
+                On the empty state the composer is the anchor of a vertically
+                centred stack (mark + headline above it), exactly as in the
+                reference; once a session is running it docks to the bottom. */}
+            <div
+              className={cx(
+                "shrink-0 px-4",
+                hasConversation
+                  ? "pb-4 pt-2"
+                  : "flex min-h-0 flex-1 flex-col justify-center overflow-y-auto pb-6 pt-4 md:pb-0 md:pt-0"
+              )}
+            >
+              <div className="relative mx-auto w-full max-w-2xl">
+                {/* The mark + headline float above the composer and are excluded
+                    from the centring maths, so the composer alone sits on the
+                    optical centre of the column — as in the reference. */}
+                {!hasConversation && (
+                  <div className="pointer-events-none absolute bottom-full left-0 right-0 flex flex-col items-center gap-4 pb-8">
+                    {booting ? (
+                      <div className="w-full max-w-xl space-y-3">
+                        <Skeleton className="mx-auto h-12 w-12 rounded-full" />
+                        <Skeleton className="mx-auto h-8 w-3/5" />
+                        <Skeleton className="mx-auto h-3 w-1/3" />
+                      </div>
+                    ) : (
+                      <Hero busy={sending} />
+                    )}
+                  </div>
+                )}
+
+                {!hasConversation && errorNote}
+                {!hasConversation && approvalNote}
                 <Composer
                   onSend={sendMessage}
                   busy={busy}
@@ -438,7 +460,14 @@ export default function AgentPage() {
                       : "Describe the task — or connect a repository first…"
                   }
                 />
-                <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-text-muted">
+                {/* Kept out of the empty state so the composer sits on the exact
+                    centre of the column, as in the reference composition. */}
+                <div
+                  className={cx(
+                    "mt-2 items-center justify-between px-1 text-[10px] text-text-muted",
+                    hasConversation ? "flex" : "hidden"
+                  )}
+                >
                   <span>
                     {BRANDING.PRODUCT_NAME} · {BRANDING.PRODUCT_DOMAIN}
                   </span>
@@ -454,7 +483,7 @@ export default function AgentPage() {
 
           {/* Right rail */}
           {railOpen && (
-            <aside className="hidden w-[380px] shrink-0 flex-col border-l border-border-faint bg-surface-tertiary lg:flex">
+            <aside className="hidden w-[380px] shrink-0 flex-col border-l border-border-faint bg-surface-primary lg:flex">
               <div className="flex h-9 shrink-0 items-center gap-1 border-b border-border-faint px-2">
                 {(
                   [

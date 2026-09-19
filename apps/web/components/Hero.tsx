@@ -14,7 +14,7 @@ import { HeroMark } from "./Wordmark";
 export function Hero({ busy }: { busy?: boolean }) {
   return (
     <div className="animate-rise flex flex-col items-center">
-      <HeroMark className="mb-6 h-14 w-14 sm:h-16 sm:w-16" />
+      <HeroMark className="mb-5 h-12 w-12 sm:h-14 sm:w-14" />
 
       <h1 className="headline-hero font-serif-display animate-rise delay-1 mb-4 text-center text-text-tertiary">
         {BRANDING.HERO_TITLE_LEAD}

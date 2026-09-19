@@ -75,7 +75,7 @@ export function Composer({
         </div>
       )}
 
-      <div className="flex w-full flex-col items-start justify-center p-2">
+      <div className="flex w-full flex-col items-start justify-center p-3">
         {attachments.length > 0 && (
           <div className="mb-1.5 flex w-full flex-wrap gap-1.5 px-1">
             {attachments.map((a, idx) => (
@@ -114,7 +114,7 @@ export function Composer({
                 submit();
               }
             }}
-            className="max-h-[40vh] min-h-[42px] w-full resize-none bg-transparent px-1.5 py-1 text-sm leading-relaxed text-text-primary outline-none placeholder:text-text-muted md:min-h-[80px]"
+            className="max-h-[40vh] min-h-[42px] w-full resize-none bg-transparent px-1.5 py-1 text-sm leading-relaxed text-text-primary outline-none placeholder:text-text-muted md:min-h-[68px]"
           />
 
           <div className="flex items-center justify-between gap-4">

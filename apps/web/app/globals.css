@@ -85,7 +85,9 @@
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* Sidebar rail */
-  --sidebar: 34 7% 13%;
+  /* The rail shares the page canvas rather than sitting on a darker panel —
+     matching the reference, where the two are separated by a 1px border only. */
+  --sidebar: 60 3% 14%;
   --sidebar-foreground: 33 31% 94%;
   --sidebar-accent: 24 6% 24%;
   --sidebar-border: 30 7% 24%;

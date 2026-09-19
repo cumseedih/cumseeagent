@@ -135,9 +135,9 @@ export function SessionSidebar({
   }
 
   return (
-    <nav className="flex h-full w-72 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
+    <nav className="flex h-full w-[240px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       {/* Brand row */}
-      <div className="flex h-14 items-center justify-between px-3">
+      <div className="flex h-12 items-center justify-between px-4">
         <Wordmark glyphClass="h-5 w-5" textClass="text-[12px]" />
         <button
           onClick={onToggleCollapse}
