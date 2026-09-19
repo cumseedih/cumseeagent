@@ -56,8 +56,8 @@ HOST=0.0.0.0
 NODE_ENV=development
 PRODUCT_NAME="Delvin"
 PRODUCT_DOMAIN="delvin.local"
-LOGO_PATH="/assets/delvin-logo.jpg"
-FAVICON_PATH="/assets/delvin-logo.jpg"
+LOGO_PATH="/assets/logo.png"
+FAVICON_PATH="/assets/favicon.ico"
 PRIMARY_COLOR="#0ea5e9"
 ACCENT_COLOR="#06b6d4"
 OMNIROUTE_BASE_URL="http://127.0.0.1:20128/v1"
@@ -75,8 +75,8 @@ AGENT_USER="agent"
 ```ini
 NEXT_PUBLIC_PRODUCT_NAME="Delvin"
 NEXT_PUBLIC_PRODUCT_DOMAIN="delvin.local"
-NEXT_PUBLIC_LOGO_PATH="/assets/delvin-logo.jpg"
-NEXT_PUBLIC_FAVICON_PATH="/assets/delvin-logo.jpg"
+NEXT_PUBLIC_LOGO_PATH="/assets/logo.png"
+NEXT_PUBLIC_FAVICON_PATH="/assets/favicon.ico"
 NEXT_PUBLIC_PRIMARY_COLOR="#0ea5e9"
 NEXT_PUBLIC_ACCENT_COLOR="#06b6d4"
 NEXT_PUBLIC_API_URL="http://localhost:4000"
@@ -92,7 +92,7 @@ Central config: `apps/web/branding.config.ts` + `apps/api/src/lib/config.ts` (bo
 | Knob | Env | Notes |
 | --- | --- | --- |
 | Product name / domain | `PRODUCT_NAME`, `PRODUCT_DOMAIN` | Sidebar, metadata, message attribution |
-| Logo / favicon | `LOGO_PATH`, `FAVICON_PATH` | Served from `apps/web/public/assets/` |
+| Logo / favicon | `LOGO_PATH`, `FAVICON_PATH` | Served from `apps/web/public/assets/` — see **Brand assets** below |
 | Theme channels | `PRIMARY_COLOR`, `ACCENT_COLOR`, `HIGHLIGHT_COLOR` | `"H S% L%"` channels surfaced as CSS vars in `app/globals.css` |
 | Hero copy | `HERO_TITLE_LEAD`, `HERO_TITLE_TAIL`, `HERO_TITLE_HIGHLIGHT`, `HERO_SUBTITLE` | Headline renders `<LEAD> the <HIGHLIGHT>` |
 
@@ -155,3 +155,21 @@ Authorized clone: `https://github.com/cumseedih/cumseeagent` (reference, inspect
 
 ---
 *Generated for safe public push — no .env, node_modules, .next, dist, coverage, or DBs are committed.*
+
+### Brand assets
+
+`apps/web/public/assets/` holds the mark and everything derived from it:
+
+| File | Purpose |
+| --- | --- |
+| `delvin-logo.jpg` | **Master artwork** (1536×1536). Edit the brand here. |
+| `logo.png` | 512px in-app mark — tight crop, raised tile, used by the sidebar, hero and `LOGO_PATH` |
+| `favicon.ico` | 16/32/48 multi-size icon |
+| `icon-32.png` | 32px PNG for modern browsers |
+| `apple-touch-icon.png` | 180px iOS home-screen icon |
+| `og.png` | 1200×630 social preview |
+| `logo.svg` | SVG wrapper around `logo.png` for tooling that requires a vector entry point |
+
+The artwork is a light figure on a near-white ground, so the small icons bake in a
+raised dark tile and use a tight head-and-hat crop — at 20px the wider crop loses the
+face against the dark UI. Regenerate by re-running the crop/plate script if the master changes.

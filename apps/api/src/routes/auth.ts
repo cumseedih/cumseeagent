@@ -101,6 +101,10 @@ export async function authRoutes(app: FastifyInstance) {
   });
 }
 
+// Identity used by the no-token dev fallback below.
+const DEV_EMAIL = "dev@localhost";
+const DEV_USERNAME = "dev";
+
 // Helper to get userId from request (auth-ready: if no token, create/find default dev user)
 export async function getUserId(req: any): Promise<string> {
   const queryToken = (req.query as any)?.token;
@@ -113,12 +117,26 @@ export async function getUserId(req: any): Promise<string> {
       return payload.userId;
     } catch {}
   }
-  // Fallback: get or create default user for dev
-  let user = await prisma.user.findFirst({ where: { email: "dev@localhost" } });
+  // Fallback: get or create default user for dev.
+  //
+  // The page fires several requests in parallel on first load, so more than one
+  // of them can reach this point with no user row in the database. A plain
+  // find-then-create then loses the race: the losers die on the unique
+  // constraint for `username` and the request 500s. Re-read on conflict.
+  let user = await prisma.user.findFirst({ where: { email: DEV_EMAIL } });
   if (!user) {
-    user = await prisma.user.create({
-      data: { email: "dev@localhost", username: "dev", passwordHash: await hashPassword("dev123456") },
-    });
+    try {
+      user = await prisma.user.create({
+        data: { email: DEV_EMAIL, username: DEV_USERNAME, passwordHash: await hashPassword("dev123456") },
+      });
+    } catch (err: any) {
+      if (err?.code !== "P2002") throw err;
+      // Another request won the race (or `username` is held by a different row).
+      user =
+        (await prisma.user.findFirst({ where: { email: DEV_EMAIL } })) ??
+        (await prisma.user.findFirst({ where: { username: DEV_USERNAME } }));
+      if (!user) throw err;
+    }
   }
   return user.id;
 }
