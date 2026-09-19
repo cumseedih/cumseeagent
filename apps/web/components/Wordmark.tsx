@@ -5,13 +5,18 @@ import { BRANDING } from "../branding.config";
 /**
  * Brand mark — uses the supplied Delvin logo asset, with an inline glyph
  * fallback so the UI never breaks if the image is missing.
+ *
+ * The artwork is a light figure, so at small sizes it rides on a raised tile
+ * (baked into the asset itself) to stay legible on the dark canvas.
  */
-export function Mark({ className = "h-6 w-6" }: { className?: string }) {
+export function Mark({ className = "h-6 w-6", square = false }: { className?: string; square?: boolean }) {
   return (
     <img
       src={BRANDING.LOGO_PATH}
       alt={`${BRANDING.PRODUCT_NAME} logo`}
-      className={`${className} rounded-md object-cover object-center ring-1 ring-border-medium`}
+      className={`${className} object-cover object-center ${
+        square ? "rounded-md" : "rounded-full"
+      } ring-1 ring-border-faint`}
       onError={(e) => ((e.currentTarget as HTMLImageElement).style.visibility = "hidden")}
     />
   );
@@ -40,15 +45,16 @@ export function Wordmark({
   );
 }
 
-/** Large mark shown above the hero headline. */
+/**
+ * Large mark shown above the hero headline.
+ *
+ * No glow behind it — the reference mark sits plain on the canvas, and a
+ * coloured halo would fight the artwork.
+ */
 export function HeroMark({ className = "h-16 w-16" }: { className?: string }) {
   return (
     <div className={`relative ${className}`}>
-      <div
-        className="absolute inset-0 -z-10 rounded-full opacity-40 blur-2xl"
-        style={{ background: "radial-gradient(closest-side, hsl(var(--highlight) / 0.5), transparent)" }}
-      />
-      <Mark className="h-full w-full rounded-2xl" />
+      <Mark className="h-full w-full" square />
     </div>
   );
 }

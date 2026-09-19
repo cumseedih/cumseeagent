@@ -1,5 +1,5 @@
-<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="48" height="48" rx="8" fill="#0ea5e9"/>
-<path d="M12 18 L24 10 L36 18 L36 30 L24 38 L12 30 Z" stroke="white" stroke-width="2" fill="none"/>
-<circle cx="24" cy="24" r="6" fill="white"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 512 512" role="img" aria-label="Delvin brand mark">
+  <title>Delvin brand mark</title>
+  <image width="512" height="512" xlink:href="/assets/logo.png"/>
 </svg>
