@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { KeyCap, cx } from "./ui";
 import { IconCloudUpload, IconPaperclip, IconSendArrow, IconStop } from "./icons";
 
@@ -16,12 +16,16 @@ export function Composer({
   onStop,
   placeholder,
   onAttach,
+  controls,
+  footer,
 }: {
   onSend: (text: string, files: { name: string; size: number; content: string }[]) => void;
   disabled?: boolean;
   busy?: boolean;
   onStop?: () => void;
   placeholder?: string;
+  controls?: ReactNode;
+  footer?: ReactNode;
   onAttach?: (files: { name: string; size: number; content: string }[]) => void;
 }) {
   const [text, setText] = useState("");
@@ -137,6 +141,7 @@ export function Composer({
                 </span>
                 <span className="hidden text-sm sm:inline">{dragging ? "Drop files…" : "Add files"}</span>
               </button>
+              {controls}
             </div>
 
             <div className="flex items-center gap-2">
@@ -172,6 +177,7 @@ export function Composer({
           </div>
         </div>
       </div>
+      {footer}
     </div>
   );
 }

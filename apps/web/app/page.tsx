@@ -6,14 +6,15 @@ import { api } from "../lib/api";
 import { connectSSE, CumseeEvent } from "../lib/sse";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { Hero } from "../components/Hero";
 import { Composer } from "../components/Composer";
+import { ModelSelector } from "../components/ModelSelector";
+import { IconPanelLeft, IconFolder, IconGitBranch } from "../components/icons";
 import { MessageList } from "../components/MessageList";
 import { ToolTimeline } from "../components/ToolTimeline";
 import { Terminal } from "../components/Terminal";
 import { FileViewer } from "../components/FileViewer";
 import { ApprovalBar } from "../components/ApprovalBar";
-import { ErrorNote, Skeleton, cx } from "../components/ui";
+import { ErrorNote, cx } from "../components/ui";
 import { TermsGate } from "../components/TermsGate";
 import {
   BranchPicker,
@@ -55,7 +56,7 @@ export default function AgentPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [railOpen, setRailOpen] = useState(true);
+  const [railOpen, setRailOpen] = useState(false);
   const [railTab, setRailTab] = useState<RailTab>("activity");
   const [branches, setBranches] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
@@ -292,7 +293,7 @@ export default function AgentPage() {
   ) : null;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface-primary">
+    <div className="flex h-[100dvh] overflow-hidden bg-surface-primary">
       <TermsGate onAccepted={() => setTermsAccepted(true)} />
 
       <RepositoryPicker
@@ -373,7 +374,7 @@ export default function AgentPage() {
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <WorkspaceHeader
+        {hasConversation ? <WorkspaceHeader
           status={status}
           project={project}
           branch={branch}
@@ -394,7 +395,10 @@ export default function AgentPage() {
           railTab={railTab}
           onRailTabChange={setRailTab}
           sessionTitle={sessionTitle}
-        />
+        /> : <header className="flex h-16 shrink-0 items-center justify-between px-4">
+          <button aria-label="Open sessions" onClick={() => isMobile ? setMobileNav(v => !v) : setSidebarCollapsed(v => !v)} className="grid h-11 w-11 place-items-center rounded-lg hover:bg-surface-raised"><IconPanelLeft className="h-5 w-5" /></button>
+          <button aria-label="Open repositories" onClick={() => setRepoPicker(true)} className="grid h-11 w-11 place-items-center rounded-lg text-text-muted hover:bg-surface-raised"><IconFolder className="h-5 w-5" /></button>
+        </header>}
 
         {bootError && (
           <div className="px-4 pt-3">
@@ -417,35 +421,17 @@ export default function AgentPage() {
               </div>
             )}
 
-            {/* Composer column.
-                On the empty state the composer is the anchor of a vertically
-                centred stack (mark + headline above it), exactly as in the
-                reference; once a session is running it docks to the bottom. */}
+            {/* Bottom-docked composer; the empty-state headline occupies the open canvas. */}
             <div
               className={cx(
                 "shrink-0 px-4",
                 hasConversation
                   ? "pb-4 pt-2"
-                  : "flex min-h-0 flex-1 flex-col justify-center overflow-y-auto pb-6 pt-4 md:pb-0 md:pt-0"
+                  : "relative flex min-h-0 flex-1 flex-col justify-end overflow-y-auto pb-6 pt-4"
               )}
             >
+              {!hasConversation && <div className="pointer-events-none absolute inset-x-3 top-[42%] -translate-y-1/2"><h1 className="text-center font-serif-display text-[clamp(24px,6vw,48px)] font-light tracking-[-0.045em] text-text-tertiary">What would you like to do?</h1></div>}
               <div className="relative mx-auto w-full max-w-2xl">
-                {/* The mark + headline float above the composer and are excluded
-                    from the centring maths, so the composer alone sits on the
-                    optical centre of the column — as in the reference. */}
-                {!hasConversation && (
-                  <div className="pointer-events-none absolute bottom-full left-0 right-0 flex flex-col items-center gap-4 pb-8">
-                    {booting ? (
-                      <div className="w-full max-w-xl space-y-3">
-                        <Skeleton className="mx-auto h-12 w-12 rounded-full" />
-                        <Skeleton className="mx-auto h-8 w-3/5" />
-                        <Skeleton className="mx-auto h-3 w-1/3" />
-                      </div>
-                    ) : (
-                      <Hero busy={sending} />
-                    )}
-                  </div>
-                )}
 
                 {!hasConversation && errorNote}
                 {!hasConversation && approvalNote}
@@ -454,14 +440,15 @@ export default function AgentPage() {
                   busy={busy}
                   onStop={stopRun}
                   disabled={sending}
-                  placeholder={
-                    project
-                      ? `Describe the task for ${project.name} — attach files with the paperclip…`
-                      : "Describe the task — or connect a repository first…"
-                  }
+                  placeholder="Ask anything…"
+                  controls={<ModelSelector value={model} providerId={provider} onChange={(m, p) => { setModel(m); setProvider(p); }} />}
+                  footer={<div className="flex items-center gap-2 border-t border-border-faint p-2">
+                    <button onClick={() => setRepoPicker(true)} className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md border border-border-faint px-2 text-xs text-text-tertiary"><IconFolder className="h-4 w-4 shrink-0" /><span className="truncate">{project?.name || "Add repositories…"}</span><span className="ml-auto">⌄</span></button>
+                    <button onClick={() => setBranchPicker(true)} className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md border border-border-faint px-2 text-xs text-text-tertiary"><IconGitBranch className="h-4 w-4 shrink-0" /><span className="truncate">{branch || "main"}</span><span className="ml-auto">⌄</span></button>
+                    <button aria-label="Connection settings" onClick={() => setConnections(true)} className="h-10 w-10 shrink-0 rounded-md text-xl text-text-tertiary hover:bg-surface-raised">⚙</button>
+                  </div>}
                 />
-                {/* Kept out of the empty state so the composer sits on the exact
-                    centre of the column, as in the reference composition. */}
+                {/* Transcript metadata remains hidden on the minimal landing screen. */}
                 <div
                   className={cx(
                     "mt-2 items-center justify-between px-1 text-[10px] text-text-muted",

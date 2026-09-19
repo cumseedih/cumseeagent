@@ -31,7 +31,7 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Design tokens — warm graphite dark theme in the Arena agent workspace
+   Design tokens — warm editorial light theme in the Delvin agent workspace
    idiom. Channels are bare "H S% L%" so Tailwind can apply alpha modifiers.
 --------------------------------------------------------------------------- */
 :root {
@@ -92,7 +92,34 @@
   --sidebar-accent: 24 6% 24%;
   --sidebar-border: 30 7% 24%;
 
-  color-scheme: dark;
+  color-scheme: light;
+  --surface-primary: 30 25% 98%;
+  --surface-secondary: 0 0% 100%;
+  --surface-tertiary: 30 25% 96%;
+  --surface-floating: 0 0% 100%;
+  --surface-raised: 30 20% 94%;
+  --surface-raised-tertiary: 30 25% 97%;
+  --surface-skeleton: 30 15% 90%;
+  --surface-highlight: 30 20% 94%;
+  --text-primary: 24 6% 17%;
+  --text-secondary: 28 6% 36%;
+  --text-tertiary: 28 6% 41%;
+  --text-muted: 28 5% 50%;
+  --text-placeholder: 28 5% 66%;
+  --border-faint: 30 10% 92%;
+  --border-medium: 30 10% 85%;
+  --border-strong: 30 8% 70%;
+  --interactive-normal: 28 6% 36%;
+  --interactive-active: 24 6% 17%;
+  --interactive-cta: 30 24% 92%;
+  --interactive-cta-hover: 30 20% 88%;
+  --interactive-on-cta: 24 6% 17%;
+  --interactive-cta-secondary: 30 25% 96%;
+  --interactive-cta-secondary-hover: 30 20% 92%;
+  --sidebar: 30 25% 98%;
+  --sidebar-foreground: 24 6% 17%;
+  --sidebar-accent: 30 20% 94%;
+  --sidebar-border: 30 10% 92%;
 }
 
 * {
