@@ -60,6 +60,9 @@ export async function buildApp() {
       await api.register(modelRoutes);
       await api.register(eventRoutes);
       await api.register(githubRoutes, { prefix: "/github" });
+      // Keep the original GitHub App setup URL working while the app uses the
+      // shorter /api/github endpoints internally.
+      await api.register(githubRoutes, { prefix: "/integrations/github" });
       // Also expose health under /api
       await api.register(healthRoutes);
       await api.register(usageRoutes);
