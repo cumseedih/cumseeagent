@@ -5,7 +5,7 @@
 /* ---------------------------------------------------------------------------
    Brand fonts (self-hosted variable TTFs in /public/assets/fonts).
    Roboto Slab  → editorial serif used for the hero headline
-   Roboto       → UI / body
+   Mulish       → UI / body
    Oswald       → brand wordmark + section headings
 --------------------------------------------------------------------------- */
 @font-face {
@@ -23,76 +23,90 @@
   font-display: swap;
 }
 @font-face {
-  font-family: "Delvin Roboto";
-  src: url("/assets/fonts/Roboto/Roboto-Variable.ttf") format("truetype");
+  font-family: "Delvin Mulish";
+  src: url("/assets/fonts/Mulish/Mulish-Regular.ttf") format("truetype");
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Delvin Mulish";
+  src: url("/assets/fonts/Mulish/Mulish-SemiBold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Delvin Mulish";
+  src: url("/assets/fonts/Mulish/Mulish-Bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
   font-display: swap;
 }
 
 /* ---------------------------------------------------------------------------
-   Delvin Earthy Minimal palette. Channels are bare "H S% L%" so Tailwind
+   Delvin Apple Modern palette. Channels are bare "H S% L%" so Tailwind
    opacity modifiers remain available throughout the interface.
 --------------------------------------------------------------------------- */
 :root {
   color-scheme: light;
 
-  /* Brand: #2E3A2F · #6B7F5B · #D9C9B2 · #C96F4F · #F8F6EE */
-  --primary: 126 12% 20%;
-  --brand-secondary: 93 17% 43%;
-  --brand-tertiary: 35 34% 77%;
-  --accent: 16 54% 55%;
-  --highlight: 35 34% 77%;
-  --highlight-text: 126 12% 20%;
+  /* Brand: #F5F5F7 · #1D1D1F · #AAAAAA · #007AFF */
+  --primary: 240 3% 12%;
+  --brand-secondary: 0 0% 67%;
+  --brand-tertiary: 240 11% 96%;
+  --accent: 211 100% 50%;
+  --highlight: 211 100% 50%;
+  --highlight-text: 0 0% 100%;
 
   /* Surfaces */
-  --surface-primary: 48 42% 95%;
-  --surface-secondary: 46 38% 98%;
-  --surface-tertiary: 39 34% 92%;
-  --surface-floating: 46 38% 99%;
-  --surface-raised: 35 34% 88%;
-  --surface-raised-tertiary: 43 34% 94%;
-  --surface-skeleton: 35 24% 84%;
-  --surface-highlight: 35 34% 90%;
+  --surface-primary: 240 11% 96%;
+  --surface-secondary: 0 0% 100%;
+  --surface-tertiary: 240 11% 96%;
+  --surface-floating: 0 0% 100%;
+  --surface-raised: 0 0% 93%;
+  --surface-raised-tertiary: 240 8% 97%;
+  --surface-skeleton: 0 0% 88%;
+  --surface-highlight: 211 100% 96%;
 
   /* Text */
-  --text-primary: 126 12% 20%;
-  --text-secondary: 120 8% 31%;
-  --text-tertiary: 96 9% 39%;
-  --text-muted: 76 7% 52%;
-  --text-placeholder: 52 9% 63%;
+  --text-primary: 240 3% 12%;
+  --text-secondary: 240 2% 28%;
+  --text-tertiary: 0 0% 45%;
+  --text-muted: 0 0% 60%;
+  --text-placeholder: 0 0% 67%;
 
   /* Borders */
-  --border-faint: 38 22% 86%;
-  --border-medium: 35 24% 77%;
-  --border-strong: 93 17% 54%;
+  --border-faint: 0 0% 89%;
+  --border-medium: 0 0% 80%;
+  --border-strong: 211 100% 50%;
 
   /* Interactive */
-  --interactive-normal: 126 12% 27%;
-  --interactive-active: 126 12% 20%;
-  --interactive-link: 126 24% 31%;
-  --interactive-positive: 119 27% 38%;
-  --interactive-negative: 6 58% 47%;
-  --interactive-warning: 16 54% 55%;
-  --interactive-cta: 126 12% 20%;
-  --interactive-cta-hover: 93 17% 43%;
-  --interactive-on-cta: 48 42% 95%;
-  --interactive-cta-secondary: 39 34% 92%;
-  --interactive-cta-secondary-hover: 35 34% 86%;
+  --interactive-normal: 240 3% 12%;
+  --interactive-active: 240 3% 12%;
+  --interactive-link: 211 100% 50%;
+  --interactive-positive: 142 49% 36%;
+  --interactive-negative: 4 83% 54%;
+  --interactive-warning: 211 100% 50%;
+  --interactive-cta: 211 100% 50%;
+  --interactive-cta-hover: 211 100% 43%;
+  --interactive-on-cta: 0 0% 100%;
+  --interactive-cta-secondary: 240 11% 96%;
+  --interactive-cta-secondary-hover: 0 0% 93%;
 
   /* Font stacks (Delvin brand fonts, self-hosted) */
   --font-serif: "Delvin Roboto Slab", ui-serif, Georgia, Cambria, serif;
-  --font-ui: "Delvin Roboto", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-ui: "Delvin Mulish", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-display: "Delvin Oswald", "Arial Narrow", ui-sans-serif, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* Sidebar rail */
   /* The rail shares the page canvas rather than sitting on a darker panel —
      matching the reference, where the two are separated by a 1px border only. */
-  --sidebar: 48 42% 95%;
-  --sidebar-foreground: 126 12% 20%;
-  --sidebar-accent: 39 34% 90%;
-  --sidebar-border: 38 22% 86%;
+  --sidebar: 240 11% 96%;
+  --sidebar-foreground: 240 3% 12%;
+  --sidebar-accent: 0 0% 93%;
+  --sidebar-border: 0 0% 89%;
 }
 
 * {
