@@ -7,7 +7,6 @@ import { connectSSE, CumseeEvent } from "../lib/sse";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { Composer } from "../components/Composer";
-import { ModelSelector } from "../components/ModelSelector";
 import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings } from "../components/icons";
 import { MessageList } from "../components/MessageList";
 import { ToolTimeline } from "../components/ToolTimeline";
@@ -35,8 +34,6 @@ export default function AgentPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [events, setEvents] = useState<CumseeEvent[]>([]);
   const [toolCalls, setToolCalls] = useState<any[]>([]);
-  const [model, setModel] = useState("");
-  const [provider, setProvider] = useState("");
   const [harness, setHarness] = useState<Harness>("standard");
   const [models, setModels] = useState<any[]>([]);
   const [quota, setQuota] = useState<{ remaining: number | null; limit: number; exhausted: boolean; unlimited: boolean } | null>(null);
@@ -94,7 +91,6 @@ export default function AgentPage() {
         if (s.sessions?.length) {
           setSessionId(s.sessions[0].id);
           setSessionTitle(s.sessions[0].title);
-          if (s.sessions[0].selectedModel) setModel(s.sessions[0].selectedModel);
         }
       } catch (e: any) {
         setBootError(e.message || "Backend unreachable");
@@ -186,8 +182,6 @@ export default function AgentPage() {
       const res = await api.createSession({
         projectId: project?.id,
         title: title || "New session",
-        selectedModel: model || undefined,
-        selectedProvider: provider || undefined,
       });
       setSessionId(res.session.id);
       setSessionTitle(res.session.title);
@@ -225,8 +219,6 @@ export default function AgentPage() {
       const res = await api.sendMessage(target, {
         role: "user",
         content: payloadContent,
-        selectedModel: model || undefined,
-        selectedProvider: provider || undefined,
       });
       setMessages((prev) => [...prev, res.message || { id: `local-${Date.now()}`, role: "user", content: payloadContent, status: "completed", createdAt: new Date().toISOString() }]);
       setStatus("running");
@@ -378,13 +370,7 @@ export default function AgentPage() {
           status={status}
           project={project}
           branch={branch}
-          model={model}
-          providerId={provider}
           harness={harness}
-          onModelChange={(m, p) => {
-            setModel(m);
-            setProvider(p);
-          }}
           onToggleSidebar={() => (isMobile ? setMobileNav((v) => !v) : setSidebarCollapsed((v) => !v))}
           onOpenRepository={() => setRepoPicker(true)}
           onOpenBranch={() => setBranchPicker(true)}
@@ -441,7 +427,6 @@ export default function AgentPage() {
                   onStop={stopRun}
                   disabled={sending}
                   placeholder="Ask anything…"
-                  controls={<ModelSelector compact value={model} providerId={provider} onChange={(m, p) => { setModel(m); setProvider(p); }} />}
                   footer={<div className="flex items-center gap-1.5 border-t border-border-faint p-1 sm:gap-2 sm:p-2">
                     <button onClick={() => setRepoPicker(true)} className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border-faint px-2 text-[12px] text-text-tertiary hover:bg-surface-raised-tertiary sm:h-10 sm:px-3 sm:text-[13px]"><IconFolder className="h-4 w-4 shrink-0 sm:h-[17px] sm:w-[17px]" /><span className="truncate">{project?.name || "Add repositories…"}</span><IconChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-text-muted sm:h-4 sm:w-4" /></button>
                     <button onClick={() => setBranchPicker(true)} className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border-faint px-2 text-[12px] text-text-tertiary hover:bg-surface-raised-tertiary sm:h-10 sm:px-3 sm:text-[13px]"><IconGitBranch className="h-4 w-4 shrink-0 sm:h-[17px] sm:w-[17px]" /><span className="truncate">{branch || "main"}</span><IconChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-text-muted sm:h-4 sm:w-4" /></button>

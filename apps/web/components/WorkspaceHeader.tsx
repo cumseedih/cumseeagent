@@ -1,22 +1,18 @@
 "use client";
 
 import { BRANDING } from "../branding.config";
-import { ModelSelector } from "./ModelSelector";
 import { StatusPill, Chip, cx } from "./ui";
 import { IconBolt, IconChevronDown, IconGitBranch, IconGithub, IconPanelLeft, IconShield, IconTerminal, IconFolder } from "./icons";
 
 /**
  * Top bar: sidebar toggle, repo/branch context pickers, live status,
- * harness+model selection, and the terminal/files rail toggle.
+ * harness selection and the terminal/files rail toggle.
  */
 export function WorkspaceHeader({
   status,
   project,
   branch,
-  model,
-  providerId,
   harness,
-  onModelChange,
   onToggleSidebar,
   onOpenRepository,
   onOpenBranch,
@@ -31,10 +27,7 @@ export function WorkspaceHeader({
   status: string;
   project?: { id: string; name: string } | null;
   branch: string;
-  model: string;
-  providerId?: string;
   harness: string;
-  onModelChange: (m: string, p: string) => void;
   onToggleSidebar?: () => void;
   onOpenRepository?: () => void;
   onOpenBranch?: () => void;
@@ -117,7 +110,6 @@ export function WorkspaceHeader({
           </span>
           <IconChevronDown className="h-3.5 w-3.5" />
         </Chip>
-        <ModelSelector value={model} providerId={providerId} onChange={onModelChange} />
         <div className="hidden items-center gap-1 rounded-sm border border-border-faint p-0.5 md:flex">
           {(
             [

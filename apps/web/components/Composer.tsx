@@ -16,7 +16,6 @@ export function Composer({
   onStop,
   placeholder,
   onAttach,
-  controls,
   footer,
 }: {
   onSend: (text: string, files: { name: string; size: number; content: string }[]) => void;
@@ -24,7 +23,6 @@ export function Composer({
   busy?: boolean;
   onStop?: () => void;
   placeholder?: string;
-  controls?: ReactNode;
   footer?: ReactNode;
   onAttach?: (files: { name: string; size: number; content: string }[]) => void;
 }) {
@@ -140,7 +138,6 @@ export function Composer({
                   {dragging ? <IconCloudUpload className="h-[19px] w-[19px]" /> : <IconAppsPlus className="h-[19px] w-[19px]" />}
                 </span>
               </button>
-              {controls}
             </div>
 
             <div className="flex items-center gap-1.5">
