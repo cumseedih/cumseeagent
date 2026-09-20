@@ -1,112 +1,74 @@
+@import url("https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ---------------------------------------------------------------------------
-   Brand fonts (self-hosted variable TTFs in /public/assets/fonts).
-   Roboto Slab  → editorial serif used for the hero headline
-   Mulish       → UI / body
-   Oswald       → brand wordmark + section headings
---------------------------------------------------------------------------- */
-@font-face {
-  font-family: "Delvin Roboto Slab";
-  src: url("/assets/fonts/RobotoSlab/RobotoSlab-Variable.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Delvin Oswald";
-  src: url("/assets/fonts/Oswald/Oswald-Variable.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 200 700;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Delvin Mulish";
-  src: url("/assets/fonts/Mulish/Mulish-Regular.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Delvin Mulish";
-  src: url("/assets/fonts/Mulish/Mulish-SemiBold.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Delvin Mulish";
-  src: url("/assets/fonts/Mulish/Mulish-Bold.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-}
+/* Delvin uses one clean family throughout the agent workspace. */
 
 /* ---------------------------------------------------------------------------
-   Delvin Earthy Minimal palette. Channels are bare "H S% L%" so Tailwind
+   Delvin Ocean Breeze palette. Channels are bare "H S% L%" so Tailwind
    opacity modifiers remain available throughout the interface.
 --------------------------------------------------------------------------- */
 :root {
   color-scheme: light;
 
-  /* Brand: #2E3A2F · #6B7F5B · #D9C9B2 · #C96F4F · #F8F6EE */
-  --primary: 126 12% 20%;
-  --brand-secondary: 93 17% 43%;
-  --brand-tertiary: 35 34% 77%;
-  --accent: 16 54% 55%;
-  --highlight: 35 34% 77%;
-  --highlight-text: 126 12% 20%;
+  /* Brand: #0B3D91 · #3BA7F2 · #7FE7D6 · #E8F6FF */
+  --primary: 218 86% 31%;
+  --brand-secondary: 205 87% 59%;
+  --brand-tertiary: 172 68% 70%;
+  --accent: 205 87% 59%;
+  --highlight: 172 68% 70%;
+  --highlight-text: 218 86% 20%;
 
   /* Surfaces */
-  --surface-primary: 48 42% 95%;
-  --surface-secondary: 46 38% 98%;
-  --surface-tertiary: 39 34% 92%;
-  --surface-floating: 46 38% 99%;
-  --surface-raised: 35 34% 88%;
-  --surface-raised-tertiary: 43 34% 94%;
-  --surface-skeleton: 35 24% 84%;
-  --surface-highlight: 35 34% 90%;
+  --surface-primary: 204 100% 95%;
+  --surface-secondary: 204 100% 98%;
+  --surface-tertiary: 204 73% 92%;
+  --surface-floating: 0 0% 100%;
+  --surface-raised: 204 80% 89%;
+  --surface-raised-tertiary: 204 83% 94%;
+  --surface-skeleton: 204 49% 84%;
+  --surface-highlight: 172 68% 92%;
 
   /* Text */
-  --text-primary: 126 12% 20%;
-  --text-secondary: 120 8% 31%;
-  --text-tertiary: 96 9% 39%;
-  --text-muted: 76 7% 52%;
-  --text-placeholder: 52 9% 63%;
+  --text-primary: 218 86% 20%;
+  --text-secondary: 218 54% 33%;
+  --text-tertiary: 211 38% 45%;
+  --text-muted: 207 22% 53%;
+  --text-placeholder: 207 20% 63%;
 
   /* Borders */
-  --border-faint: 38 22% 86%;
-  --border-medium: 35 24% 77%;
-  --border-strong: 93 17% 54%;
+  --border-faint: 204 68% 88%;
+  --border-medium: 204 62% 78%;
+  --border-strong: 205 87% 59%;
 
   /* Interactive */
-  --interactive-normal: 126 12% 27%;
-  --interactive-active: 126 12% 20%;
-  --interactive-link: 126 24% 31%;
-  --interactive-positive: 119 27% 38%;
-  --interactive-negative: 6 58% 47%;
-  --interactive-warning: 16 54% 55%;
-  --interactive-cta: 126 12% 20%;
-  --interactive-cta-hover: 93 17% 43%;
-  --interactive-on-cta: 48 42% 95%;
-  --interactive-cta-secondary: 39 34% 92%;
-  --interactive-cta-secondary-hover: 35 34% 86%;
+  --interactive-normal: 218 86% 35%;
+  --interactive-active: 218 86% 27%;
+  --interactive-link: 205 87% 47%;
+  --interactive-positive: 172 57% 37%;
+  --interactive-negative: 0 68% 48%;
+  --interactive-warning: 35 94% 50%;
+  --interactive-cta: 218 86% 31%;
+  --interactive-cta-hover: 205 87% 46%;
+  --interactive-on-cta: 0 0% 100%;
+  --interactive-cta-secondary: 204 100% 92%;
+  --interactive-cta-secondary-hover: 172 68% 86%;
 
-  /* Font stacks (Delvin brand fonts, self-hosted) */
-  --font-serif: "Delvin Roboto Slab", ui-serif, Georgia, Cambria, serif;
-  --font-ui: "Delvin Mulish", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: "Delvin Oswald", "Arial Narrow", ui-sans-serif, sans-serif;
+  /* Font stacks */
+  --font-serif: "Josefin Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-ui: "Josefin Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Josefin Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* Sidebar rail */
   /* The rail shares the page canvas rather than sitting on a darker panel —
      matching the reference, where the two are separated by a 1px border only. */
-  --sidebar: 48 42% 95%;
-  --sidebar-foreground: 126 12% 20%;
-  --sidebar-accent: 39 34% 90%;
-  --sidebar-border: 38 22% 86%;
+  --sidebar: 204 100% 95%;
+  --sidebar-foreground: 218 86% 20%;
+  --sidebar-accent: 204 100% 90%;
+  --sidebar-border: 204 68% 88%;
 }
 
 * {
@@ -126,16 +88,16 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Editorial serif for the hero headline */
+/* Light display treatment for the hero headline */
 .font-serif-display {
-  font-family: var(--font-serif), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  font-weight: 300;
-  letter-spacing: -0.02em;
+  font-family: var(--font-serif), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.035em;
 }
 
 /* Brand wordmark + section headings */
 .font-display {
-  font-family: var(--font-display), "Arial Narrow", ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
 }
 
 .font-mono-code {
