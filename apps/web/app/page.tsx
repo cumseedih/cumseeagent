@@ -15,6 +15,7 @@ import { FileViewer } from "../components/FileViewer";
 import { ApprovalBar } from "../components/ApprovalBar";
 import { ErrorNote, cx } from "../components/ui";
 import { TermsGate } from "../components/TermsGate";
+import { WorkspaceSheet } from "../components/WorkspaceSheet";
 import {
   BranchPicker,
   ConnectionsDialog,
@@ -57,6 +58,7 @@ export default function AgentPage() {
   const [railTab, setRailTab] = useState<RailTab>("activity");
   const [branches, setBranches] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const bootRef = useRef(false);
 
   /* ---------------------------------------------------------------- bootstrap */
@@ -261,6 +263,7 @@ export default function AgentPage() {
   const pendingTool = useMemo(() => toolCalls.find((t) => t.approvalStatus === "pending"), [toolCalls]);
   const busy = status === "running" || status === "thinking";
   const hasConversation = messages.length > 0;
+  const workspaceRefreshKey = events.filter((event) => event.eventType.startsWith("file.")).length;
 
   // Rendered in the transcript when a session is running, and above the
   // composer on the empty state — one definition, two mount points.
@@ -287,6 +290,7 @@ export default function AgentPage() {
   return (
     <div className="flex h-[100dvh] overflow-hidden bg-surface-primary">
       <TermsGate onAccepted={() => setTermsAccepted(true)} />
+      <WorkspaceSheet open={workspaceOpen} onClose={() => setWorkspaceOpen(false)} project={project} refreshKey={workspaceRefreshKey} />
 
       <RepositoryPicker
         open={repoPicker}
@@ -347,6 +351,17 @@ export default function AgentPage() {
           onOpenLeaderboard={() => setLeaderboard(true)}
           onOpenConnections={() => setConnections(true)}
           onOpenHarness={() => setHarnessPicker(true)}
+          onDeleted={(id) => {
+            if (sessionId === id) {
+              setSessionId(null);
+              setSessionTitle(undefined);
+              setMessages([]);
+              setEvents([]);
+              setToolCalls([]);
+              setStatus("idle");
+            }
+            refreshSessions();
+          }}
           selectedId={sessionId || undefined}
           onSelect={(id) => {
             setSessionId(id);
@@ -375,6 +390,7 @@ export default function AgentPage() {
           onOpenRepository={() => setRepoPicker(true)}
           onOpenBranch={() => setBranchPicker(true)}
           onOpenHarness={() => setHarnessPicker(true)}
+          onOpenWorkspace={() => setWorkspaceOpen(true)}
           quota={quota}
           railOpen={railOpen}
           onToggleRail={() => setRailOpen((v) => !v)}
@@ -383,7 +399,7 @@ export default function AgentPage() {
           sessionTitle={sessionTitle}
         /></div> : <header className="flex h-[68px] shrink-0 items-center justify-between px-0 sm:px-5">
           <button aria-label="Open sessions" onClick={() => isMobile ? setMobileNav(v => !v) : setSidebarCollapsed(v => !v)} className="grid h-11 w-11 place-items-center rounded-lg text-text-primary hover:bg-surface-raised"><IconPanelLeft className="h-[22px] w-[22px]" /></button>
-          <button aria-label="Open repositories" onClick={() => setRepoPicker(true)} className="grid h-11 w-11 place-items-center rounded-lg text-text-placeholder hover:bg-surface-raised"><IconFolder className="h-[23px] w-[23px]" /></button>
+          <button aria-label="Open workspace files" onClick={() => setWorkspaceOpen(true)} className="grid h-11 w-11 place-items-center rounded-lg text-text-placeholder hover:bg-surface-raised"><IconFolder className="h-[23px] w-[23px]" /></button>
         </header>}
 
         {bootError && (
@@ -529,7 +545,7 @@ export default function AgentPage() {
 
               {railTab === "files" &&
                 (project ? (
-                  <FileViewer projectId={project.id} />
+                  <FileViewer projectId={project.id} refreshKey={workspaceRefreshKey} />
                 ) : (
                   <p className="p-3 text-xs text-text-muted">Connect a repository to browse workspace files.</p>
                 ))}

@@ -15,7 +15,7 @@ function humanSize(n?: number) {
 }
 
 /** Workspace file browser with a read-only preview pane. */
-export function FileViewer({ projectId }: { projectId: string }) {
+export function FileViewer({ projectId, refreshKey }: { projectId: string; refreshKey?: number }) {
   const [path, setPath] = useState("/");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +42,12 @@ export function FileViewer({ projectId }: { projectId: string }) {
   useEffect(() => {
     if (projectId) load("/");
   }, [projectId, load]);
+
+  useEffect(() => {
+    if (projectId && refreshKey !== undefined) load(path);
+    // `path` deliberately stays stable while an SSE file event refreshes the current folder.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
 
   async function openFile(target: string) {
     setError(null);

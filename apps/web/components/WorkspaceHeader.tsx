@@ -17,6 +17,7 @@ export function WorkspaceHeader({
   onOpenRepository,
   onOpenBranch,
   onOpenHarness,
+  onOpenWorkspace,
   quota,
   railOpen,
   onToggleRail,
@@ -32,6 +33,7 @@ export function WorkspaceHeader({
   onOpenRepository?: () => void;
   onOpenBranch?: () => void;
   onOpenHarness?: () => void;
+  onOpenWorkspace?: () => void;
   quota?: { remaining: number | null; limit: number; exhausted: boolean; unlimited: boolean } | null;
   railOpen: boolean;
   onToggleRail: () => void;
@@ -82,6 +84,15 @@ export function WorkspaceHeader({
       {!sessionTitle && <span className="min-w-0 flex-1" />}
 
       <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={onOpenWorkspace}
+          title="Open workspace files"
+          aria-label="Open workspace files"
+          className="grid h-9 w-9 place-items-center rounded-lg text-text-tertiary transition-colors hover:bg-surface-raised hover:text-interactive-link"
+        >
+          <IconFolder className="h-[21px] w-[21px]" />
+        </button>
         {quota && !quota.unlimited && (
           <span
             title={

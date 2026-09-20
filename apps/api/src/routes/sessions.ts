@@ -94,6 +94,12 @@ export async function sessionRoutes(app: FastifyInstance) {
     if (!session) return reply.code(404).send({ error: "Session not found" });
     if (session.userId !== userId) return reply.code(403).send({ error: "Forbidden" });
 
+    const activeRun = await prisma.agentRun.findFirst({
+      where: { sessionId, status: { in: ["running", "waiting_approval"] } },
+      select: { id: true },
+    });
+    if (activeRun) return reply.code(409).send({ error: "Stop the active run before deleting this session" });
+
     await prisma.session.delete({ where: { id: sessionId } });
     await prisma.auditLog.create({ data: { userId, sessionId, action: "session.delete", ipAddress: req.ip } });
     return { message: "Deleted" };

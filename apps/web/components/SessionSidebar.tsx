@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { BRANDING } from "../branding.config";
 import { Button, SkeletonRows, cx } from "./ui";
-import { IconGithub, IconPlusChat, IconRefresh, IconSearch, IconSparkle, IconTrophy } from "./icons";
+import { IconGithub, IconPlusChat, IconRefresh, IconSearch, IconSparkle, IconTrash, IconTrophy } from "./icons";
 import { Mark, Wordmark } from "./Wordmark";
 
 type Session = {
@@ -42,6 +42,7 @@ export function SessionSidebar({
   onOpenConnections,
   onOpenRepository,
   onOpenHarness,
+  onDeleted,
 }: {
   selectedId?: string;
   onSelect: (id: string) => void;
@@ -56,12 +57,48 @@ export function SessionSidebar({
   onOpenConnections?: () => void;
   onOpenRepository?: () => void;
   onOpenHarness?: () => void;
+  onDeleted?: (id: string) => void;
 }) {
   const [promoOpen, setPromoOpen] = useState(true);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [actionSessionId, setActionSessionId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressed = useRef(false);
+
+  function cancelHold() {
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+    holdTimer.current = null;
+  }
+
+  function startHold(id: string) {
+    cancelHold();
+    longPressed.current = false;
+    holdTimer.current = setTimeout(() => {
+      longPressed.current = true;
+      setActionSessionId(id);
+      navigator.vibrate?.(18);
+    }, 560);
+  }
+
+  async function deleteSession(session: Session) {
+    if (!window.confirm(`Delete “${session.title || "Untitled session"}”? This removes its chat history and cannot be undone.`)) return;
+    setDeletingId(session.id);
+    setError(null);
+    try {
+      await api.deleteSession(session.id);
+      setSessions((current) => current.filter((item) => item.id !== session.id));
+      setActionSessionId(null);
+      onDeleted?.(session.id);
+    } catch (e: any) {
+      setError(e.message || "Unable to delete session");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -204,30 +241,65 @@ export function SessionSidebar({
               <div className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
                 {label}
               </div>
-              {items.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => onSelect(s.id)}
-                  className={cx(
-                    "group mb-0.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors",
-                    selectedId === s.id
-                      ? "bg-sidebar-accent text-text-primary"
-                      : "text-text-tertiary hover:bg-sidebar-accent/70 hover:text-text-secondary"
-                  )}
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm">{s.title || "Untitled session"}</span>
-                    <span className="block truncate text-[11px] text-text-muted">
-                      {s.status || "idle"}
-                      {s.selectedModel ? ` · ${s.selectedModel}` : ""} ·{" "}
-                      {new Date(s.updatedAt || s.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </span>
-                </button>
-              ))}
+              {items.map((s) => {
+                const actionsOpen = actionSessionId === s.id;
+                return (
+                  <div
+                    key={s.id}
+                    className={cx(
+                      "group mb-0.5 flex items-stretch overflow-hidden rounded-md transition-colors",
+                      selectedId === s.id
+                        ? "bg-sidebar-accent text-text-primary"
+                        : "text-text-tertiary hover:bg-sidebar-accent/70 hover:text-text-secondary"
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onPointerDown={() => startHold(s.id)}
+                      onPointerUp={cancelHold}
+                      onPointerCancel={cancelHold}
+                      onPointerLeave={cancelHold}
+                      onContextMenu={(event) => {
+                        event.preventDefault();
+                        cancelHold();
+                        setActionSessionId(s.id);
+                      }}
+                      onClick={() => {
+                        if (longPressed.current) {
+                          longPressed.current = false;
+                          return;
+                        }
+                        setActionSessionId(null);
+                        onSelect(s.id);
+                      }}
+                      aria-label={`${s.title || "Untitled session"}. Hold for actions.`}
+                      className="min-w-0 flex-1 select-none px-2 py-1.5 text-left touch-pan-y"
+                    >
+                      <span className="block truncate text-sm">{s.title || "Untitled session"}</span>
+                      <span className="block truncate text-[11px] text-text-muted">
+                        {s.status || "idle"}
+                        {s.selectedModel ? ` · ${s.selectedModel}` : ""} ·{" "}
+                        {new Date(s.updatedAt || s.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </button>
+                    {actionsOpen && (
+                      <button
+                        type="button"
+                        onClick={() => deleteSession(s)}
+                        disabled={deletingId === s.id}
+                        className="animate-action-reveal inline-flex w-[74px] shrink-0 items-center justify-center gap-1.5 border-l border-interactive-negative/15 bg-interactive-negative/[0.08] text-[11px] font-semibold text-interactive-negative transition-colors hover:bg-interactive-negative/[0.14] disabled:opacity-50"
+                        aria-label={`Delete ${s.title || "session"}`}
+                      >
+                        <IconTrash className="h-3.5 w-3.5" />
+                        {deletingId === s.id ? "Deleting" : "Delete"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ))}
 

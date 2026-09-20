@@ -126,6 +126,12 @@ export const IconFile = (p: IconProps) => (
   </Base>
 );
 
+export const IconTrash = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4.5 7h15M9 7V4.5h6V7M7 7l.8 12h8.4L17 7M10 10.5v5M14 10.5v5" />
+  </Base>
+);
+
 export const IconCheck = (p: IconProps) => (
   <Base {...p}>
     <path d="M5 13l4.5 4.5L19 7" />
