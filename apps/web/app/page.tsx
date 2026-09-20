@@ -366,7 +366,7 @@ export default function AgentPage() {
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {hasConversation ? <WorkspaceHeader
+        {hasConversation ? <div className="shrink-0 animate-workspace-enter"><WorkspaceHeader
           status={status}
           project={project}
           branch={branch}
@@ -381,7 +381,7 @@ export default function AgentPage() {
           railTab={railTab}
           onRailTabChange={setRailTab}
           sessionTitle={sessionTitle}
-        /> : <header className="flex h-[68px] shrink-0 items-center justify-between px-0 sm:px-5">
+        /></div> : <header className="flex h-[68px] shrink-0 items-center justify-between px-0 sm:px-5">
           <button aria-label="Open sessions" onClick={() => isMobile ? setMobileNav(v => !v) : setSidebarCollapsed(v => !v)} className="grid h-11 w-11 place-items-center rounded-lg text-text-primary hover:bg-surface-raised"><IconPanelLeft className="h-[22px] w-[22px]" /></button>
           <button aria-label="Open repositories" onClick={() => setRepoPicker(true)} className="grid h-11 w-11 place-items-center rounded-lg text-text-placeholder hover:bg-surface-raised"><IconFolder className="h-[23px] w-[23px]" /></button>
         </header>}
@@ -398,11 +398,11 @@ export default function AgentPage() {
           {/* Conversation column */}
           <div className="flex min-w-0 flex-1 flex-col">
             {hasConversation && (
-              <div className="min-h-0 flex-1 overflow-y-auto px-4">
+              <div className="animate-workspace-enter min-h-0 flex-1 overflow-y-auto px-4">
                 <div className="mx-auto w-full max-w-3xl py-6">
                   {errorNote}
                   {approvalNote}
-                  <MessageList messages={messages} thinking={status === "thinking"} streaming={status === "running"} />
+                  <MessageList messages={messages} events={events} thinking={status === "thinking"} streaming={status === "running"} />
                 </div>
               </div>
             )}
@@ -416,7 +416,7 @@ export default function AgentPage() {
                   : "relative flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 pb-7 pt-4"
               )}
             >
-              {!hasConversation && <div className="pointer-events-none absolute inset-x-3 top-[40%] -translate-y-1/2"><h1 className="whitespace-nowrap text-center font-serif-display text-[28px] font-light leading-[1.08] tracking-[-0.045em] text-text-tertiary sm:text-[clamp(34px,4vw,48px)]">What would you like to do?</h1></div>}
+              {!hasConversation && <div className="pointer-events-none absolute inset-x-3 top-[40%] -translate-y-1/2"><h1 className="animate-hero-breathe whitespace-nowrap text-center font-serif-display text-[28px] font-light leading-[1.08] tracking-[-0.045em] text-primary sm:text-[clamp(34px,4vw,48px)]">What would you like to do?</h1></div>}
               <div className="relative mx-auto w-full max-w-2xl">
 
                 {!hasConversation && errorNote}

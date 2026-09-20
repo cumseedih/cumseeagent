@@ -100,12 +100,16 @@ export function ToolTimeline({ events, compact }: { events: TimelineEvent[]; com
 
   return (
     <ol className="space-y-0.5">
-      {rows.map((row) => {
+      {rows.map((row, index) => {
         const e = row.event;
         const tone = toneFor(e.eventType);
         const open = openId === row.key;
         return (
-          <li key={row.key}>
+          <li
+            key={row.key}
+            className="animate-stage-in"
+            style={{ animationDelay: `${Math.min(index * 24, 160)}ms` }}
+          >
             <button
               onClick={() => setOpenId(open ? null : row.key)}
               className="flex w-full items-start gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-surface-raised/40"

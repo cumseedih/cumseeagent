@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ||
       (BRANDING.PRODUCT_DOMAIN === "localhost" ? "http://localhost:3000" : `https://${BRANDING.PRODUCT_DOMAIN}`)
   ),
-  title: `${BRANDING.PRODUCT_NAME} — Agent Mode`,
+  title: `${BRANDING.PRODUCT_NAME} Agent`,
   description: BRANDING.HERO_SUBTITLE,
   icons: {
     icon: [
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     apple: [{ url: BRANDING.APPLE_ICON_PATH, sizes: "180x180" }],
   },
   openGraph: {
-    title: `${BRANDING.PRODUCT_NAME} — Agent Mode`,
+    title: `${BRANDING.PRODUCT_NAME} Agent`,
     description: BRANDING.HERO_SUBTITLE,
     url: `https://${BRANDING.PRODUCT_DOMAIN}`,
     siteName: BRANDING.PRODUCT_NAME,
@@ -28,15 +28,15 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#252522",
-  colorScheme: "dark",
+  themeColor: "#F8F6EE",
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body className="min-h-screen bg-surface-primary text-text-primary antialiased">
         {/* Brand channels + font stacks are injected once; components read CSS vars only. */}
         <style

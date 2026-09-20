@@ -144,18 +144,16 @@ export function Composer({
               <span className="hidden items-center gap-1 text-[11px] text-text-muted md:flex">
                 <KeyCap>⏎</KeyCap> send · <KeyCap>⇧⏎</KeyCap> newline
               </span>
-              {busy && onStop && (
+              {busy && onStop ? (
                 <button
                   type="button"
                   onClick={onStop}
                   aria-label="Stop run"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-sm border border-interactive-negative/40 px-2 text-interactive-negative transition-colors hover:bg-interactive-negative/10"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border-medium bg-primary text-white transition-[transform,background-color] hover:scale-[1.02] hover:bg-[hsl(var(--brand-secondary))] md:h-10 md:w-10"
                 >
                   <IconStop className="h-4 w-4" />
-                  <span className="hidden text-sm sm:inline">Stop</span>
                 </button>
-              )}
-              <button
+              ) : <button
                 type="button"
                 onClick={submit}
                 disabled={!canSend}
@@ -168,7 +166,7 @@ export function Composer({
                 )}
               >
                 <IconSendArrow className="h-5 w-5" />
-              </button>
+              </button>}
             </div>
           </div>
         </div>

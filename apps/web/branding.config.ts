@@ -1,9 +1,8 @@
 /**
  * Central branding config — change only here + env.
  *
- * Visual language follows the Arena agent workspace (dark editorial surfaces,
- * hero serif headline, highlight block); the palette keeps Delvin's brand
- * accent so the identity stays yours.
+ * The workspace uses Arena's restrained agent layout while every visible
+ * identity token—artwork, type and the Earthy Minimal palette—belongs to Delvin.
  */
 export const BRANDING = {
   PRODUCT_NAME: process.env.NEXT_PUBLIC_PRODUCT_NAME || process.env.PRODUCT_NAME || "Delvin",
@@ -15,9 +14,9 @@ export const BRANDING = {
   OG_IMAGE_PATH: "/assets/og.png",
 
   // "H S% L%" channels consumed by the CSS custom properties in globals.css
-  PRIMARY_COLOR: process.env.NEXT_PUBLIC_PRIMARY_COLOR || process.env.PRIMARY_COLOR || "24 5% 18%",
-  ACCENT_COLOR: process.env.NEXT_PUBLIC_ACCENT_COLOR || process.env.ACCENT_COLOR || "48 100% 50%",
-  HIGHLIGHT_COLOR: process.env.NEXT_PUBLIC_HIGHLIGHT_COLOR || process.env.HIGHLIGHT_COLOR || "48 100% 50%",
+  PRIMARY_COLOR: "126 12% 20%",
+  ACCENT_COLOR: "16 54% 55%",
+  HIGHLIGHT_COLOR: "35 34% 77%",
 
   // Hero copy — the highlight block renders HERO_TITLE_HIGHLIGHT
   HERO_TITLE_LEAD: process.env.NEXT_PUBLIC_HERO_TITLE_LEAD || "Experience",
