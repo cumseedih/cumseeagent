@@ -11,6 +11,7 @@ import { IconCheck, IconChevronRight, IconClock, IconGithub, IconGitBranch, Icon
 /* -------------------------------------------------------------------------- */
 
 type Project = { id: string; name: string; defaultBranch?: string; repositoryUrl?: string | null };
+type GitHubRepository = { id: string; name: string; fullName: string; private: boolean; defaultBranch: string; owner: string };
 
 export function RepositoryPicker({
   open,
@@ -28,13 +29,22 @@ export function RepositoryPicker({
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
+  const [githubRepositories, setGithubRepositories] = useState<GitHubRepository[]>([]);
+  const [githubConnected, setGithubConnected] = useState(false);
 
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.listProjects();
+      const [data, status] = await Promise.all([api.listProjects(), api.githubStatus().catch(() => ({ connected: false }))]);
       setProjects(data.projects || []);
+      setGithubConnected(Boolean(status.connected));
+      if (status.connected) {
+        const repositories = await api.githubRepositories();
+        setGithubRepositories(repositories.repositories || []);
+      } else {
+        setGithubRepositories([]);
+      }
     } catch (e: any) {
       setError(e.message || "Couldn't load your repositories.");
     } finally {
@@ -53,10 +63,10 @@ export function RepositoryPicker({
     return projects.filter((p) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
   }, [projects, query]);
 
-  async function addRepository() {
+  async function addRepository(repositoryId: string) {
     setCreating(true);
     try {
-      const created = await api.createProject({ name: `Workspace ${projects.length + 1}`, defaultBranch: "main" });
+      const created = await api.githubClone(repositoryId);
       setProjects((prev) => [created.project, ...prev]);
       onSelect(created.project);
       onClose();
@@ -106,19 +116,29 @@ export function RepositoryPicker({
       {!loading && !error && (
         <>
           <button
-            onClick={addRepository}
+            onClick={() => {
+              if (!githubConnected) window.location.assign("/api/github/connect");
+            }}
             disabled={creating}
             className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-surface-raised/50 disabled:opacity-50"
           >
             <span className="shrink-0 text-text-muted">
               <IconPlusChat className="h-4 w-4" />
             </span>
-            <span className="text-sm text-text-secondary">{creating ? "Adding…" : "Add repositories…"}</span>
+            <span className="text-sm text-text-secondary">{githubConnected ? "Choose a repository below" : "Connect GitHub to add repositories…"}</span>
           </button>
 
-          {filtered.length === 0 && (
-            <DialogEmpty>{query ? "No repositories found." : "No repositories found."}</DialogEmpty>
-          )}
+          {githubConnected && githubRepositories.map((repo) => (
+            <DialogRow
+              key={repo.id}
+              icon={<IconGithub className="h-4 w-4" />}
+              title={repo.fullName}
+              subtitle={`${repo.private ? "Private" : "Public"} · ${repo.defaultBranch}`}
+              onClick={() => addRepository(repo.id)}
+            />
+          ))}
+
+          {githubConnected && githubRepositories.length === 0 && <DialogEmpty>No GitHub repositories are available to this installation.</DialogEmpty>}
 
           {filtered.map((p) => (
             <DialogRow
@@ -311,14 +331,17 @@ export function ConnectionsDialog({
   projectId?: string;
 }) {
   const [github, setGithub] = useState<"idle" | "connecting" | "connected" | "disconnecting">("idle");
+  const [account, setAccount] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open || !projectId) return;
+    if (!open) return;
     let alive = true;
-    api
-      .gitStatus(projectId)
+    api.githubStatus()
       .then((s: any) => {
-        if (alive && s?.remote) setGithub("connected");
+        if (alive) {
+          setGithub(s?.connected ? "connected" : "idle");
+          setAccount(s?.connection?.accountLogin || null);
+        }
       })
       .catch(() => undefined);
     return () => {
@@ -344,17 +367,28 @@ export function ConnectionsDialog({
               <p className="text-sm text-text-secondary">GitHub</p>
               <p className="text-[11px] text-text-muted">
                 {github === "connected"
-                  ? "Connected — sessions can clone and push"
-                  : "Not connected — add a remote to clone and push"}
+                  ? `Connected${account ? ` as ${account}` : ""} — choose approved repositories to clone and push`
+                  : "Connect GitHub to choose repositories for Delvin"}
               </p>
             </div>
             <Button
               variant="secondary"
               size="sm"
               disabled={github === "connecting" || github === "disconnecting"}
-              onClick={() => {
-                setGithub(github === "connected" ? "disconnecting" : "connecting");
-                setTimeout(() => setGithub(github === "connected" ? "idle" : "connected"), 900);
+              onClick={async () => {
+                if (github !== "connected") {
+                  setGithub("connecting");
+                  window.location.assign("/api/github/connect");
+                  return;
+                }
+                setGithub("disconnecting");
+                try {
+                  await api.githubDisconnect();
+                  setGithub("idle");
+                  setAccount(null);
+                } catch {
+                  setGithub("connected");
+                }
               }}
             >
               {github === "connecting" ? "Connecting…" : github === "disconnecting" ? "Disconnecting…" : github === "connected" ? "Disconnect" : "Connect"}

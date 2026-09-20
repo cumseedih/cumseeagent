@@ -13,6 +13,12 @@ export const config = {
   // Bump to force re-acceptance of the Terms of Use
   touVersion: process.env.TOU_VERSION || "1",
   agentUser: process.env.AGENT_USER || "agent",
+  github: {
+    appId: process.env.GITHUB_APP_ID || "",
+    appSlug: process.env.GITHUB_APP_SLUG || "delvin-agent",
+    privateKeyPath: process.env.GITHUB_PRIVATE_KEY_PATH || "",
+    privateKeyBase64: process.env.GITHUB_PRIVATE_KEY_BASE64 || "",
+  },
   branding: {
     productName: process.env.PRODUCT_NAME || "Delvin",
     productDomain: process.env.PRODUCT_DOMAIN || "delvin.local",

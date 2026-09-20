@@ -18,6 +18,7 @@ import { terminalRoutes } from "./routes/terminal.js";
 import { gitRoutes } from "./routes/git.js";
 import { modelRoutes } from "./routes/models.js";
 import { eventRoutes } from "./routes/events.js";
+import { githubRoutes } from "./routes/github.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -58,6 +59,7 @@ export async function buildApp() {
       await api.register(gitRoutes);
       await api.register(modelRoutes);
       await api.register(eventRoutes);
+      await api.register(githubRoutes, { prefix: "/github" });
       // Also expose health under /api
       await api.register(healthRoutes);
       await api.register(usageRoutes);

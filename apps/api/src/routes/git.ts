@@ -3,6 +3,13 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { getUserId } from "./auth.js";
 import { terminalRunner } from "../lib/terminalRunner.js";
+import { gitAuthEnvironment, installationToken } from "../lib/githubApp.js";
+
+async function githubEnvironment(userId: string) {
+  const connection = await prisma.gitHubConnection.findUnique({ where: { userId } });
+  if (!connection) return undefined;
+  return gitAuthEnvironment(await installationToken(connection.installationId));
+}
 
 export async function gitRoutes(app: FastifyInstance) {
   // GET /api/projects/:projectId/git/status
@@ -74,7 +81,7 @@ export async function gitRoutes(app: FastifyInstance) {
     }
 
     try {
-      const result = await terminalRunner.run({ command: "git push", cwd: project.workspacePath, workspaceRoot: project.workspacePath });
+      const result = await terminalRunner.run({ command: "git push", cwd: project.workspacePath, workspaceRoot: project.workspacePath, env: await githubEnvironment(userId), approvalGranted: true });
       await prisma.auditLog.create({ data: { userId, action: "git.push", metadataJson: JSON.stringify({ projectId }), ipAddress: req.ip } });
       return { output: result.stdout + result.stderr, exitCode: result.exitCode };
     } catch (e: any) {
@@ -91,7 +98,7 @@ export async function gitRoutes(app: FastifyInstance) {
     if (project.userId !== userId) return reply.code(403).send({ error: "Forbidden" });
 
     try {
-      const result = await terminalRunner.run({ command: "git pull --rebase || git pull", cwd: project.workspacePath, workspaceRoot: project.workspacePath });
+      const result = await terminalRunner.run({ command: "git pull --rebase || git pull", cwd: project.workspacePath, workspaceRoot: project.workspacePath, env: await githubEnvironment(userId), approvalGranted: true });
       await prisma.auditLog.create({ data: { userId, action: "git.pull", metadataJson: JSON.stringify({ projectId }), ipAddress: req.ip } });
       return { output: result.stdout + result.stderr, exitCode: result.exitCode };
     } catch (e: any) {

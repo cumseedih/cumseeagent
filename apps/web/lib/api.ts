@@ -78,6 +78,12 @@ export const api = {
   gitPush: (projectId: string, approved?: boolean) => request(`/projects/${projectId}/git/push`, { method: "POST", body: JSON.stringify({ approved }) }),
   gitPull: (projectId: string) => request(`/projects/${projectId}/git/pull`, { method: "POST" }),
 
+  // GitHub App connection
+  githubStatus: () => request("/github/status"),
+  githubRepositories: () => request("/github/repositories"),
+  githubClone: (repositoryId: string) => request("/github/repositories/clone", { method: "POST", body: JSON.stringify({ repositoryId }) }),
+  githubDisconnect: () => request("/github/connection", { method: "DELETE" }),
+
   // Models
   listModels: () => request("/models"),
   listProviders: () => request("/providers"),
