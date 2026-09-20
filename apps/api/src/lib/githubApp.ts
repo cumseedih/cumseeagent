@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { config } from "./config.js";
 
 const GITHUB_API = "https://api.github.com";
+const GITHUB_STATE_TTL_MS = 30 * 60 * 1000;
 
 export type GitHubRepository = {
   id: string;
@@ -88,7 +89,8 @@ export function gitAuthEnvironment(token: string) {
 
 export function createGitHubState(userId: string) {
   const nonce = crypto.randomBytes(24).toString("base64url");
-  const body = `${userId}.${nonce}`;
+  const issuedAt = Date.now().toString(36);
+  const body = `${userId}.${issuedAt}.${nonce}`;
   const signature = crypto.createHmac("sha256", config.encryptionKey).update(body).digest("base64url");
   return `${body}.${signature}`;
 }
@@ -96,10 +98,12 @@ export function createGitHubState(userId: string) {
 export function verifyGitHubState(value?: string) {
   if (!value) return null;
   const parts = value.split(".");
-  if (parts.length !== 3) return null;
-  const body = `${parts[0]}.${parts[1]}`;
+  if (parts.length !== 4) return null;
+  const issuedAt = Number.parseInt(parts[1], 36);
+  if (!Number.isFinite(issuedAt) || issuedAt > Date.now() + 60_000 || Date.now() - issuedAt > GITHUB_STATE_TTL_MS) return null;
+  const body = `${parts[0]}.${parts[1]}.${parts[2]}`;
   const expected = crypto.createHmac("sha256", config.encryptionKey).update(body).digest("base64url");
-  const supplied = Buffer.from(parts[2]);
+  const supplied = Buffer.from(parts[3]);
   const expectedBuffer = Buffer.from(expected);
   if (supplied.length !== expectedBuffer.length || !crypto.timingSafeEqual(supplied, expectedBuffer)) return null;
   return parts[0];

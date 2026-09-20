@@ -32,8 +32,12 @@ export async function githubRoutes(app: FastifyInstance) {
   app.get("/setup", async (req, reply) => {
     const query = req.query as { installation_id?: string; state?: string };
     const cookieState = (req.cookies as any)?.delvin_github_state as string | undefined;
-    const userId = verifyGitHubState(cookieState);
-    if (!userId || !query.installation_id || (query.state && query.state !== cookieState)) return reply.code(400).send({ error: "GitHub connection state expired or invalid. Start the connection again." });
+    // GitHub returns our signed state in the setup callback. Prefer it so the
+    // connection survives mobile browsers that drop cookies while switching
+    // between Delvin and github.com. If both values exist, they must agree.
+    const callbackState = query.state || cookieState;
+    const userId = verifyGitHubState(callbackState);
+    if (!userId || !query.installation_id || (query.state && cookieState && query.state !== cookieState)) return reply.code(400).send({ error: "GitHub connection state expired or invalid. Start the connection again." });
     try {
       const installation = await getInstallation(query.installation_id);
       await prisma.gitHubConnection.upsert({
