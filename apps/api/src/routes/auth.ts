@@ -2,6 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { hashPassword, verifyPassword, signToken, verifyToken } from "../lib/auth.js";
+import { config } from "../lib/config.js";
+import { createGoogleState, exchangeGoogleCode, googleAuthorizationUrl, verifyGoogleState } from "../lib/googleOAuth.js";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -12,6 +14,14 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+});
+
+const sessionCookie = () => ({
+  httpOnly: true,
+  secure: config.nodeEnv === "production",
+  sameSite: "lax" as const,
+  path: "/",
+  maxAge: 60 * 60 * 24 * 7,
 });
 
 export async function authRoutes(app: FastifyInstance) {
@@ -31,13 +41,7 @@ export async function authRoutes(app: FastifyInstance) {
     });
 
     const token = signToken({ userId: user.id, email: user.email });
-    reply.setCookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    reply.setCookie("token", token, sessionCookie());
 
     await prisma.auditLog.create({
       data: { userId: user.id, action: "auth.register", ipAddress: req.ip, metadataJson: JSON.stringify({ email }) },
@@ -59,13 +63,7 @@ export async function authRoutes(app: FastifyInstance) {
     if (!ok) return reply.code(401).send({ error: "Invalid credentials" });
 
     const token = signToken({ userId: user.id, email: user.email });
-    reply.setCookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    reply.setCookie("token", token, sessionCookie());
 
     await prisma.auditLog.create({
       data: { userId: user.id, action: "auth.login", ipAddress: req.ip },
@@ -99,6 +97,65 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(401).send({ error: "Invalid token" });
     }
   });
+
+  app.get("/google", async (_req, reply) => {
+    if (!config.google.clientId || !config.google.clientSecret) {
+      return reply.code(503).send({ error: "Google sign-in is not configured" });
+    }
+    const state = createGoogleState();
+    reply.setCookie("delvin_google_state", state, {
+      httpOnly: true,
+      secure: config.nodeEnv === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 10 * 60,
+    });
+    return reply.redirect(googleAuthorizationUrl(state));
+  });
+
+  app.get("/google/callback", async (req, reply) => {
+    const query = req.query as { code?: string; state?: string; error?: string };
+    const cookieState = (req.cookies as any)?.delvin_google_state as string | undefined;
+    const redirectWithError = (message: string) =>
+      reply.redirect(`${config.publicAppUrl}/?auth_error=${encodeURIComponent(message)}`);
+
+    if (query.error) return redirectWithError("Google sign-in was cancelled");
+    if (!query.code || !query.state || query.state !== cookieState || !verifyGoogleState(query.state)) {
+      return redirectWithError("Google sign-in expired. Please try again.");
+    }
+
+    try {
+      const profile = await exchangeGoogleCode(query.code);
+      const existingIdentity = await prisma.authIdentity.findUnique({
+        where: { provider_providerSubject: { provider: "google", providerSubject: profile.sub } },
+        include: { user: true },
+      });
+
+      let user = existingIdentity?.user;
+      if (!user) {
+        user = await prisma.$transaction(async (tx) => {
+          const account =
+            (await tx.user.findUnique({ where: { email: profile.email } })) ??
+            (await tx.user.create({ data: { email: profile.email } }));
+          await tx.authIdentity.create({
+            data: { userId: account.id, provider: "google", providerSubject: profile.sub },
+          });
+          return account;
+        });
+      }
+
+      const token = signToken({ userId: user.id, email: user.email });
+      reply.setCookie("token", token, sessionCookie());
+      reply.clearCookie("delvin_google_state", { path: "/" });
+      await prisma.auditLog.create({
+        data: { userId: user.id, action: "auth.google", ipAddress: req.ip },
+      });
+      return reply.redirect(`${config.publicAppUrl}/?auth=success`);
+    } catch (error: any) {
+      req.log.error(error, "Google OAuth callback failed");
+      return redirectWithError("Google sign-in could not be completed");
+    }
+  });
 }
 
 // Identity used by the no-token dev fallback below.
@@ -116,6 +173,11 @@ export async function getUserId(req: any): Promise<string> {
       const payload = verifyToken(token);
       return payload.userId;
     } catch {}
+  }
+  if (config.nodeEnv === "production") {
+    const error: any = new Error("Authentication required");
+    error.statusCode = 401;
+    throw error;
   }
   // Fallback: get or create default user for dev.
   //

@@ -27,7 +27,7 @@ import {
 
 type RailTab = "terminal" | "files" | "activity";
 
-export default function AgentPage() {
+function AgentWorkspace() {
   const [project, setProject] = useState<{ id: string; name: string; defaultBranch?: string } | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState<string | undefined>();
@@ -561,4 +561,81 @@ export default function AgentPage() {
       )}
     </div>
   );
+}
+
+type AuthStatus = "checking" | "authenticated" | "anonymous";
+
+export default function AgentPage() {
+  const [authStatus, setAuthStatus] = useState<AuthStatus>("checking");
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setAuthError(params.get("auth_error"));
+    api.me()
+      .then(() => setAuthStatus("authenticated"))
+      .catch(() => setAuthStatus("anonymous"));
+  }, []);
+
+  if (authStatus === "checking") {
+    return (
+      <main className="grid min-h-[100dvh] place-items-center bg-surface-primary">
+        <div className="h-7 w-7 animate-spin rounded-full border-2 border-border-medium border-t-interactive-cta" aria-label="Loading" />
+      </main>
+    );
+  }
+
+  if (authStatus === "anonymous") {
+    return (
+      <main className="relative grid min-h-[100dvh] overflow-hidden bg-surface-primary px-5 py-10 sm:px-8">
+        <div className="pointer-events-none absolute -left-24 top-[-8rem] h-80 w-80 rounded-full bg-highlight/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
+
+        <section className="relative m-auto w-full max-w-[420px] animate-stage-in rounded-[28px] border border-border-faint bg-surface-floating/95 p-7 shadow-floating backdrop-blur sm:p-9">
+          <div className="mb-10 flex items-center gap-3">
+            <img src={BRANDING.LOGO_PATH} alt="Delvin" className="h-11 w-11 rounded-full object-cover ring-1 ring-border-faint" />
+            <div>
+              <p className="font-display text-xl font-semibold tracking-[-0.02em] text-text-primary">Delvin</p>
+              <p className="text-xs text-text-muted">Your coding agent</p>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="font-display text-[32px] font-semibold leading-[1.08] tracking-[-0.04em] text-text-primary">
+              Build something great.
+            </h1>
+            <p className="mt-3 text-[15px] leading-6 text-text-tertiary">
+              Sign in to connect repositories, keep your workspaces, and continue your agent sessions.
+            </p>
+          </div>
+
+          {authError && (
+            <div role="alert" className="mb-4 rounded-xl border border-interactive-negative/20 bg-interactive-negative/5 px-3.5 py-3 text-sm text-interactive-negative">
+              {authError}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => window.location.assign("/api/auth/google")}
+            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-interactive-cta px-4 text-[15px] font-semibold text-interactive-on-cta shadow-sm transition hover:bg-interactive-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-interactive-link focus-visible:ring-offset-2"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 rounded-full bg-white p-0.5">
+              <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.23-.2-1.77H12v3.41h5.52a4.72 4.72 0 0 1-2.05 3.01l-.02.11 2.98 2.31.21.02c1.92-1.77 2.96-4.38 2.96-7.09Z" />
+              <path fill="#34A853" d="M12 22c2.7 0 4.96-.89 6.62-2.42l-3.15-2.44c-.84.57-1.96.97-3.47.97a6.02 6.02 0 0 1-5.7-4.16l-.11.01-3.1 2.4-.04.1A10 10 0 0 0 12 22Z" />
+              <path fill="#FBBC05" d="M6.3 13.95A6.15 6.15 0 0 1 5.98 12c0-.68.12-1.34.31-1.95v-.12L3.16 7.49l-.1.05A10 10 0 0 0 2 12c0 1.61.38 3.14 1.05 4.46l3.25-2.51Z" />
+              <path fill="#EA4335" d="M12 5.89c1.88 0 3.15.81 3.88 1.48l2.81-2.74C16.97 3.03 14.7 2 12 2a10 10 0 0 0-8.95 5.54l3.24 2.51A6.04 6.04 0 0 1 12 5.89Z" />
+            </svg>
+            Continue with Google
+          </button>
+
+          <p className="mt-6 text-center text-[11px] leading-5 text-text-muted">
+            By continuing, you agree to Delvin&apos;s Terms of Use and Privacy Policy.
+          </p>
+        </section>
+      </main>
+    );
+  }
+
+  return <AgentWorkspace />;
 }

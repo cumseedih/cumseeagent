@@ -19,6 +19,7 @@ export async function cleanup() {
   await prisma.message.deleteMany();
   await prisma.session.deleteMany();
   await prisma.project.deleteMany();
+  await prisma.authIdentity.deleteMany();
   await prisma.auditLog.deleteMany();
   // Keep users for auth tests? Clean too but handle
   await prisma.user.deleteMany();

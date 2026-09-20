@@ -8,28 +8,42 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  username       String?  @unique
-  passwordHash   String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  projects       Project[]
-  sessions       Session[]
-  auditLogs      AuditLog[]
+  id               String            @id @default(cuid())
+  email            String            @unique
+  username         String?           @unique
+  passwordHash     String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  projects         Project[]
+  sessions         Session[]
+  auditLogs        AuditLog[]
   githubConnection GitHubConnection?
+  authIdentities   AuthIdentity[]
+}
+
+model AuthIdentity {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider        String
+  providerSubject String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([provider, providerSubject])
+  @@index([userId])
 }
 
 model Project {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name          String
-  workspacePath String   @unique
+  workspacePath String    @unique
   repositoryUrl String?
-  defaultBranch String   @default("main")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  defaultBranch String    @default("main")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   sessions      Session[]
 }
 
@@ -45,17 +59,17 @@ model GitHubConnection {
 }
 
 model Session {
-  id               String   @id @default(cuid())
+  id               String     @id @default(cuid())
   projectId        String?
-  project          Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  project          Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
   userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title            String   @default("New Session")
-  status           String   @default("active")
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title            String     @default("New Session")
+  status           String     @default("active")
   selectedModel    String?
   selectedProvider String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
   completedAt      DateTime?
   messages         Message[]
   agentRuns        AgentRun[]
@@ -73,13 +87,13 @@ model Message {
 }
 
 model AgentRun {
-  id           String   @id @default(cuid())
+  id           String       @id @default(cuid())
   sessionId    String
-  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  status       String   @default("running")
+  session      Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  status       String       @default("running")
   goal         String?
   currentStep  String?
-  startedAt    DateTime @default(now())
+  startedAt    DateTime     @default(now())
   completedAt  DateTime?
   errorMessage String?
   plans        Plan[]
@@ -91,32 +105,32 @@ model Plan {
   id         String   @id @default(cuid())
   agentRunId String
   agentRun   AgentRun @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
-  planJson   String   // JSON string
+  planJson   String // JSON string
   status     String   @default("pending")
   createdAt  DateTime @default(now())
 }
 
 model ToolCall {
-  id              String   @id @default(cuid())
-  agentRunId      String
-  agentRun        AgentRun @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
-  toolName        String
-  providerCallId  String?
-  argumentsJson   String   // JSON string
-  resultJson      String?
-  riskLevel       String   @default("low")
-  approvalStatus  String   @default("auto_approved")
-  executionStatus String   @default("pending")
-  startedAt       DateTime?
-  completedAt     DateTime?
-  exitCode        Int?
-  errorMessage    String?
-  approvals       Approval[]
+  id               String            @id @default(cuid())
+  agentRunId       String
+  agentRun         AgentRun          @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
+  toolName         String
+  providerCallId   String?
+  argumentsJson    String // JSON string
+  resultJson       String?
+  riskLevel        String            @default("low")
+  approvalStatus   String            @default("auto_approved")
+  executionStatus  String            @default("pending")
+  startedAt        DateTime?
+  completedAt      DateTime?
+  exitCode         Int?
+  errorMessage     String?
+  approvals        Approval[]
   terminalCommands TerminalCommand[]
 }
 
 model TerminalCommand {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   toolCallId       String?
   toolCall         ToolCall? @relation(fields: [toolCallId], references: [id], onDelete: SetNull)
   sessionId        String?
@@ -125,7 +139,7 @@ model TerminalCommand {
   stdout           String?
   stderr           String?
   exitCode         Int?
-  startedAt        DateTime @default(now())
+  startedAt        DateTime  @default(now())
   completedAt      DateTime?
 }
 
@@ -144,7 +158,7 @@ model Event {
   sessionId   String
   session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   eventType   String
-  payloadJson String   // JSON string
+  payloadJson String // JSON string
   createdAt   DateTime @default(now())
 }
 

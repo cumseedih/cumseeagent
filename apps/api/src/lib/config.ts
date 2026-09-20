@@ -13,6 +13,18 @@ export const config = {
   // Bump to force re-acceptance of the Terms of Use
   touVersion: process.env.TOU_VERSION || "1",
   agentUser: process.env.AGENT_USER || "agent",
+  publicAppUrl:
+    process.env.PUBLIC_APP_URL ||
+    (process.env.NODE_ENV === "production" ? "https://delvin.agentdomains.co" : "http://localhost:3000"),
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID || "",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    redirectUri:
+      process.env.GOOGLE_REDIRECT_URI ||
+      (process.env.NODE_ENV === "production"
+        ? "https://delvin.agentdomains.co/api/auth/google/callback"
+        : "http://localhost:4000/api/auth/google/callback"),
+  },
   github: {
     appId: process.env.GITHUB_APP_ID || "",
     appSlug: process.env.GITHUB_APP_SLUG || "delvin-agent",
