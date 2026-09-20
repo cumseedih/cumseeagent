@@ -6,7 +6,7 @@ import { BRANDING } from "../branding.config";
  * Brand mark — uses the supplied Delvin logo asset, with an inline glyph
  * fallback so the UI never breaks if the image is missing.
  *
- * The supplied blue shark artwork is kept intact and cropped consistently at
+ * The supplied monochrome girl artwork is kept intact and cropped consistently at
  * every responsive size so the same identity carries through the app icons.
  */
 export function Mark({ className = "h-6 w-6", square = false }: { className?: string; square?: boolean }) {
