@@ -198,13 +198,6 @@ export const IconAlert = (p: IconProps) => (
   </Base>
 );
 
-export const IconMonitor = (p: IconProps) => (
-  <Base {...p}>
-    <rect x="3.5" y="4.5" width="17" height="12" rx="2.5" />
-    <path d="M9 20h6M12 16.5V20" />
-  </Base>
-);
-
 export const IconSettings = (p: IconProps) => (
   <Base {...p}>
     <circle cx="12" cy="12" r="3" />

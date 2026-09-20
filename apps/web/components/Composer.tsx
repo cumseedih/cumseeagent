@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { KeyCap, cx } from "./ui";
-import { IconAlert, IconAppsPlus, IconCloudUpload, IconMonitor, IconSendArrow, IconStop } from "./icons";
+import { IconAppsPlus, IconCloudUpload, IconSendArrow, IconStop } from "./icons";
 
 /**
  * Prompt composer.
@@ -158,12 +158,6 @@ export function Composer({
                   <span className="hidden text-sm sm:inline">Stop</span>
                 </button>
               )}
-              <button type="button" aria-label="Open workspace preview" title="Workspace preview" className="grid h-8 w-8 place-items-center rounded-lg text-text-secondary hover:bg-surface-raised md:h-9 md:w-9">
-                <IconMonitor className="h-[19px] w-[19px]" />
-              </button>
-              <span aria-label="Approval protection enabled" title="Risky commands require approval" className="grid h-8 w-8 place-items-center text-interactive-negative/65 md:h-9 md:w-9">
-                <IconAlert className="h-[19px] w-[19px]" />
-              </span>
               <button
                 type="button"
                 onClick={submit}
