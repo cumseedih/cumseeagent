@@ -45,54 +45,54 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Delvin Apple Modern palette. Channels are bare "H S% L%" so Tailwind
+   Delvin Earthy Minimal palette. Channels are bare "H S% L%" so Tailwind
    opacity modifiers remain available throughout the interface.
 --------------------------------------------------------------------------- */
 :root {
   color-scheme: light;
 
-  /* Brand: #F5F5F7 · #1D1D1F · #AAAAAA · #007AFF */
-  --primary: 240 3% 12%;
-  --brand-secondary: 0 0% 67%;
-  --brand-tertiary: 240 11% 96%;
-  --accent: 211 100% 50%;
-  --highlight: 211 100% 50%;
-  --highlight-text: 0 0% 100%;
+  /* Brand: #2E3A2F · #6B7F5B · #D9C9B2 · #C96F4F · #F8F6EE */
+  --primary: 126 12% 20%;
+  --brand-secondary: 93 17% 43%;
+  --brand-tertiary: 35 34% 77%;
+  --accent: 16 54% 55%;
+  --highlight: 35 34% 77%;
+  --highlight-text: 126 12% 20%;
 
   /* Surfaces */
-  --surface-primary: 240 11% 96%;
-  --surface-secondary: 0 0% 100%;
-  --surface-tertiary: 240 11% 96%;
-  --surface-floating: 0 0% 100%;
-  --surface-raised: 0 0% 93%;
-  --surface-raised-tertiary: 240 8% 97%;
-  --surface-skeleton: 0 0% 88%;
-  --surface-highlight: 211 100% 96%;
+  --surface-primary: 48 42% 95%;
+  --surface-secondary: 46 38% 98%;
+  --surface-tertiary: 39 34% 92%;
+  --surface-floating: 46 38% 99%;
+  --surface-raised: 35 34% 88%;
+  --surface-raised-tertiary: 43 34% 94%;
+  --surface-skeleton: 35 24% 84%;
+  --surface-highlight: 35 34% 90%;
 
   /* Text */
-  --text-primary: 240 3% 12%;
-  --text-secondary: 240 2% 28%;
-  --text-tertiary: 0 0% 45%;
-  --text-muted: 0 0% 60%;
-  --text-placeholder: 0 0% 67%;
+  --text-primary: 126 12% 20%;
+  --text-secondary: 120 8% 31%;
+  --text-tertiary: 96 9% 39%;
+  --text-muted: 76 7% 52%;
+  --text-placeholder: 52 9% 63%;
 
   /* Borders */
-  --border-faint: 0 0% 89%;
-  --border-medium: 0 0% 80%;
-  --border-strong: 211 100% 50%;
+  --border-faint: 38 22% 86%;
+  --border-medium: 35 24% 77%;
+  --border-strong: 93 17% 54%;
 
   /* Interactive */
-  --interactive-normal: 240 3% 12%;
-  --interactive-active: 240 3% 12%;
-  --interactive-link: 211 100% 50%;
-  --interactive-positive: 142 49% 36%;
-  --interactive-negative: 4 83% 54%;
-  --interactive-warning: 211 100% 50%;
-  --interactive-cta: 211 100% 50%;
-  --interactive-cta-hover: 211 100% 43%;
-  --interactive-on-cta: 0 0% 100%;
-  --interactive-cta-secondary: 240 11% 96%;
-  --interactive-cta-secondary-hover: 0 0% 93%;
+  --interactive-normal: 126 12% 27%;
+  --interactive-active: 126 12% 20%;
+  --interactive-link: 126 24% 31%;
+  --interactive-positive: 119 27% 38%;
+  --interactive-negative: 6 58% 47%;
+  --interactive-warning: 16 54% 55%;
+  --interactive-cta: 126 12% 20%;
+  --interactive-cta-hover: 93 17% 43%;
+  --interactive-on-cta: 48 42% 95%;
+  --interactive-cta-secondary: 39 34% 92%;
+  --interactive-cta-secondary-hover: 35 34% 86%;
 
   /* Font stacks (Delvin brand fonts, self-hosted) */
   --font-serif: "Delvin Roboto Slab", ui-serif, Georgia, Cambria, serif;
@@ -103,10 +103,10 @@
   /* Sidebar rail */
   /* The rail shares the page canvas rather than sitting on a darker panel —
      matching the reference, where the two are separated by a 1px border only. */
-  --sidebar: 240 11% 96%;
-  --sidebar-foreground: 240 3% 12%;
-  --sidebar-accent: 0 0% 93%;
-  --sidebar-border: 0 0% 89%;
+  --sidebar: 48 42% 95%;
+  --sidebar-foreground: 126 12% 20%;
+  --sidebar-accent: 39 34% 90%;
+  --sidebar-border: 38 22% 86%;
 }
 
 * {
