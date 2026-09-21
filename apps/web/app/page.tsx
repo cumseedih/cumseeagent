@@ -7,7 +7,7 @@ import { connectSSE, CumseeEvent } from "../lib/sse";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { Composer } from "../components/Composer";
-import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings } from "../components/icons";
+import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings, IconGithub, IconX } from "../components/icons";
 import { MessageList } from "../components/MessageList";
 import { ToolTimeline } from "../components/ToolTimeline";
 import { Terminal } from "../components/Terminal";
@@ -16,6 +16,7 @@ import { ApprovalBar } from "../components/ApprovalBar";
 import { ErrorNote, cx } from "../components/ui";
 import { TermsGate } from "../components/TermsGate";
 import { WorkspaceSheet } from "../components/WorkspaceSheet";
+import { Mark } from "../components/Wordmark";
 import {
   BranchPicker,
   ConnectionsDialog,
@@ -429,11 +430,33 @@ function AgentWorkspace() {
                 "shrink-0",
                 hasConversation
                   ? "px-4 pb-4 pt-2"
-                  : "relative flex min-h-0 flex-1 flex-col justify-end overflow-y-auto px-4 pb-7 pt-4"
+                  : "relative flex min-h-0 flex-1 flex-col justify-end overflow-hidden px-4 pb-7 pt-4 md:justify-center md:pb-0 md:pt-0"
               )}
             >
-              {!hasConversation && <div className="pointer-events-none absolute inset-x-3 top-[40%] -translate-y-1/2"><h1 className="animate-hero-breathe whitespace-nowrap text-center font-serif-display text-[28px] font-light leading-[1.08] tracking-[-0.045em] text-primary sm:text-[clamp(34px,4vw,48px)]">What would you like to do?</h1></div>}
+              {!hasConversation && (
+                <div className="pointer-events-none absolute inset-x-3 top-[40%] -translate-y-1/2 md:hidden">
+                  <h1 className="animate-hero-breathe whitespace-nowrap text-center font-serif-display text-[28px] font-light leading-[1.08] tracking-[-0.045em] text-primary">
+                    What would you like to do?
+                  </h1>
+                </div>
+              )}
               <div className="relative mx-auto w-full max-w-2xl">
+                {!hasConversation && (
+                  <div className="pointer-events-none absolute bottom-full left-0 right-0 hidden flex-col items-center pb-6 md:flex">
+                    <span className="mb-3 inline-flex items-center justify-center gap-2 text-text-primary">
+                      <Mark className="h-7 w-7 ring-0" />
+                      <span className="font-serif-display text-[32px] font-semibold leading-none tracking-[-0.04em]">
+                        {BRANDING.PRODUCT_NAME}
+                      </span>
+                    </span>
+                    <h1 className="font-serif-display animate-rise text-center text-[46px] font-light leading-[1.02] tracking-[-0.055em] text-text-tertiary">
+                      {BRANDING.HERO_TITLE_LEAD} {BRANDING.HERO_TITLE_TAIL}{" "}
+                      <span className="inline-block bg-highlight px-2 italic leading-[1] text-highlight-foreground">
+                        {BRANDING.HERO_TITLE_HIGHLIGHT}
+                      </span>
+                    </h1>
+                  </div>
+                )}
 
                 {!hasConversation && errorNote}
                 {!hasConversation && approvalNote}
@@ -443,12 +466,39 @@ function AgentWorkspace() {
                   onStop={stopRun}
                   disabled={sending}
                   placeholder="Ask anything…"
-                  footer={<div className="flex items-center gap-1.5 border-t border-border-faint p-1 sm:gap-2 sm:p-2">
+                  footer={<div className="flex items-center gap-1.5 border-t border-border-faint p-1 sm:gap-2 sm:p-2 md:hidden">
                     <button onClick={() => setRepoPicker(true)} className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border-faint px-2 text-[12px] text-text-tertiary hover:bg-surface-raised-tertiary sm:h-10 sm:px-3 sm:text-[13px]"><IconFolder className="h-4 w-4 shrink-0 sm:h-[17px] sm:w-[17px]" /><span className="truncate">{project?.name || "Add repositories…"}</span><IconChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-text-muted sm:h-4 sm:w-4" /></button>
                     <button onClick={() => setBranchPicker(true)} className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border-faint px-2 text-[12px] text-text-tertiary hover:bg-surface-raised-tertiary sm:h-10 sm:px-3 sm:text-[13px]"><IconGitBranch className="h-4 w-4 shrink-0 sm:h-[17px] sm:w-[17px]" /><span className="truncate">{branch || "main"}</span><IconChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-text-muted sm:h-4 sm:w-4" /></button>
                     <button aria-label="Connection settings" onClick={() => setConnections(true)} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-text-tertiary hover:bg-surface-raised sm:h-10 sm:w-10"><IconSettings className="h-[18px] w-[18px] sm:h-5 sm:w-5" /></button>
                   </div>}
                 />
+                {!hasConversation && (
+                  <div className="mt-3 flex h-[38px] w-full items-center justify-between rounded-[8px] border border-border-medium bg-surface-tertiary px-2.5 text-sm text-text-secondary shadow-[0_1px_1px_rgba(46,58,47,0.03)] md:mt-3">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <IconGithub className="h-4 w-4 shrink-0 text-text-primary" />
+                      <span className="truncate">Connect your GitHub</span>
+                      <span className="rounded-[4px] border border-border-strong px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none text-interactive-link">
+                        New
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setConnections(true)}
+                        className="h-6 rounded-[4px] bg-primary px-2.5 text-xs font-medium text-white transition-colors hover:bg-interactive-active"
+                      >
+                        Connect
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Dismiss GitHub promotion"
+                        className="grid h-6 w-6 place-items-center rounded-[4px] bg-surface-raised-tertiary text-text-muted transition-colors hover:text-text-primary"
+                      >
+                        <IconX className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {/* Transcript metadata remains hidden on the minimal landing screen. */}
                 <div
                   className={cx(

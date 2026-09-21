@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { KeyCap, cx } from "./ui";
-import { IconAppsPlus, IconCloudUpload, IconSendArrow, IconStop } from "./icons";
+import { IconAppsPlus, IconChevronDown, IconCloudUpload, IconSendArrow, IconStop } from "./icons";
 
 /**
  * Prompt composer.
@@ -120,7 +120,7 @@ export function Composer({
           />
 
           <div className="flex items-center justify-between gap-4">
-            <div className="mr-1 flex h-8 min-w-0 items-center gap-1 md:h-9">
+            <div className="mr-1 flex h-8 min-w-0 items-center gap-2 md:h-8">
               <input
                 ref={fileRef}
                 type="file"
@@ -137,6 +137,14 @@ export function Composer({
                 <span className="grid place-items-center">
                   {dragging ? <IconCloudUpload className="h-[19px] w-[19px]" /> : <IconAppsPlus className="h-[19px] w-[19px]" />}
                 </span>
+              </button>
+              <button
+                type="button"
+                className="hidden h-8 items-center gap-1.5 rounded-md border border-border-faint px-2 text-sm text-text-secondary transition-colors hover:bg-surface-raised-tertiary hover:text-text-primary sm:inline-flex"
+                aria-label="Agent mode"
+              >
+                Agent
+                <IconChevronDown className="h-3.5 w-3.5 text-text-muted" />
               </button>
             </div>
 
@@ -159,7 +167,7 @@ export function Composer({
                 disabled={!canSend}
                 aria-label="Send message"
                 className={cx(
-                  "inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors md:h-10 md:w-10",
+                  "inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors md:h-10 md:w-10",
                   canSend
                     ? "border-border-medium bg-surface-raised text-interactive-active hover:bg-surface-highlight"
                     : "pointer-events-none border-border-faint text-text-muted opacity-50"
