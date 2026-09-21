@@ -7,54 +7,54 @@
 /* Delvin uses one clean family throughout the agent workspace. */
 
 /* ---------------------------------------------------------------------------
-   Delvin Ocean Breeze palette. Channels are bare "H S% L%" so Tailwind
+   Delvin Earthy Minimal palette. Channels are bare "H S% L%" so Tailwind
    opacity modifiers remain available throughout the interface.
 --------------------------------------------------------------------------- */
 :root {
   color-scheme: light;
 
-  /* Brand: #0B3D91 · #3BA7F2 · #7FE7D6 · #E8F6FF */
-  --primary: 218 86% 31%;
-  --brand-secondary: 205 87% 59%;
-  --brand-tertiary: 172 68% 70%;
-  --accent: 205 87% 59%;
-  --highlight: 172 68% 70%;
-  --highlight-text: 218 86% 20%;
+  /* Brand: #2E3A2F · #6B7F5B · #D9C9B2 · #C96F4F · #F8F6EE */
+  --primary: 125 12% 20%;
+  --brand-secondary: 93 17% 43%;
+  --brand-tertiary: 35 34% 77%;
+  --accent: 16 53% 55%;
+  --highlight: 35 34% 77%;
+  --highlight-text: 125 12% 20%;
 
   /* Surfaces */
-  --surface-primary: 204 100% 95%;
-  --surface-secondary: 204 100% 98%;
-  --surface-tertiary: 204 73% 92%;
+  --surface-primary: 48 42% 95%;
+  --surface-secondary: 45 45% 98%;
+  --surface-tertiary: 35 34% 88%;
   --surface-floating: 0 0% 100%;
-  --surface-raised: 204 80% 89%;
-  --surface-raised-tertiary: 204 83% 94%;
-  --surface-skeleton: 204 49% 84%;
-  --surface-highlight: 172 68% 92%;
+  --surface-raised: 35 34% 90%;
+  --surface-raised-tertiary: 48 42% 92%;
+  --surface-skeleton: 35 20% 82%;
+  --surface-highlight: 35 34% 89%;
 
   /* Text */
-  --text-primary: 218 86% 20%;
-  --text-secondary: 218 54% 33%;
-  --text-tertiary: 211 38% 45%;
-  --text-muted: 207 22% 53%;
-  --text-placeholder: 207 20% 63%;
+  --text-primary: 125 12% 20%;
+  --text-secondary: 93 17% 34%;
+  --text-tertiary: 91 10% 45%;
+  --text-muted: 35 11% 50%;
+  --text-placeholder: 34 10% 63%;
 
   /* Borders */
-  --border-faint: 204 68% 88%;
-  --border-medium: 204 62% 78%;
-  --border-strong: 205 87% 59%;
+  --border-faint: 35 28% 86%;
+  --border-medium: 35 25% 76%;
+  --border-strong: 93 17% 43%;
 
   /* Interactive */
-  --interactive-normal: 218 86% 35%;
-  --interactive-active: 218 86% 27%;
-  --interactive-link: 205 87% 47%;
-  --interactive-positive: 172 57% 37%;
+  --interactive-normal: 125 12% 24%;
+  --interactive-active: 125 12% 18%;
+  --interactive-link: 93 17% 34%;
+  --interactive-positive: 93 25% 32%;
   --interactive-negative: 0 68% 48%;
-  --interactive-warning: 35 94% 50%;
-  --interactive-cta: 218 86% 31%;
-  --interactive-cta-hover: 205 87% 46%;
+  --interactive-warning: 16 53% 55%;
+  --interactive-cta: 16 53% 55%;
+  --interactive-cta-hover: 16 48% 48%;
   --interactive-on-cta: 0 0% 100%;
-  --interactive-cta-secondary: 204 100% 92%;
-  --interactive-cta-secondary-hover: 172 68% 86%;
+  --interactive-cta-secondary: 35 34% 88%;
+  --interactive-cta-secondary-hover: 35 34% 82%;
 
   /* Font stacks */
   --font-serif: "Josefin Sans", ui-sans-serif, system-ui, sans-serif;
@@ -65,10 +65,10 @@
   /* Sidebar rail */
   /* The rail shares the page canvas rather than sitting on a darker panel —
      matching the reference, where the two are separated by a 1px border only. */
-  --sidebar: 204 100% 95%;
-  --sidebar-foreground: 218 86% 20%;
-  --sidebar-accent: 204 100% 90%;
-  --sidebar-border: 204 68% 88%;
+  --sidebar: 48 42% 95%;
+  --sidebar-foreground: 125 12% 20%;
+  --sidebar-accent: 35 34% 88%;
+  --sidebar-border: 35 28% 86%;
 }
 
 * {
