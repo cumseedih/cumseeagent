@@ -21,7 +21,6 @@ import {
   BranchPicker,
   ConnectionsDialog,
   HarnessPicker,
-  LeaderboardDialog,
   RepositoryPicker,
   type Harness,
 } from "../components/Pickers";
@@ -37,14 +36,12 @@ function AgentWorkspace() {
   const [events, setEvents] = useState<CumseeEvent[]>([]);
   const [toolCalls, setToolCalls] = useState<any[]>([]);
   const [harness, setHarness] = useState<Harness>("standard");
-  const [models, setModels] = useState<any[]>([]);
   const [quota, setQuota] = useState<{ remaining: number | null; limit: number; exhausted: boolean; unlimited: boolean } | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [repoPicker, setRepoPicker] = useState(false);
   const [branchPicker, setBranchPicker] = useState(false);
   const [harnessPicker, setHarnessPicker] = useState(false);
   const [connections, setConnections] = useState(false);
-  const [leaderboard, setLeaderboard] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(false);
   const [branch, setBranch] = useState("main");
   const [status, setStatus] = useState("idle");
@@ -88,8 +85,6 @@ function AgentWorkspace() {
           .catch(() => undefined);
 
         api.getUsage().then(setQuota).catch(() => undefined);
-        api.listModels().then((m: any) => setModels(m.models || [])).catch(() => undefined);
-
         const s = await api.listSessions().catch(() => ({ sessions: [] as any[] }));
         if (s.sessions?.length) {
           setSessionId(s.sessions[0].id);
@@ -256,11 +251,6 @@ function AgentWorkspace() {
     setTimeout(() => setToast(null), 3200);
   }
 
-  const [sessionList, setSessionList] = useState<any[]>([]);
-  useEffect(() => {
-    api.listSessions().then((d: any) => setSessionList(d.sessions || [])).catch(() => undefined);
-  }, [sessionsKey]);
-
   const pendingTool = useMemo(() => toolCalls.find((t) => t.approvalStatus === "pending"), [toolCalls]);
   const busy = status === "running" || status === "thinking";
   const hasConversation = messages.length > 0;
@@ -321,12 +311,6 @@ function AgentWorkspace() {
         onSelect={setHarness}
       />
       <ConnectionsDialog open={connections} onClose={() => setConnections(false)} projectId={project?.id} />
-      <LeaderboardDialog
-        open={leaderboard}
-        onClose={() => setLeaderboard(false)}
-        sessions={sessionList}
-        models={models}
-      />
 
       {/* Mobile: dim backdrop behind the drawer */}
       {isMobile && mobileNav && (
@@ -349,7 +333,6 @@ function AgentWorkspace() {
           project={project}
           onConnectRepository={() => setRepoPicker(true)}
           onOpenRepository={() => setRepoPicker(true)}
-          onOpenLeaderboard={() => setLeaderboard(true)}
           onOpenConnections={() => setConnections(true)}
           onOpenHarness={() => setHarnessPicker(true)}
           onDeleted={(id) => {

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { BRANDING } from "../branding.config";
 import { Button, SkeletonRows, cx } from "./ui";
-import { IconGithub, IconPlusChat, IconRefresh, IconSearch, IconSparkle, IconTrash, IconTrophy } from "./icons";
+import { IconGithub, IconPlusChat, IconRefresh, IconSearch, IconSparkle, IconTrash } from "./icons";
 import { Mark, Wordmark } from "./Wordmark";
 
 type Session = {
@@ -38,7 +38,6 @@ export function SessionSidebar({
   refreshKey,
   project,
   onConnectRepository,
-  onOpenLeaderboard,
   onOpenConnections,
   onOpenRepository,
   onOpenHarness,
@@ -53,7 +52,6 @@ export function SessionSidebar({
   refreshKey?: number;
   project?: { id: string; name: string; defaultBranch?: string } | null;
   onConnectRepository?: () => void;
-  onOpenLeaderboard?: () => void;
   onOpenConnections?: () => void;
   onOpenRepository?: () => void;
   onOpenHarness?: () => void;
@@ -160,13 +158,6 @@ export function SessionSidebar({
         >
           <IconSearch className="h-5 w-5" />
         </button>
-        <button
-          onClick={onOpenLeaderboard}
-          title="Leaderboard"
-          className="grid h-8 w-8 place-items-center rounded-md text-text-tertiary transition-colors hover:bg-sidebar-accent hover:text-interactive-active"
-        >
-          <IconTrophy className="h-5 w-5" />
-        </button>
       </nav>
     );
   }
@@ -191,7 +182,6 @@ export function SessionSidebar({
       {/* Primary nav */}
       <div className="px-2">
         <SidebarLink icon={<IconPlusChat className="h-5 w-5" />} label="New Chat" onClick={onNew} />
-        <SidebarLink icon={<IconTrophy className="h-5 w-5" />} label="Leaderboard" onClick={onOpenLeaderboard} />
         <SidebarLink icon={<IconSparkle className="h-5 w-5" />} label="Harnesses" onClick={onOpenHarness} />
         <SidebarLink icon={<IconSearch className="h-5 w-5" />} label="Search" onClick={onOpenSearch} />
         <SidebarLink icon={<IconGithub className="h-5 w-5" />} label="Connections" onClick={onOpenConnections} />
