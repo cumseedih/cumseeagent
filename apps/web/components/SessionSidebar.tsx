@@ -5,7 +5,7 @@ import { api } from "../lib/api";
 import { BRANDING } from "../branding.config";
 import { SkeletonRows, cx } from "./ui";
 import { IconPanelLeft, IconPlusChat, IconRefresh, IconSearch, IconTrash } from "./icons";
-import { Mark, Wordmark } from "./Wordmark";
+import { Wordmark } from "./Wordmark";
 
 type Session = {
   id: string;
@@ -55,7 +55,7 @@ export function SessionSidebar({
   onOpenHarness?: () => void;
   onDeleted?: (id: string) => void;
   guest?: boolean;
-  user?: { email: string } | null;
+  user?: { email: string; displayName?: string | null; avatarUrl?: string | null } | null;
   onRequestLogin?: () => void;
   onOpenAccount?: () => void;
 }) {
@@ -294,9 +294,9 @@ export function SessionSidebar({
           onClick={guest ? onRequestLogin : onOpenAccount}
           className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-sidebar-accent"
         >
-          <Mark className="h-7 w-7" />
+          {user?.avatarUrl ? <img src={user.avatarUrl} alt="Profile" className="h-7 w-7 rounded-full object-cover" /> : <span className="grid h-7 w-7 place-items-center rounded-full bg-[#e8e6e1] text-[10px] font-medium text-[#2e2b29]">{guest ? "D" : (user?.displayName || user?.email || "U").slice(0, 1).toUpperCase()}</span>}
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-xs text-text-secondary">{guest ? "Log In" : user?.email || BRANDING.PRODUCT_NAME}</span>
+            <span className="block truncate text-xs text-text-secondary">{guest ? "Log In" : user?.displayName || user?.email || BRANDING.PRODUCT_NAME}</span>
             <span className="block truncate font-mono text-[10px] text-text-muted">{guest ? "Save your chats and workspaces" : BRANDING.PRODUCT_DOMAIN}</span>
           </span>
           {!guest && <span className="text-text-muted">···</span>}

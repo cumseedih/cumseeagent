@@ -25,7 +25,12 @@ import {
 } from "../components/Pickers";
 
 type RailTab = "terminal" | "files" | "activity";
-type AuthUser = { id: string; email: string; username?: string | null; createdAt?: string };
+type AuthUser = { id: string; email: string; username?: string | null; displayName?: string | null; avatarUrl?: string | null; createdAt?: string };
+
+function ProfileAvatar({ user, className = "h-8 w-8" }: { user?: Pick<AuthUser, "email" | "displayName" | "avatarUrl"> | null; className?: string }) {
+  const label = (user?.displayName || user?.email || "U").trim();
+  return user?.avatarUrl ? <img src={user.avatarUrl} alt="Profile" className={`${className} rounded-full object-cover`} /> : <span aria-hidden="true" className={`${className} grid place-items-center rounded-full bg-[#e8e6e1] text-[11px] font-medium text-[#2e2b29]`}>{label.slice(0, 1).toUpperCase()}</span>;
+}
 
 function AgentWorkspace({
   guest = false,
@@ -692,6 +697,12 @@ export default function AgentPage() {
           setUser(null);
           setAuthStatus("anonymous");
         }}
+        onUserUpdated={(nextUser) => setUser(nextUser)}
+        onAccountDeleted={() => {
+          setAccountOpen(false);
+          setUser(null);
+          setAuthStatus("anonymous");
+        }}
       />
     </>
   );
@@ -744,13 +755,35 @@ function LoginSheet({ open, error, onClose, onAuthenticated }: { open: boolean; 
   </div>;
 }
 
-function AccountSheet({ open, user, onClose, onSignOut }: { open: boolean; user: AuthUser | null; onClose: () => void; onSignOut: () => void }) {
+function AccountSheet({ open, user, onClose, onSignOut, onUserUpdated, onAccountDeleted }: { open: boolean; user: AuthUser | null; onClose: () => void; onSignOut: () => void; onUserUpdated: (user: AuthUser) => void; onAccountDeleted: () => void }) {
+  const [displayName, setDisplayName] = useState(user?.displayName || "");
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => { setDisplayName(user?.displayName || ""); setAvatarUrl(user?.avatarUrl || ""); }, [user?.id, user?.displayName, user?.avatarUrl]);
   if (!open || !user) return null;
-  return <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-3 sm:items-center" role="dialog" aria-modal="true" aria-label="Account settings">
-    <div className="w-full max-w-[600px] animate-sheet-up rounded-[20px] border border-border-faint bg-surface-floating p-6 shadow-floating">
-      <div className="flex items-center gap-3"><img src={BRANDING.LOGO_PATH} alt="Delvin" className="h-14 w-14 rounded-full object-cover" /><span className="min-w-0 rounded-full bg-surface-raised px-3 py-1.5 text-sm text-text-secondary">{user.email}</span><button type="button" aria-label="Close account" onClick={onClose} className="ml-auto text-text-muted"><IconX className="h-5 w-5" /></button></div>
-      <label className="mt-7 flex items-center gap-3 text-sm text-text-secondary"><input type="checkbox" className="h-5 w-5 rounded border-border-medium" />Yes, keep me posted on what&apos;s new</label>
-      <button type="button" onClick={onSignOut} className="mt-6 h-14 w-full rounded-lg bg-interactive-cta text-[15px] font-medium text-interactive-on-cta hover:bg-interactive-cta-hover">Sign Out</button>
+  async function saveProfile() {
+    setBusy(true); setNotice(null);
+    try { const result = await api.updateProfile({ displayName: displayName.trim() || null, avatarUrl: avatarUrl || null }); onUserUpdated(result.user); setNotice("Profile saved"); } catch (e: any) { setNotice(e.message || "Could not save profile"); } finally { setBusy(false); }
+  }
+  async function chooseAvatar(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]; if (!file) return;
+    if (file.size > 1_500_000) { setNotice("Choose an image under 1.5MB"); return; }
+    const reader = new FileReader(); reader.onload = () => setAvatarUrl(String(reader.result)); reader.readAsDataURL(file);
+  }
+  async function deleteAccount() {
+    if (!window.confirm("Delete your Delvin account and all workspaces? This cannot be undone.")) return;
+    setBusy(true); try { await api.deleteAccount(); onAccountDeleted(); } catch (e: any) { setNotice(e.message || "Could not delete account"); } finally { setBusy(false); }
+  }
+  return <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-label="Account settings">
+    <div className="w-full max-w-[600px] animate-sheet-up rounded-[24px] border border-white/60 bg-white/85 p-6 shadow-floating backdrop-blur-xl">
+      <div className="flex items-center gap-3"><label className="relative cursor-pointer"><ProfileAvatar user={{ ...user, avatarUrl }} className="h-14 w-14" /><input type="file" accept="image/*" onChange={chooseAvatar} className="sr-only" /></label><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-text-primary">{user.displayName || "Your profile"}</p><p className="truncate text-xs text-text-secondary">{user.email}</p></div><button type="button" aria-label="Close account" onClick={onClose} className="text-text-muted"><IconX className="h-5 w-5" /></button></div>
+      <label className="mt-6 block text-xs font-medium text-text-secondary">Display name<input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" className="mt-1 h-12 w-full rounded-lg border border-border-faint bg-white/70 px-3 text-sm outline-none focus:border-border-strong" /></label>
+      {notice && <p className="mt-3 text-xs text-text-secondary">{notice}</p>}
+      <label className="mt-5 flex items-center gap-3 text-sm text-text-secondary"><input type="checkbox" className="h-5 w-5 rounded border-border-medium" />Yes, keep me posted on what&apos;s new</label>
+      <button type="button" disabled={busy} onClick={saveProfile} className="mt-5 h-12 w-full rounded-lg border border-border-faint bg-white text-[15px] font-medium text-text-primary hover:bg-surface-raised disabled:opacity-50">{busy ? "Saving…" : "Save profile"}</button>
+      <button type="button" onClick={onSignOut} className="mt-2 h-12 w-full rounded-lg bg-interactive-cta text-[15px] font-medium text-interactive-on-cta hover:bg-interactive-cta-hover">Sign Out</button>
+      <button type="button" disabled={busy} onClick={deleteAccount} className="mt-4 w-full text-xs text-red-600 hover:underline disabled:opacity-50">Delete account</button>
     </div>
   </div>;
 }

@@ -22,6 +22,10 @@ const emailCodeVerifySchema = z.object({
   email: z.string().email().transform((value) => value.trim().toLowerCase()),
   code: z.string().regex(/^\d{6}$/),
 });
+const profileSchema = z.object({
+  displayName: z.string().trim().max(60).nullable().optional(),
+  avatarUrl: z.string().max(2_000_000).nullable().optional(),
+});
 
 const sessionCookie = () => ({
   httpOnly: true,
@@ -155,13 +159,38 @@ export async function authRoutes(app: FastifyInstance) {
       const payload = verifyToken(token);
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
-        select: { id: true, email: true, username: true, createdAt: true },
+        select: { id: true, email: true, username: true, displayName: true, avatarUrl: true, createdAt: true },
       });
       if (!user) return reply.code(401).send({ error: "User not found" });
       return { user };
     } catch (e) {
       return reply.code(401).send({ error: "Invalid token" });
     }
+  });
+
+  app.patch("/me", async (req, reply) => {
+    const token = (req.cookies as any)?.token || req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return reply.code(401).send({ error: "Not authenticated" });
+    let userId: string;
+    try { userId = verifyToken(token).userId; } catch { return reply.code(401).send({ error: "Invalid token" }); }
+    const parsed = profileSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: "Invalid profile" });
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { displayName: parsed.data.displayName ?? undefined, avatarUrl: parsed.data.avatarUrl ?? undefined },
+      select: { id: true, email: true, username: true, displayName: true, avatarUrl: true, createdAt: true },
+    });
+    return { user };
+  });
+
+  app.delete("/me", async (req, reply) => {
+    const token = (req.cookies as any)?.token || req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return reply.code(401).send({ error: "Not authenticated" });
+    let userId: string;
+    try { userId = verifyToken(token).userId; } catch { return reply.code(401).send({ error: "Invalid token" }); }
+    await prisma.user.delete({ where: { id: userId } });
+    reply.clearCookie("token", { path: "/" });
+    return { ok: true };
   });
 
   app.get("/google", async (_req, reply) => {
