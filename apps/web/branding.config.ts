@@ -24,7 +24,7 @@ export const BRANDING = {
   HERO_TITLE_HIGHLIGHT: process.env.NEXT_PUBLIC_HERO_TITLE_HIGHLIGHT || "frontier",
   HERO_SUBTITLE:
     process.env.NEXT_PUBLIC_HERO_SUBTITLE ||
-    "Connect a repository, pick a harness and model, then let the agent plan, run commands and ship changes — every risky step gated by your approval.",
+    "Connect a repository and let the agent plan, run commands and ship changes — every risky step gated by your approval.",
 
   SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@delvin.local",
 } as const;

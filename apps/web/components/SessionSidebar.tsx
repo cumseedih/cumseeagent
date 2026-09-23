@@ -13,7 +13,6 @@ type Session = {
   status: string;
   createdAt: string;
   updatedAt?: string;
-  selectedModel?: string;
 };
 
 /** Group sessions into Today / Yesterday / Previous 7 days / Earlier buckets. */
@@ -267,8 +266,7 @@ export function SessionSidebar({
                     >
                       <span className="block truncate text-sm">{s.title || "Untitled session"}</span>
                       <span className="block truncate text-[11px] text-text-muted">
-                        {s.status || "idle"}
-                        {s.selectedModel ? ` · ${s.selectedModel}` : ""} ·{" "}
+                        {s.status || "idle"} ·{" "}
                         {new Date(s.updatedAt || s.createdAt).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",

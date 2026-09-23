@@ -11,7 +11,6 @@ type Message = {
   content: string;
   status?: string;
   createdAt?: string;
-  selectedModel?: string;
 };
 
 type AgentEvent = {

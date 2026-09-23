@@ -47,7 +47,7 @@ function iconFor(type: string) {
 
 function summarize(e: TimelineEvent) {
   const p = e.payload || {};
-  return p.toolName || p.command || p.path || p.title || p.message || p.summary || p.goal || p.model || (Object.keys(p)[0] ?? "—");
+  return p.toolName || p.command || p.path || p.title || p.message || p.summary || p.goal || (Object.keys(p)[0] ?? "—");
 }
 
 /** A display row: consecutive streaming deltas of the same run collapse into one. */
