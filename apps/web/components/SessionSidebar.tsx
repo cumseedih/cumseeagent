@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { BRANDING } from "../branding.config";
 import { Button, SkeletonRows, cx } from "./ui";
-import { IconGithub, IconPlusChat, IconRefresh, IconSearch, IconSparkle, IconTrash } from "./icons";
+import { IconPanelLeft, IconPlusChat, IconRefresh, IconSearch, IconTrash } from "./icons";
 import { Mark, Wordmark } from "./Wordmark";
 
 type Session = {
@@ -35,11 +35,6 @@ export function SessionSidebar({
   onToggleCollapse,
   onOpenSearch,
   refreshKey,
-  project,
-  onConnectRepository,
-  onOpenConnections,
-  onOpenRepository,
-  onOpenHarness,
   onDeleted,
 }: {
   selectedId?: string;
@@ -56,7 +51,6 @@ export function SessionSidebar({
   onOpenHarness?: () => void;
   onDeleted?: (id: string) => void;
 }) {
-  const [promoOpen, setPromoOpen] = useState(true);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,27 +129,13 @@ export function SessionSidebar({
 
   if (collapsed) {
     return (
-      <nav className="flex h-full w-14 flex-col items-center gap-2 border-r border-sidebar-border bg-sidebar py-3">
+      <nav className="flex h-full w-14 flex-col items-center border-r border-sidebar-border bg-sidebar py-3">
         <button
           onClick={onToggleCollapse}
-          title="Expand sidebar"
-          className="grid h-8 w-8 place-items-center rounded-md text-text-tertiary transition-colors hover:bg-sidebar-accent hover:text-interactive-active"
+          title="Open sessions"
+          className="grid h-8 w-8 place-items-center rounded-md text-text-primary transition-colors hover:bg-sidebar-accent hover:text-interactive-active"
         >
-          <Wordmark showName={false} glyphClass="h-5 w-5" />
-        </button>
-        <button
-          onClick={onNew}
-          title="New chat"
-          className="grid h-8 w-8 place-items-center rounded-md text-text-tertiary transition-colors hover:bg-sidebar-accent hover:text-interactive-active"
-        >
-          <IconPlusChat className="h-5 w-5" />
-        </button>
-        <button
-          onClick={onOpenSearch}
-          title="Search"
-          className="grid h-8 w-8 place-items-center rounded-md text-text-tertiary transition-colors hover:bg-sidebar-accent hover:text-interactive-active"
-        >
-          <IconSearch className="h-5 w-5" />
+          <IconPanelLeft className="h-[20px] w-[20px]" />
         </button>
       </nav>
     );
@@ -181,9 +161,7 @@ export function SessionSidebar({
       {/* Primary nav */}
       <div className="px-2">
         <SidebarLink icon={<IconPlusChat className="h-5 w-5" />} label="New Chat" onClick={onNew} />
-        <SidebarLink icon={<IconSparkle className="h-5 w-5" />} label="Harnesses" onClick={onOpenHarness} />
         <SidebarLink icon={<IconSearch className="h-5 w-5" />} label="Search" onClick={onOpenSearch} />
-        <SidebarLink icon={<IconGithub className="h-5 w-5" />} label="Connections" onClick={onOpenConnections} />
       </div>
 
       {/* Session search */}
@@ -295,44 +273,6 @@ export function SessionSidebar({
           <p className="px-2 py-3 text-xs text-text-muted">No sessions match “{query}”.</p>
         )}
       </div>
-
-      {/* Connector promotion — mirrors the "connect your GitHub" card */}
-      {promoOpen && (
-        <div className="border-t border-sidebar-border p-2">
-          <div className="rounded-panel border border-border-faint bg-surface-secondary p-2.5">
-            <div className="mb-1.5 flex items-start gap-2">
-              <span className="mt-[1px] text-text-tertiary">
-                <IconGithub className="h-4 w-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-text-secondary">
-                  {project ? project.name : "Connect your GitHub"}
-                </p>
-                <p className="mt-0.5 truncate font-mono text-[10px] text-text-muted">
-                  {project ? `${project.id.slice(0, 8)} · ${project.defaultBranch || "main"}` : "Clone and push from a session"}
-                </p>
-              </div>
-              <button
-                onClick={() => setPromoOpen(false)}
-                aria-label="Dismiss connectors promotion"
-                title="Dismiss"
-                className="shrink-0 text-text-muted transition-colors hover:text-text-tertiary"
-              >
-                ×
-              </button>
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full"
-              onClick={onOpenRepository || onConnectRepository}
-            >
-              <IconGithub className="h-3.5 w-3.5" />
-              {project ? "Manage repository" : "Connect"}
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Footer */}
       <div className="border-t border-sidebar-border p-2">

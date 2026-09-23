@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { KeyCap, cx } from "./ui";
-import { IconAppsPlus, IconChevronDown, IconCloudUpload, IconSendArrow, IconStop } from "./icons";
+import { IconAppsPlus, IconCloudUpload, IconSendArrow, IconStop } from "./icons";
 
 /**
  * Prompt composer.
@@ -137,14 +137,6 @@ export function Composer({
                 <span className="grid place-items-center">
                   {dragging ? <IconCloudUpload className="h-[19px] w-[19px]" /> : <IconAppsPlus className="h-[19px] w-[19px]" />}
                 </span>
-              </button>
-              <button
-                type="button"
-                className="hidden h-8 items-center gap-1.5 rounded-md border border-border-faint px-2 text-sm text-text-secondary transition-colors hover:bg-surface-raised-tertiary hover:text-text-primary sm:inline-flex"
-                aria-label="Agent mode"
-              >
-                Agent
-                <IconChevronDown className="h-3.5 w-3.5 text-text-muted" />
               </button>
             </div>
 
