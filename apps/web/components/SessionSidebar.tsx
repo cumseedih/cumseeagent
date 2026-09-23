@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { BRANDING } from "../branding.config";
-import { Button, SkeletonRows, cx } from "./ui";
+import { SkeletonRows, cx } from "./ui";
 import { IconPanelLeft, IconPlusChat, IconRefresh, IconSearch, IconTrash } from "./icons";
 import { Mark, Wordmark } from "./Wordmark";
 
@@ -36,6 +36,10 @@ export function SessionSidebar({
   onOpenSearch,
   refreshKey,
   onDeleted,
+  guest = false,
+  user,
+  onRequestLogin,
+  onOpenAccount,
 }: {
   selectedId?: string;
   onSelect: (id: string) => void;
@@ -50,6 +54,10 @@ export function SessionSidebar({
   onOpenRepository?: () => void;
   onOpenHarness?: () => void;
   onDeleted?: (id: string) => void;
+  guest?: boolean;
+  user?: { email: string } | null;
+  onRequestLogin?: () => void;
+  onOpenAccount?: () => void;
 }) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,9 +113,14 @@ export function SessionSidebar({
   }
 
   useEffect(() => {
+    if (guest) {
+      setSessions([]);
+      setLoading(false);
+      return;
+    }
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]);
+  }, [refreshKey, guest]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return sessions;
@@ -160,7 +173,7 @@ export function SessionSidebar({
 
       {/* Primary nav */}
       <div className="px-2">
-        <SidebarLink icon={<IconPlusChat className="h-5 w-5" />} label="New Chat" onClick={onNew} />
+        <SidebarLink icon={<IconPlusChat className="h-5 w-5" />} label="New Chat" onClick={guest ? onRequestLogin : onNew} />
         <SidebarLink icon={<IconSearch className="h-5 w-5" />} label="Search" onClick={onOpenSearch} />
       </div>
 
@@ -276,16 +289,18 @@ export function SessionSidebar({
 
       {/* Footer */}
       <div className="border-t border-sidebar-border p-2">
-        <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
+        <button
+          type="button"
+          onClick={guest ? onRequestLogin : onOpenAccount}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-sidebar-accent"
+        >
           <Mark className="h-7 w-7" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-xs text-text-secondary">{BRANDING.PRODUCT_NAME}</span>
-            <span className="block truncate font-mono text-[10px] text-text-muted">{BRANDING.PRODUCT_DOMAIN}</span>
+            <span className="block truncate text-xs text-text-secondary">{guest ? "Log In" : user?.email || BRANDING.PRODUCT_NAME}</span>
+            <span className="block truncate font-mono text-[10px] text-text-muted">{guest ? "Save your chats and workspaces" : BRANDING.PRODUCT_DOMAIN}</span>
           </span>
-          <Button variant="ghost" size="icon" onClick={load} title="Refresh sessions">
-            <IconRefresh className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+          {!guest && <span className="text-text-muted">···</span>}
+        </button>
       </div>
     </nav>
   );

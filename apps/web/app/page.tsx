@@ -25,8 +25,19 @@ import {
 } from "../components/Pickers";
 
 type RailTab = "terminal" | "files" | "activity";
+type AuthUser = { id: string; email: string; username?: string | null; createdAt?: string };
 
-function AgentWorkspace() {
+function AgentWorkspace({
+  guest = false,
+  user,
+  onRequestLogin,
+  onOpenAccount,
+}: {
+  guest?: boolean;
+  user?: AuthUser | null;
+  onRequestLogin?: () => void;
+  onOpenAccount?: () => void;
+}) {
   const [project, setProject] = useState<{ id: string; name: string; defaultBranch?: string } | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState<string | undefined>();
@@ -36,7 +47,6 @@ function AgentWorkspace() {
   const [toolCalls, setToolCalls] = useState<any[]>([]);
   const [harness, setHarness] = useState<Harness>("standard");
   const [quota, setQuota] = useState<{ remaining: number | null; limit: number; exhausted: boolean; unlimited: boolean } | null>(null);
-  const [termsAccepted, setTermsAccepted] = useState(false);
   const [repoPicker, setRepoPicker] = useState(false);
   const [branchPicker, setBranchPicker] = useState(false);
   const [harnessPicker, setHarnessPicker] = useState(false);
@@ -61,6 +71,10 @@ function AgentWorkspace() {
 
   /* ---------------------------------------------------------------- bootstrap */
   useEffect(() => {
+    if (guest) {
+      setBooting(false);
+      return;
+    }
     if (bootRef.current) return;
     bootRef.current = true;
     (async () => {
@@ -96,7 +110,7 @@ function AgentWorkspace() {
         setBooting(false);
       }
     })();
-  }, []);
+  }, [guest]);
 
   /* --------------------------------------------------- session data + stream */
   useEffect(() => {
@@ -176,6 +190,10 @@ function AgentWorkspace() {
   const refreshSessions = useCallback(() => setSessionsKey((k) => k + 1), []);
 
   async function createSession(title?: string) {
+    if (guest) {
+      onRequestLogin?.();
+      return null;
+    }
     try {
       const res = await api.createSession({
         projectId: project?.id,
@@ -197,6 +215,10 @@ function AgentWorkspace() {
   }
 
   async function sendMessage(text: string, files: { name: string; size: number; content: string }[]) {
+    if (guest) {
+      onRequestLogin?.();
+      return;
+    }
     setSending(true);
     setError(null);
     const payloadContent = files.length
@@ -280,7 +302,7 @@ function AgentWorkspace() {
 
   return (
     <div className="flex h-[100dvh] overflow-hidden bg-surface-primary">
-      <TermsGate onAccepted={() => setTermsAccepted(true)} />
+      {!guest && <TermsGate onAccepted={() => undefined} />}
       <WorkspaceSheet open={workspaceOpen} onClose={() => setWorkspaceOpen(false)} project={project} refreshKey={workspaceRefreshKey} />
 
       <RepositoryPicker
@@ -330,6 +352,10 @@ function AgentWorkspace() {
         )}
       >
         <SessionSidebar
+          guest={guest}
+          user={user}
+          onRequestLogin={onRequestLogin}
+          onOpenAccount={onOpenAccount}
           project={project}
           onConnectRepository={() => setRepoPicker(true)}
           onOpenRepository={() => setRepoPicker(true)}
@@ -614,12 +640,18 @@ type AuthStatus = "checking" | "authenticated" | "anonymous";
 export default function AgentPage() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>("checking");
   const [authError, setAuthError] = useState<string | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setAuthError(params.get("auth_error"));
     api.me()
-      .then(() => setAuthStatus("authenticated"))
+      .then((result: { user: AuthUser }) => {
+        setUser(result.user);
+        setAuthStatus("authenticated");
+      })
       .catch(() => setAuthStatus("anonymous"));
   }, []);
 
@@ -631,59 +663,63 @@ export default function AgentPage() {
     );
   }
 
-  if (authStatus === "anonymous") {
-    return (
-      <main className="relative grid min-h-[100dvh] overflow-hidden bg-surface-primary px-5 py-10 sm:px-8">
-        <div className="pointer-events-none absolute -left-24 top-[-8rem] h-80 w-80 rounded-full bg-highlight/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
+  const anonymous = authStatus === "anonymous";
+  return (
+    <>
+      <AgentWorkspace
+        guest={anonymous}
+        user={user}
+        onRequestLogin={() => setLoginOpen(true)}
+        onOpenAccount={() => setAccountOpen(true)}
+      />
+      <LoginSheet open={loginOpen} error={authError} onClose={() => setLoginOpen(false)} />
+      <AccountSheet
+        open={accountOpen}
+        user={user}
+        onClose={() => setAccountOpen(false)}
+        onSignOut={async () => {
+          await api.logout().catch(() => undefined);
+          setAccountOpen(false);
+          setUser(null);
+          setAuthStatus("anonymous");
+        }}
+      />
+    </>
+  );
+}
 
-        <section className="relative m-auto w-full max-w-[420px] animate-stage-in rounded-[28px] border border-border-faint bg-surface-floating/95 p-7 shadow-floating backdrop-blur sm:p-9">
-          <div className="mb-10 flex items-center gap-3">
-            <img src={BRANDING.LOGO_PATH} alt="Delvin" className="h-11 w-11 rounded-full object-cover ring-1 ring-border-faint" />
-            <div>
-              <p className="delvin-wordmark delvin-wordmark--login text-[26px]" aria-label="Delvin">
-                <span className="delvin-wordmark__text">Delvin</span>
-              </p>
-              <p className="mt-1 text-xs text-text-muted">Your coding agent</p>
-            </div>
-          </div>
+function GoogleIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.23-.2-1.77H12v3.41h5.52a4.72 4.72 0 0 1-2.05 3.01l-.02.11 2.98 2.31.21.02c1.92-1.77 2.96-4.38 2.96-7.09Z" /><path fill="#34A853" d="M12 22c2.7 0 4.96-.89 6.62-2.42l-3.15-2.44c-.84.57-1.96.97-3.47.97a6.02 6.02 0 0 1-5.7-4.16l-.11.01-3.1 2.4-.04.1A10 10 0 0 0 2 12c0 1.61.38 3.14 1.05 4.46l3.25-2.51Z" /><path fill="#FBBC05" d="M6.3 13.95A6.15 6.15 0 0 1 5.98 12c0-.68.12-1.34.31-1.95v-.12L3.16 7.49l-.1.05A10 10 0 0 0 2 12c0 1.61.38 3.14 1.05 4.46l3.25-2.51Z" /><path fill="#EA4335" d="M12 5.89c1.88 0 3.15.81 3.88 1.48l2.81-2.74C16.97 3.03 14.7 2 12 2a10 10 0 0 0-8.95 5.54l3.24 2.51A6.04 6.04 0 0 1 12 5.89Z" /></svg>;
+}
 
-          <div className="mb-8">
-            <h1 className="font-display text-[32px] font-semibold leading-[1.08] tracking-[-0.04em] text-text-primary">
-              Build something great.
-            </h1>
-            <p className="mt-3 text-[15px] leading-6 text-text-tertiary">
-              Sign in to connect repositories, keep your workspaces, and continue your agent sessions.
-            </p>
-          </div>
+function LoginSheet({ open, error, onClose }: { open: boolean; error: string | null; onClose: () => void }) {
+  const [email, setEmail] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
+  if (!open) return null;
+  return <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <div className="relative w-full max-w-[600px] animate-sheet-up rounded-[26px] border border-border-faint bg-surface-floating px-6 pb-6 pt-4 shadow-floating sm:px-8">
+      <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-surface-raised" />
+      <button type="button" aria-label="Close login" onClick={onClose} className="absolute right-7 top-6 grid h-8 w-8 place-items-center rounded-md text-text-muted hover:bg-surface-raised"><IconX className="h-5 w-5" /></button>
+      <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center"><img src={BRANDING.LOGO_PATH} alt="Delvin" className="h-11 w-11 rounded-full object-cover" /></div>
+      <h2 id="login-title" className="text-center font-serif-display text-[28px] leading-tight tracking-[-0.04em] text-text-primary">Log In or Create Account</h2>
+      <p className="mx-auto mt-2 max-w-[440px] text-center text-sm leading-5 text-text-tertiary">Your current chat history will be saved to your new account so you can access your work from any device.</p>
+      {(error || notice) && <p role="alert" className="mt-4 rounded-lg bg-surface-raised px-3 py-2 text-center text-xs text-text-secondary">{error || notice}</p>}
+      <button type="button" onClick={() => window.location.assign("/api/auth/google")} className="mt-5 flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-border-faint bg-surface-secondary text-[15px] text-text-secondary hover:bg-surface-raised"><GoogleIcon />Continue with Google</button>
+      <div className="my-5 flex items-center gap-3 text-[11px] text-text-muted"><span className="h-px flex-1 bg-border-faint" />OR<span className="h-px flex-1 bg-border-faint" /></div>
+      <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="Your email" className="h-14 w-full rounded-lg border border-border-faint bg-surface-secondary px-4 text-[15px] text-text-primary outline-none placeholder:text-text-placeholder focus:border-border-strong" />
+      <button type="button" onClick={() => setNotice(email ? "Email verification will be available after the mail service is configured." : "Enter your email first.")} className="mt-2 h-14 w-full rounded-lg bg-interactive-cta text-[15px] font-medium text-interactive-on-cta hover:bg-interactive-cta-hover">Continue with email</button>
+      <p className="mt-4 text-center text-[11px] leading-5 text-text-muted">By continuing, you agree to Delvin&apos;s Terms of Use and Privacy Policy.</p>
+    </div>
+  </div>;
+}
 
-          {authError && (
-            <div role="alert" className="mb-4 rounded-xl border border-interactive-negative/20 bg-interactive-negative/5 px-3.5 py-3 text-sm text-interactive-negative">
-              {authError}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => window.location.assign("/api/auth/google")}
-            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-interactive-cta px-4 text-[15px] font-semibold text-interactive-on-cta shadow-sm transition hover:bg-interactive-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-interactive-link focus-visible:ring-offset-2"
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 rounded-full bg-white p-0.5">
-              <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.23-.2-1.77H12v3.41h5.52a4.72 4.72 0 0 1-2.05 3.01l-.02.11 2.98 2.31.21.02c1.92-1.77 2.96-4.38 2.96-7.09Z" />
-              <path fill="#34A853" d="M12 22c2.7 0 4.96-.89 6.62-2.42l-3.15-2.44c-.84.57-1.96.97-3.47.97a6.02 6.02 0 0 1-5.7-4.16l-.11.01-3.1 2.4-.04.1A10 10 0 0 0 12 22Z" />
-              <path fill="#FBBC05" d="M6.3 13.95A6.15 6.15 0 0 1 5.98 12c0-.68.12-1.34.31-1.95v-.12L3.16 7.49l-.1.05A10 10 0 0 0 2 12c0 1.61.38 3.14 1.05 4.46l3.25-2.51Z" />
-              <path fill="#EA4335" d="M12 5.89c1.88 0 3.15.81 3.88 1.48l2.81-2.74C16.97 3.03 14.7 2 12 2a10 10 0 0 0-8.95 5.54l3.24 2.51A6.04 6.04 0 0 1 12 5.89Z" />
-            </svg>
-            Continue with Google
-          </button>
-
-          <p className="mt-6 text-center text-[11px] leading-5 text-text-muted">
-            By continuing, you agree to Delvin&apos;s Terms of Use and Privacy Policy.
-          </p>
-        </section>
-      </main>
-    );
-  }
-
-  return <AgentWorkspace />;
+function AccountSheet({ open, user, onClose, onSignOut }: { open: boolean; user: AuthUser | null; onClose: () => void; onSignOut: () => void }) {
+  if (!open || !user) return null;
+  return <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-3 sm:items-center" role="dialog" aria-modal="true" aria-label="Account settings">
+    <div className="w-full max-w-[600px] animate-sheet-up rounded-[20px] border border-border-faint bg-surface-floating p-6 shadow-floating">
+      <div className="flex items-center gap-3"><img src={BRANDING.LOGO_PATH} alt="Delvin" className="h-14 w-14 rounded-full object-cover" /><span className="min-w-0 rounded-full bg-surface-raised px-3 py-1.5 text-sm text-text-secondary">{user.email}</span><button type="button" aria-label="Close account" onClick={onClose} className="ml-auto text-text-muted"><IconX className="h-5 w-5" /></button></div>
+      <label className="mt-7 flex items-center gap-3 text-sm text-text-secondary"><input type="checkbox" className="h-5 w-5 rounded border-border-medium" />Yes, keep me posted on what&apos;s new</label>
+      <button type="button" onClick={onSignOut} className="mt-6 h-14 w-full rounded-lg bg-interactive-cta text-[15px] font-medium text-interactive-on-cta hover:bg-interactive-cta-hover">Sign Out</button>
+    </div>
+  </div>;
 }
