@@ -468,7 +468,7 @@ function AgentWorkspace() {
                   </div> : undefined}
                 />
                 {!hasConversation && githubPromoOpen && (
-                  <div className="mt-3 flex h-[38px] w-full items-center justify-between rounded-[8px] border border-border-medium bg-surface-tertiary px-2.5 text-sm text-text-secondary shadow-[0_1px_1px_rgba(46,58,47,0.03)] md:mt-3">
+                  <div className="mt-3 flex h-[38px] w-full items-center justify-between rounded-[8px] border border-border-medium bg-surface-tertiary px-2.5 text-sm text-text-secondary shadow-[0_1px_1px_rgba(46,43,41,0.03)] md:mt-3">
                     <div className="flex min-w-0 items-center gap-1.5">
                       <IconGithub className="h-4 w-4 shrink-0 text-text-primary" />
                       <span className="truncate">Connect your GitHub</span>
