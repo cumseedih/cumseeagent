@@ -16,7 +16,6 @@ import { ApprovalBar } from "../components/ApprovalBar";
 import { ErrorNote, cx } from "../components/ui";
 import { TermsGate } from "../components/TermsGate";
 import { WorkspaceSheet } from "../components/WorkspaceSheet";
-import { Mark } from "../components/Wordmark";
 import {
   BranchPicker,
   ConnectionsDialog,
@@ -418,8 +417,8 @@ function AgentWorkspace() {
               )}
             >
               {!hasConversation && (
-                <div className="pointer-events-none absolute inset-x-3 top-[40%] -translate-y-1/2 md:hidden">
-                  <h1 className="animate-hero-breathe whitespace-nowrap text-center font-serif-display text-[28px] font-light leading-[1.08] tracking-[-0.045em] text-primary">
+                <div className="pointer-events-none absolute inset-x-5 top-[42%] -translate-y-1/2 md:hidden">
+                  <h1 className="animate-hero-breathe mx-auto max-w-[360px] text-center font-serif-display text-[48px] font-light leading-[0.98] tracking-[-0.055em] text-text-tertiary">
                     What would you like to do?
                   </h1>
                 </div>
@@ -427,34 +426,46 @@ function AgentWorkspace() {
               <div className="relative mx-auto w-full max-w-[720px]">
                 {!hasConversation && (
                   <div className="pointer-events-none absolute bottom-full left-0 right-0 hidden flex-col items-center pb-6 md:flex">
-                    <span className="mb-4 inline-flex items-center justify-center gap-2 text-text-primary">
-                      <Mark className="h-7 w-7 ring-0" />
-                      <span className="font-serif-display text-[32px] font-semibold leading-none tracking-[-0.04em]">
-                        {BRANDING.PRODUCT_NAME}
-                      </span>
-                    </span>
                     <h1 className="font-serif-display animate-rise text-center text-[48px] font-light leading-[1.02] tracking-[-0.055em] text-text-tertiary md:text-[54px]">
-                      {BRANDING.HERO_TITLE_LEAD} {BRANDING.HERO_TITLE_TAIL}{" "}
-                      <span className="inline-block bg-highlight px-2 italic leading-[1] text-highlight-foreground">
-                        {BRANDING.HERO_TITLE_HIGHLIGHT}
-                      </span>
+                      What would you like to do?
                     </h1>
                   </div>
                 )}
 
                 {!hasConversation && errorNote}
                 {!hasConversation && approvalNote}
+                {!hasConversation && (
+                  <div className="mb-3 flex w-full gap-2 overflow-x-auto px-0.5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {[
+                      ["D", "Docs", "#4285F4"],
+                      ["N", "Notion", "#2E3A2F"],
+                      ["M", "Gmail", "#C96F4F"],
+                      ["L", "Linear", "#6B7F5B"],
+                      ["31", "Calendar", "#4285F4"],
+                    ].map(([icon, label, color]) => (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => setConnections(true)}
+                        className="flex h-10 shrink-0 items-center gap-2 rounded-[10px] border border-border-faint bg-surface-secondary px-3 text-[14px] text-text-secondary transition-colors hover:bg-surface-raised-tertiary"
+                      >
+                        <span className="grid h-5 min-w-5 place-items-center text-[12px] font-semibold" style={{ color }} aria-hidden="true">{icon}</span>
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <Composer
                   onSend={sendMessage}
                   busy={busy}
                   onStop={stopRun}
                   disabled={sending}
                   placeholder="Ask anything…"
-                  footer={<div className="flex items-center gap-1.5 border-t border-border-faint p-1 sm:gap-2 sm:p-2 md:hidden">
+                  footer={hasConversation ? <div className="flex items-center gap-1.5 border-t border-border-faint p-1 sm:gap-2 sm:p-2 md:hidden">
                     <button onClick={() => setRepoPicker(true)} className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border-faint px-2 text-[12px] text-text-tertiary hover:bg-surface-raised-tertiary sm:h-10 sm:px-3 sm:text-[13px]"><IconFolder className="h-4 w-4 shrink-0 sm:h-[17px] sm:w-[17px]" /><span className="truncate">{project?.name || "Add repositories…"}</span><IconChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-text-muted sm:h-4 sm:w-4" /></button>
                     <button onClick={() => setBranchPicker(true)} className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border-faint px-2 text-[12px] text-text-tertiary hover:bg-surface-raised-tertiary sm:h-10 sm:px-3 sm:text-[13px]"><IconGitBranch className="h-4 w-4 shrink-0 sm:h-[17px] sm:w-[17px]" /><span className="truncate">{branch || "main"}</span><IconChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-text-muted sm:h-4 sm:w-4" /></button>
                     <button aria-label="Connection settings" onClick={() => setConnections(true)} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-text-tertiary hover:bg-surface-raised sm:h-10 sm:w-10"><IconSettings className="h-[18px] w-[18px] sm:h-5 sm:w-5" /></button>
-                  </div>}
+                  </div> : undefined}
                 />
                 {!hasConversation && githubPromoOpen && (
                   <div className="mt-3 flex h-[38px] w-full items-center justify-between rounded-[8px] border border-border-medium bg-surface-tertiary px-2.5 text-sm text-text-secondary shadow-[0_1px_1px_rgba(46,58,47,0.03)] md:mt-3">

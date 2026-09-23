@@ -67,7 +67,7 @@ export function Composer({
         ingest(e.dataTransfer.files);
       }}
       className={cx(
-        "relative w-full overflow-hidden rounded-[22px] border bg-surface-secondary shadow-[0_18px_48px_rgba(46,43,41,0.07)] transition-[border-color,box-shadow]",
+        "relative w-full overflow-hidden rounded-[18px] border bg-surface-secondary shadow-[0_10px_32px_rgba(46,43,41,0.035)] transition-[border-color,box-shadow]",
         dragging ? "border-border-strong shadow-glow" : "border-border-medium"
       )}
     >
@@ -77,7 +77,7 @@ export function Composer({
         </div>
       )}
 
-      <div className="flex w-full flex-col items-start justify-center px-4 pb-1 pt-4 md:px-5 md:pb-3 md:pt-5">
+      <div className="flex w-full flex-col items-start justify-center px-4 pb-3 pt-4 md:px-5 md:pb-3 md:pt-5">
         {attachments.length > 0 && (
           <div className="mb-1.5 flex w-full flex-wrap gap-1.5 px-1">
             {attachments.map((a, idx) => (
@@ -116,7 +116,7 @@ export function Composer({
                 submit();
               }
             }}
-            className="max-h-[40vh] min-h-[28px] w-full resize-none bg-transparent px-0 py-0 text-[15px] leading-relaxed text-text-primary outline-none placeholder:text-text-placeholder md:min-h-[68px] md:text-[15px]"
+            className="agent-composer-input max-h-[40vh] min-h-[54px] w-full resize-none border-0 bg-transparent px-0 py-0 text-[15px] leading-relaxed text-text-primary outline-none placeholder:text-text-placeholder focus:border-0 focus:outline-none focus:ring-0 md:min-h-[68px] md:text-[15px]"
           />
 
           <div className="flex items-center justify-between gap-4">

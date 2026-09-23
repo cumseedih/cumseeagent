@@ -389,6 +389,13 @@ body {
   outline-offset: 2px;
 }
 
+.agent-composer-input:focus,
+.agent-composer-input:focus-visible {
+  outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+}
+
 /* Markdown rendered inside agent replies */
 .agent-md p {
   margin: 0 0 0.75rem;
