@@ -34,6 +34,18 @@ model AuthIdentity {
   @@index([userId])
 }
 
+model EmailVerificationCode {
+  id         String    @id @default(cuid())
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email, createdAt])
+}
+
 model Project {
   id            String    @id @default(cuid())
   userId        String

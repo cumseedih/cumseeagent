@@ -672,7 +672,16 @@ export default function AgentPage() {
         onRequestLogin={() => setLoginOpen(true)}
         onOpenAccount={() => setAccountOpen(true)}
       />
-      <LoginSheet open={loginOpen} error={authError} onClose={() => setLoginOpen(false)} />
+      <LoginSheet
+        open={loginOpen}
+        error={authError}
+        onClose={() => setLoginOpen(false)}
+        onAuthenticated={(nextUser) => {
+          setUser(nextUser);
+          setAuthStatus("authenticated");
+          setLoginOpen(false);
+        }}
+      />
       <AccountSheet
         open={accountOpen}
         user={user}
@@ -692,10 +701,31 @@ function GoogleIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.23-.2-1.77H12v3.41h5.52a4.72 4.72 0 0 1-2.05 3.01l-.02.11 2.98 2.31.21.02c1.92-1.77 2.96-4.38 2.96-7.09Z" /><path fill="#34A853" d="M12 22c2.7 0 4.96-.89 6.62-2.42l-3.15-2.44c-.84.57-1.96.97-3.47.97a6.02 6.02 0 0 1-5.7-4.16l-.11.01-3.1 2.4-.04.1A10 10 0 0 0 2 12c0 1.61.38 3.14 1.05 4.46l3.25-2.51Z" /><path fill="#FBBC05" d="M6.3 13.95A6.15 6.15 0 0 1 5.98 12c0-.68.12-1.34.31-1.95v-.12L3.16 7.49l-.1.05A10 10 0 0 0 2 12c0 1.61.38 3.14 1.05 4.46l3.25-2.51Z" /><path fill="#EA4335" d="M12 5.89c1.88 0 3.15.81 3.88 1.48l2.81-2.74C16.97 3.03 14.7 2 12 2a10 10 0 0 0-8.95 5.54l3.24 2.51A6.04 6.04 0 0 1 12 5.89Z" /></svg>;
 }
 
-function LoginSheet({ open, error, onClose }: { open: boolean; error: string | null; onClose: () => void }) {
+function LoginSheet({ open, error, onClose, onAuthenticated }: { open: boolean; error: string | null; onClose: () => void; onAuthenticated: (user: AuthUser) => void }) {
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   if (!open) return null;
+  async function continueWithEmail() {
+    setBusy(true);
+    setNotice(null);
+    try {
+      if (!codeSent) {
+        await api.requestEmailCode(email);
+        setCodeSent(true);
+        setNotice("Verification code sent. Check your inbox.");
+      } else {
+        const result = await api.verifyEmailCode(email, code);
+        onAuthenticated(result.user);
+      }
+    } catch (e: any) {
+      setNotice(e.message || "Could not verify email");
+    } finally {
+      setBusy(false);
+    }
+  }
   return <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="login-title">
     <div className="relative w-full max-w-[600px] animate-sheet-up rounded-[26px] border border-border-faint bg-surface-floating px-6 pb-6 pt-4 shadow-floating sm:px-8">
       <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-surface-raised" />
@@ -706,8 +736,9 @@ function LoginSheet({ open, error, onClose }: { open: boolean; error: string | n
       {(error || notice) && <p role="alert" className="mt-4 rounded-lg bg-surface-raised px-3 py-2 text-center text-xs text-text-secondary">{error || notice}</p>}
       <button type="button" onClick={() => window.location.assign("/api/auth/google")} className="mt-5 flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-border-faint bg-surface-secondary text-[15px] text-text-secondary hover:bg-surface-raised"><GoogleIcon />Continue with Google</button>
       <div className="my-5 flex items-center gap-3 text-[11px] text-text-muted"><span className="h-px flex-1 bg-border-faint" />OR<span className="h-px flex-1 bg-border-faint" /></div>
-      <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="Your email" className="h-14 w-full rounded-lg border border-border-faint bg-surface-secondary px-4 text-[15px] text-text-primary outline-none placeholder:text-text-placeholder focus:border-border-strong" />
-      <button type="button" onClick={() => setNotice(email ? "Email verification will be available after the mail service is configured." : "Enter your email first.")} className="mt-2 h-14 w-full rounded-lg bg-interactive-cta text-[15px] font-medium text-interactive-on-cta hover:bg-interactive-cta-hover">Continue with email</button>
+      <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" disabled={codeSent || busy} placeholder="Your email" className="h-14 w-full rounded-lg border border-border-faint bg-surface-secondary px-4 text-[15px] text-text-primary outline-none placeholder:text-text-placeholder focus:border-border-strong disabled:opacity-60" />
+      {codeSent && <input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit verification code" className="mt-2 h-14 w-full rounded-lg border border-border-faint bg-surface-secondary px-4 text-center text-[18px] tracking-[0.35em] text-text-primary outline-none placeholder:text-text-placeholder focus:border-border-strong" />}
+      <button type="button" disabled={busy || !email || (codeSent && code.length !== 6)} onClick={continueWithEmail} className="mt-2 h-14 w-full rounded-lg bg-interactive-cta text-[15px] font-medium text-interactive-on-cta hover:bg-interactive-cta-hover disabled:opacity-50">{busy ? "Please wait…" : codeSent ? "Verify email" : "Continue with email"}</button>
       <p className="mt-4 text-center text-[11px] leading-5 text-text-muted">By continuing, you agree to Delvin&apos;s Terms of Use and Privacy Policy.</p>
     </div>
   </div>;

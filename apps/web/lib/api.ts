@@ -25,6 +25,8 @@ export const api = {
   login: (body: any) => request("/auth/login", { method: "POST", body: JSON.stringify(body) }),
   me: () => request("/auth/me"),
   logout: () => request("/auth/logout", { method: "POST" }),
+  requestEmailCode: (email: string) => request("/auth/email/request-code", { method: "POST", body: JSON.stringify({ email }) }),
+  verifyEmailCode: (email: string, code: string) => request("/auth/email/verify", { method: "POST", body: JSON.stringify({ email, code }) }),
 
   // Projects
   listProjects: () => request("/projects"),

@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma.js";
 import { hashPassword, verifyPassword, signToken, verifyToken } from "../lib/auth.js";
 import { config } from "../lib/config.js";
 import { createGoogleState, exchangeGoogleCode, googleAuthorizationUrl, verifyGoogleState } from "../lib/googleOAuth.js";
+import { createVerificationCode, hashVerificationCode, sendVerificationCode } from "../lib/email.js";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -15,6 +16,20 @@ const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 });
+
+const emailCodeRequestSchema = z.object({ email: z.string().email().transform((value) => value.trim().toLowerCase()) });
+const emailCodeVerifySchema = z.object({
+  email: z.string().email().transform((value) => value.trim().toLowerCase()),
+  code: z.string().regex(/^\d{6}$/),
+});
+
+const disposableEmailDomains = new Set([
+  "10minutemail.com", "guerrillamail.com", "mailinator.com", "temp-mail.org", "tempmail.com", "yopmail.com", "getnada.com", "sharklasers.com", "dropmail.me",
+]);
+
+function isDisposableEmail(email: string) {
+  return disposableEmailDomains.has(email.split("@")[1] || "");
+}
 
 const sessionCookie = () => ({
   httpOnly: true,
@@ -69,6 +84,66 @@ export async function authRoutes(app: FastifyInstance) {
       data: { userId: user.id, action: "auth.login", ipAddress: req.ip },
     });
 
+    return { user: { id: user.id, email: user.email, username: user.username, createdAt: user.createdAt }, token };
+  });
+
+  // POST /api/auth/email/request-code — Gmail SMTP verification
+  app.post("/email/request-code", async (req, reply) => {
+    const parsed = emailCodeRequestSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: "Enter a valid email address" });
+    const { email } = parsed.data;
+    if (isDisposableEmail(email)) return reply.code(400).send({ error: "Disposable email addresses are not allowed" });
+
+    const recent = await prisma.emailVerificationCode.findFirst({
+      where: { email, createdAt: { gt: new Date(Date.now() - 60_000) } },
+      orderBy: { createdAt: "desc" },
+    });
+    if (recent) return reply.code(429).send({ error: "Please wait before requesting another code" });
+
+    const code = createVerificationCode();
+    try {
+      await sendVerificationCode(email, code);
+    } catch (error: any) {
+      req.log.error(error, "Email verification send failed");
+      return reply.code(503).send({ error: "Email verification is not configured" });
+    }
+    await prisma.emailVerificationCode.create({
+      data: {
+        email,
+        codeHash: hashVerificationCode(code),
+        expiresAt: new Date(Date.now() + config.mail.codeTtlMinutes * 60_000),
+      },
+    });
+    return { message: "Verification code sent" };
+  });
+
+  // POST /api/auth/email/verify — consume code and start a session
+  app.post("/email/verify", async (req, reply) => {
+    const parsed = emailCodeVerifySchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: "Enter the six-digit verification code" });
+    const { email, code } = parsed.data;
+    const record = await prisma.emailVerificationCode.findFirst({
+      where: { email, consumedAt: null, expiresAt: { gt: new Date() }, attempts: { lt: 5 } },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!record || hashVerificationCode(code) !== record.codeHash) {
+      if (record) await prisma.emailVerificationCode.update({ where: { id: record.id }, data: { attempts: { increment: 1 } } });
+      return reply.code(401).send({ error: "Invalid or expired verification code" });
+    }
+    await prisma.emailVerificationCode.update({ where: { id: record.id }, data: { consumedAt: new Date() } });
+    let user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      try {
+        user = await prisma.user.create({ data: { email } });
+      } catch (error: any) {
+        if (error?.code !== "P2002") throw error;
+        user = await prisma.user.findUnique({ where: { email } });
+      }
+    }
+    if (!user) return reply.code(500).send({ error: "Could not create account" });
+    const token = signToken({ userId: user.id, email: user.email });
+    reply.setCookie("token", token, sessionCookie());
+    await prisma.auditLog.create({ data: { userId: user.id, action: "auth.email", ipAddress: req.ip } });
     return { user: { id: user.id, email: user.email, username: user.username, createdAt: user.createdAt }, token };
   });
 

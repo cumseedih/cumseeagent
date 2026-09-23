@@ -25,6 +25,15 @@ export const config = {
         ? "https://delvin.agentdomains.co/api/auth/google/callback"
         : "http://localhost:4000/api/auth/google/callback"),
   },
+  mail: {
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "465", 10),
+    secure: (process.env.SMTP_SECURE || "true") === "true",
+    user: process.env.SMTP_USER || "",
+    pass: process.env.SMTP_PASS || "",
+    from: process.env.SMTP_FROM || process.env.SMTP_USER || "",
+    codeTtlMinutes: parseInt(process.env.EMAIL_CODE_TTL_MINUTES || "10", 10),
+  },
   github: {
     appId: process.env.GITHUB_APP_ID || "",
     appSlug: process.env.GITHUB_APP_SLUG || "delvin-agent",
