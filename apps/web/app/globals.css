@@ -1,3 +1,45 @@
+@font-face {
+  font-family: "Basel Grotesk";
+  src: url("/fonts/basel-grotesk-400.woff2") format("woff2");
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Basel Grotesk";
+  src: url("/fonts/basel-grotesk-450.woff2") format("woff2");
+  font-display: swap;
+  font-weight: 450;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Basel Grotesk";
+  src: url("/fonts/basel-grotesk-500.woff2") format("woff2");
+  font-display: swap;
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Basel Grotesk";
+  src: url("/fonts/basel-grotesk-700.woff2") format("woff2");
+  font-display: swap;
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Martina Plantijn";
+  src: url("/fonts/martina-plantijn-300.woff2") format("woff2");
+  font-display: swap;
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Martina Plantijn";
+  src: url("/fonts/martina-plantijn-300-italic.woff2") format("woff2");
+  font-display: swap;
+  font-weight: 300;
+  font-style: italic;
+}
 @import url("https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap");
 
 @tailwind base;
@@ -57,9 +99,9 @@
   --interactive-cta-secondary-hover: 35 34% 82%;
 
   /* Font stacks */
-  --font-serif: "Josefin Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-ui: "Josefin Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: "Josefin Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Martina Plantijn", ui-sans-serif, system-ui, sans-serif;
+  --font-ui: "Basel Grotesk", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Basel Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* Sidebar rail */
