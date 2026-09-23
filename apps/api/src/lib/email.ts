@@ -24,8 +24,35 @@ export async function sendVerificationCode(email: string, code: string) {
   await transporter.sendMail({
     from: config.mail.from,
     to: email,
-    subject: "Your Delvin verification code",
-    text: `Your Delvin verification code is ${code}. It expires in ${config.mail.codeTtlMinutes} minutes.`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#2e2b29"><h2>Verify your Delvin account</h2><p>Use this code to continue:</p><div style="font-size:32px;letter-spacing:8px;font-weight:700;padding:16px 0">${code}</div><p>This code expires in ${config.mail.codeTtlMinutes} minutes.</p></div>`,
+    subject: `${code} is your Delvin verification code`,
+    text: `Your Delvin verification code is ${code}. It expires in ${config.mail.codeTtlMinutes} minutes. If you did not request this, you can ignore this email.`,
+    html: `<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:0;background:#fcfaf8;color:#2e2b29;font-family:Arial,Helvetica,sans-serif">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fcfaf8;padding:36px 16px">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e1dedb;border-radius:18px;overflow:hidden">
+          <tr><td style="height:6px;background:#ffc800;font-size:0;line-height:0">&nbsp;</td></tr>
+          <tr><td style="padding:34px 36px 12px">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr>
+              <td><img src="${config.publicAppUrl}/assets/logo.png" width="42" height="42" alt="Delvin" style="display:block;border-radius:50%;object-fit:cover" /></td>
+              <td align="right" style="font-size:13px;letter-spacing:2px;color:#6f6862;text-transform:uppercase">Delvin Agent</td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:18px 36px 34px">
+            <h1 style="margin:0;color:#2e2b29;font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:400;letter-spacing:-.6px;line-height:1.2">Verify your email</h1>
+            <p style="margin:14px 0 0;color:#6f6862;font-size:15px;line-height:1.6">Use the code below to continue to your Delvin workspace.</p>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:26px 0 22px;background:#f0ebe5;border:1px solid #e1dedb;border-radius:12px"><tr><td align="center" style="padding:22px 14px">
+              <div style="color:#2e2b29;font-family:Arial,Helvetica,sans-serif;font-size:34px;font-weight:700;letter-spacing:10px;line-height:1">${code}</div>
+            </td></tr></table>
+            <p style="margin:0;color:#6f6862;font-size:13px;line-height:1.6">This code expires in <strong style="color:#2e2b29">${config.mail.codeTtlMinutes} minutes</strong>.</p>
+            <p style="margin:22px 0 0;padding-top:18px;border-top:1px solid #e5e7eb;color:#98918b;font-size:12px;line-height:1.6">If you did not request this code, you can safely ignore this email. For your security, never share this code with anyone.</p>
+          </td></tr>
+        </table>
+        <p style="margin:18px 0 0;color:#98918b;font-size:11px;line-height:1.5">© Delvin Agent · Secure workspace access</p>
+      </td></tr>
+    </table>
+  </body>
+</html>`,
   });
 }
