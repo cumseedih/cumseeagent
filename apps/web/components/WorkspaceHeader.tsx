@@ -43,7 +43,7 @@ export function WorkspaceHeader({
 }) {
 
   return (
-    <header className="flex min-h-[52px] shrink-0 items-center gap-2 overflow-hidden border-b border-border-faint bg-surface-primary/95 px-4 backdrop-blur">
+    <header className="flex min-h-[56px] shrink-0 items-center gap-2 overflow-hidden border-b border-border-faint bg-surface-primary/90 px-4 backdrop-blur">
       <button
         onClick={onToggleSidebar}
         title="Toggle sidebar"

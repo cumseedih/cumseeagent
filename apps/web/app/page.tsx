@@ -381,7 +381,7 @@ function AgentWorkspace() {
           railTab={railTab}
           onRailTabChange={setRailTab}
           sessionTitle={sessionTitle}
-        /></div> : <header className="flex h-[68px] shrink-0 items-center justify-between px-0 sm:px-5">
+        /></div> : <header className="flex h-[58px] shrink-0 items-center justify-between px-2 sm:px-5">
           <button aria-label="Open sessions" onClick={() => isMobile ? setMobileNav(v => !v) : setSidebarCollapsed(v => !v)} className="grid h-11 w-11 place-items-center rounded-lg text-text-primary hover:bg-surface-raised"><IconPanelLeft className="h-[22px] w-[22px]" /></button>
           <button aria-label="Open workspace files" onClick={() => setWorkspaceOpen(true)} className="grid h-11 w-11 place-items-center rounded-lg text-text-placeholder hover:bg-surface-raised"><IconFolder className="h-[23px] w-[23px]" /></button>
         </header>}
@@ -423,16 +423,16 @@ function AgentWorkspace() {
                   </h1>
                 </div>
               )}
-              <div className="relative mx-auto w-full max-w-2xl">
+              <div className="relative mx-auto w-full max-w-[720px]">
                 {!hasConversation && (
                   <div className="pointer-events-none absolute bottom-full left-0 right-0 hidden flex-col items-center pb-6 md:flex">
-                    <span className="mb-3 inline-flex items-center justify-center gap-2 text-text-primary">
+                    <span className="mb-4 inline-flex items-center justify-center gap-2 text-text-primary">
                       <Mark className="h-7 w-7 ring-0" />
                       <span className="font-serif-display text-[32px] font-semibold leading-none tracking-[-0.04em]">
                         {BRANDING.PRODUCT_NAME}
                       </span>
                     </span>
-                    <h1 className="font-serif-display animate-rise text-center text-[46px] font-light leading-[1.02] tracking-[-0.055em] text-text-tertiary">
+                    <h1 className="font-serif-display animate-rise text-center text-[48px] font-light leading-[1.02] tracking-[-0.055em] text-text-tertiary md:text-[54px]">
                       {BRANDING.HERO_TITLE_LEAD} {BRANDING.HERO_TITLE_TAIL}{" "}
                       <span className="inline-block bg-highlight px-2 italic leading-[1] text-highlight-foreground">
                         {BRANDING.HERO_TITLE_HIGHLIGHT}
@@ -455,6 +455,26 @@ function AgentWorkspace() {
                     <button aria-label="Connection settings" onClick={() => setConnections(true)} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-text-tertiary hover:bg-surface-raised sm:h-10 sm:w-10"><IconSettings className="h-[18px] w-[18px] sm:h-5 sm:w-5" /></button>
                   </div>}
                 />
+                {!hasConversation && (
+                  <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {[
+                      ["Create a landing page", "Build a polished marketing page"],
+                      ["Build a dashboard", "Turn data into a useful view"],
+                      ["Make a game", "Create a playable browser game"],
+                      ["Review my code", "Find bugs and suggest fixes"],
+                    ].map(([title, subtitle]) => (
+                      <button
+                        key={title}
+                        type="button"
+                        onClick={() => sendMessage(title, [])}
+                        className="group rounded-2xl border border-border-faint bg-surface-secondary/70 px-3 py-2.5 text-left transition hover:-translate-y-0.5 hover:border-border-medium hover:bg-surface-floating"
+                      >
+                        <span className="block truncate text-xs font-medium text-text-secondary group-hover:text-text-primary">{title}</span>
+                        <span className="mt-1 block truncate text-[10px] leading-4 text-text-muted">{subtitle}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {!hasConversation && (
                   <div className="mt-3 flex h-[38px] w-full items-center justify-between rounded-[8px] border border-border-medium bg-surface-tertiary px-2.5 text-sm text-text-secondary shadow-[0_1px_1px_rgba(46,58,47,0.03)] md:mt-3">
                     <div className="flex min-w-0 items-center gap-1.5">
