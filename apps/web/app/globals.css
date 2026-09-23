@@ -122,10 +122,12 @@
   display: inline-flex;
   align-items: baseline;
   width: max-content;
-  font-family: var(--font-serif);
-  font-weight: 300;
-  line-height: 0.92;
-  letter-spacing: -0.055em;
+  isolation: isolate;
+  font-family: var(--font-display);
+  font-size: 1em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.075em;
   color: hsl(var(--text-primary));
   text-transform: none;
 }
@@ -134,42 +136,50 @@
   position: relative;
   z-index: 1;
   display: inline-block;
-  background: linear-gradient(
-    112deg,
-    hsl(var(--primary)) 0%,
-    hsl(var(--brand-secondary)) 48%,
-    hsl(var(--accent)) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: hsl(var(--primary));
+  transition: color 180ms ease;
 }
 
 .delvin-wordmark::after {
   content: "";
   position: absolute;
-  left: 0.09em;
-  right: 0.03em;
-  bottom: -0.2em;
-  height: 0.22em;
-  border-radius: 999px;
-  background:
-    linear-gradient(90deg, hsl(var(--brand-tertiary) / 0.78), hsl(var(--accent) / 0.22)),
-    hsl(var(--surface-highlight) / 0.72);
-  transform: rotate(-1deg);
-  transform-origin: left center;
+  z-index: -1;
+  left: 0.07em;
+  right: 0.02em;
+  bottom: -0.13em;
+  height: 0.28em;
+  border-radius: 0.12em 0.24em 0.12em 0.2em;
+  background: hsl(var(--brand-tertiary) / 0.82);
+  transform: skewX(-13deg) rotate(-1.5deg);
+  transform-origin: left bottom;
+  transition: background-color 180ms ease, transform 180ms ease;
 }
 
 .delvin-wordmark::before {
   content: "";
   position: absolute;
-  right: -0.12em;
-  top: 0.05em;
-  height: 0.18em;
-  width: 0.18em;
+  right: -0.16em;
+  top: -0.08em;
+  height: 0.22em;
+  width: 0.22em;
   border-radius: 999px;
   background: hsl(var(--accent));
-  box-shadow: -0.26em 0.2em 0 -0.075em hsl(var(--brand-secondary));
+  box-shadow: -0.24em 0.24em 0 -0.08em hsl(var(--brand-secondary));
+  transform: scale(0.78);
+  transition: transform 180ms ease;
+}
+
+.delvin-wordmark:hover .delvin-wordmark__text {
+  color: hsl(var(--brand-secondary));
+}
+
+.delvin-wordmark:hover::after {
+  background: hsl(var(--brand-tertiary));
+  transform: skewX(-13deg) rotate(-1.5deg) scaleY(1.18);
+}
+
+.delvin-wordmark:hover::before {
+  transform: scale(1);
 }
 
 .delvin-wordmark--login {
