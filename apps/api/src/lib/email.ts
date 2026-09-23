@@ -28,11 +28,11 @@ export async function sendVerificationCode(email: string, code: string) {
     text: `Your Delvin verification code is ${code}. It expires in ${config.mail.codeTtlMinutes} minutes. If you did not request this, you can ignore this email.`,
     html: `<!doctype html>
 <html lang="en">
-  <body style="margin:0;padding:0;background:#fcfaf8;color:#2e2b29;font-family:Arial,Helvetica,sans-serif">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fcfaf8;padding:36px 16px">
+    <body style="margin:0;padding:0;background:#f7f7f5;color:#2e2b29;font-family:Arial,Helvetica,sans-serif">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f7f7f5;padding:36px 16px">
       <tr><td align="center">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e1dedb;border-radius:18px;overflow:hidden">
-          <tr><td style="height:6px;background:#ffc800;font-size:0;line-height:0">&nbsp;</td></tr>
+          <tr><td style="height:6px;background:#2e2b29;font-size:0;line-height:0">&nbsp;</td></tr>
           <tr><td style="padding:34px 36px 12px">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr>
               <td><img src="${config.publicAppUrl}/assets/logo.png" width="42" height="42" alt="Delvin" style="display:block;border-radius:50%;object-fit:cover" /></td>
@@ -42,7 +42,7 @@ export async function sendVerificationCode(email: string, code: string) {
           <tr><td style="padding:18px 36px 34px">
             <h1 style="margin:0;color:#2e2b29;font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:400;letter-spacing:-.6px;line-height:1.2">Verify your email</h1>
             <p style="margin:14px 0 0;color:#6f6862;font-size:15px;line-height:1.6">Use the code below to continue to your Delvin workspace.</p>
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:26px 0 22px;background:#f0ebe5;border:1px solid #e1dedb;border-radius:12px"><tr><td align="center" style="padding:22px 14px">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:26px 0 22px;background:#f1f1ef;border:1px solid #e1dedb;border-radius:12px"><tr><td align="center" style="padding:22px 14px">
               <div style="color:#2e2b29;font-family:Arial,Helvetica,sans-serif;font-size:34px;font-weight:700;letter-spacing:10px;line-height:1">${code}</div>
             </td></tr></table>
             <p style="margin:0;color:#6f6862;font-size:13px;line-height:1.6">This code expires in <strong style="color:#2e2b29">${config.mail.codeTtlMinutes} minutes</strong>.</p>

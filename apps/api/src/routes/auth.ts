@@ -23,14 +23,6 @@ const emailCodeVerifySchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });
 
-const disposableEmailDomains = new Set([
-  "10minutemail.com", "guerrillamail.com", "mailinator.com", "temp-mail.org", "tempmail.com", "yopmail.com", "getnada.com", "sharklasers.com", "dropmail.me",
-]);
-
-function isDisposableEmail(email: string) {
-  return disposableEmailDomains.has(email.split("@")[1] || "");
-}
-
 const sessionCookie = () => ({
   httpOnly: true,
   secure: config.nodeEnv === "production",
@@ -92,7 +84,6 @@ export async function authRoutes(app: FastifyInstance) {
     const parsed = emailCodeRequestSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: "Enter a valid email address" });
     const { email } = parsed.data;
-    if (isDisposableEmail(email)) return reply.code(400).send({ error: "Disposable email addresses are not allowed" });
 
     const recent = await prisma.emailVerificationCode.findFirst({
       where: { email, createdAt: { gt: new Date(Date.now() - 60_000) } },
