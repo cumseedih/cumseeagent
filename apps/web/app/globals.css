@@ -115,6 +115,67 @@
   border-color: hsl(var(--border-faint));
 }
 
+
+
+.delvin-wordmark {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  width: max-content;
+  font-family: var(--font-serif);
+  font-weight: 300;
+  line-height: 0.92;
+  letter-spacing: -0.055em;
+  color: hsl(var(--text-primary));
+  text-transform: none;
+}
+
+.delvin-wordmark__text {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  background: linear-gradient(
+    112deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--brand-secondary)) 48%,
+    hsl(var(--accent)) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.delvin-wordmark::after {
+  content: "";
+  position: absolute;
+  left: 0.09em;
+  right: 0.03em;
+  bottom: -0.2em;
+  height: 0.22em;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, hsl(var(--brand-tertiary) / 0.78), hsl(var(--accent) / 0.22)),
+    hsl(var(--surface-highlight) / 0.72);
+  transform: rotate(-1deg);
+  transform-origin: left center;
+}
+
+.delvin-wordmark::before {
+  content: "";
+  position: absolute;
+  right: -0.12em;
+  top: 0.05em;
+  height: 0.18em;
+  width: 0.18em;
+  border-radius: 999px;
+  background: hsl(var(--accent));
+  box-shadow: -0.26em 0.2em 0 -0.075em hsl(var(--brand-secondary));
+}
+
+.delvin-wordmark--login {
+  font-size: 26px;
+}
+
 html,
 body {
   height: 100%;

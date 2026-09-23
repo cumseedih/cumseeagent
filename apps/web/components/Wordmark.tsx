@@ -37,8 +37,8 @@ export function Wordmark({
     <span className={`inline-flex items-center gap-2 text-text-primary ${className}`}>
       <Mark className={`${glyphClass} ring-0`} />
       {showName && (
-        <span className={`font-display font-medium uppercase ${textClass}`} style={{ letterSpacing: "0.16em" }}>
-          {BRANDING.PRODUCT_NAME}
+        <span className={`delvin-wordmark ${textClass}`} aria-label={BRANDING.PRODUCT_NAME}>
+          <span className="delvin-wordmark__text">{BRANDING.PRODUCT_NAME}</span>
         </span>
       )}
     </span>

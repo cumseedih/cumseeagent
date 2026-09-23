@@ -630,8 +630,10 @@ export default function AgentPage() {
           <div className="mb-10 flex items-center gap-3">
             <img src={BRANDING.LOGO_PATH} alt="Delvin" className="h-11 w-11 rounded-full object-cover ring-1 ring-border-faint" />
             <div>
-              <p className="font-display text-xl font-semibold tracking-[-0.02em] text-text-primary">Delvin</p>
-              <p className="text-xs text-text-muted">Your coding agent</p>
+              <p className="delvin-wordmark delvin-wordmark--login text-[26px]" aria-label="Delvin">
+                <span className="delvin-wordmark__text">Delvin</span>
+              </p>
+              <p className="mt-1 text-xs text-text-muted">Your coding agent</p>
             </div>
           </div>
 
