@@ -224,15 +224,15 @@
 .delvin-core-sphere {
   position: relative;
   z-index: 1;
-  width: 62%;
-  height: 62%;
+  width: 58%;
+  height: 58%;
   overflow: hidden;
   border: 1px solid hsl(0 0% 100% / 0.96);
   border-radius: 50%;
   background:
     radial-gradient(ellipse at 30% 22%, hsl(0 0% 100% / .96) 0 6%, transparent 25%),
-    radial-gradient(ellipse at 68% 76%, hsl(16 45% 64% / .78), transparent 49%),
-    linear-gradient(145deg, hsl(39 48% 98%), hsl(37 32% 83%) 56%, hsl(31 25% 72%));
+    radial-gradient(ellipse at 68% 76%, hsl(16 45% 64% / .68), transparent 49%),
+    linear-gradient(145deg, hsl(43 54% 98%), hsl(37 30% 82%) 56%, hsl(31 25% 71%));
   box-shadow:
     inset 0 0 0 4px hsl(0 0% 100% / .35),
     0 12px 24px hsl(30 22% 31% / 0.13),
@@ -241,9 +241,9 @@
   animation: delvin-core-breathe 6.6s ease-in-out infinite;
   transform-style: preserve-3d;
 }
-.delvin-core-band { position: absolute; left: -12%; right: -12%; height: 15%; border-radius: 50%; opacity: .35; transform: rotate(-22deg); }
+.delvin-core-band { position: absolute; left: -12%; right: -12%; height: 11%; border-radius: 50%; opacity: .22; transform: rotate(-13deg); }
 .delvin-core-band--one { top: 43%; background: hsl(var(--brand-secondary)); box-shadow: 0 1px 0 hsl(0 0% 100% / .45); }
-.delvin-core-band--two { top: 62%; height: 8%; background: hsl(var(--accent)); opacity: .25; }
+.delvin-core-band--two { top: 61%; height: 6%; background: hsl(var(--accent)); opacity: .18; }
 .delvin-core-glint {
   position: absolute;
   left: 19%;
@@ -258,14 +258,15 @@
 .delvin-core-ring {
   position: absolute;
   z-index: 2;
-  width: 83%;
-  height: 27%;
-  border: 1.5px solid hsl(var(--brand-secondary) / .48);
+  width: 128%;
+  height: 38%;
+  border: 2px solid hsl(var(--brand-secondary) / .58);
   border-radius: 50%;
-  box-shadow: 0 1px 0 hsl(0 0% 100% / .75), 0 4px 9px hsl(var(--brand-secondary) / .1);
-  transform: rotateX(72deg) rotateZ(-24deg) translateZ(38px);
+  background: hsl(var(--brand-tertiary) / .1);
+  box-shadow: 0 1px 0 hsl(0 0% 100% / .82), 0 5px 11px hsl(var(--brand-secondary) / .12), inset 0 1px 0 hsl(0 0% 100% / .45);
+  transform: rotate(-19deg) translateZ(38px);
 }
-.delvin-core-ring--back { z-index: 0; opacity: .42; transform: rotateX(72deg) rotateZ(-24deg) translateZ(-2px); }
+.delvin-core-ring--back { z-index: 0; opacity: .45; transform: rotate(-19deg) translateZ(-2px); clip-path: inset(0 0 51%); }
 .delvin-core-ring--front { clip-path: inset(49% 0 0); }
 .delvin-core-satellite {
   position: absolute;
