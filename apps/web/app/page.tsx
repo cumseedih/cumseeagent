@@ -488,6 +488,8 @@ function AgentWorkspace({
                 )}
                 <Composer
                   onSend={sendMessage}
+                  onOpenConnections={() => setConnections(true)}
+                  onOpenWorkspace={() => setWorkspaceOpen(true)}
                   busy={busy}
                   onStop={stopRun}
                   disabled={sending}

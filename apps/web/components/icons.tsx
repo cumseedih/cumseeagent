@@ -61,6 +61,14 @@ export const IconPanelLeft = (p: IconProps) => (
   </Base>
 );
 
+export const IconWorkspacePreview = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="3.5" y="4.5" width="15" height="12" rx="2" />
+    <path d="M8 20h8M12 16.5V20" />
+    <path d="M18.5 8.5h2v10a2 2 0 0 1-2 2h-3" />
+  </Base>
+);
+
 export const IconPaperclip = (p: IconProps) => (
   <Base {...p}>
     <path d="M20.5 11.5l-8 8a4.95 4.95 0 0 1-7-7l8.5-8.5a3.54 3.54 0 0 1 5 5l-8.5 8.5a2.12 2.12 0 0 1-3-3l7.5-7.5" />
