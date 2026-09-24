@@ -24,15 +24,52 @@ export function verifyGoogleState(value?: string) {
   return suppliedBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(suppliedBuffer, expectedBuffer);
 }
 
-export function googleAuthorizationUrl(state: string) {
+export const googleWorkspaceScopes = [
+  "openid",
+  "email",
+  "profile",
+  "https://www.googleapis.com/auth/gmail.modify",
+  "https://www.googleapis.com/auth/calendar.events",
+  "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/documents",
+];
+
+export function googleAuthorizationUrl(state: string, workspace = false) {
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.searchParams.set("client_id", config.google.clientId);
-  url.searchParams.set("redirect_uri", config.google.redirectUri);
+  url.searchParams.set("redirect_uri", workspace ? config.google.workspaceRedirectUri : config.google.redirectUri);
   url.searchParams.set("response_type", "code");
-  url.searchParams.set("scope", "openid email profile");
+  url.searchParams.set("scope", workspace ? googleWorkspaceScopes.join(" ") : "openid email profile");
   url.searchParams.set("state", state);
   url.searchParams.set("prompt", "select_account");
+  if (workspace) {
+    url.searchParams.set("access_type", "offline");
+    url.searchParams.set("include_granted_scopes", "true");
+    url.searchParams.set("prompt", "consent");
+  }
   return url.toString();
+}
+
+export async function exchangeGoogleWorkspaceCode(code: string) {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: config.google.clientId,
+      client_secret: config.google.clientSecret,
+      redirect_uri: config.google.workspaceRedirectUri,
+      grant_type: "authorization_code",
+    }),
+  });
+  if (!response.ok) throw new Error(`Google workspace token exchange failed (${response.status})`);
+  const tokens = (await response.json()) as { access_token?: string; refresh_token?: string; expires_in?: number; scope?: string };
+  if (!tokens.access_token) throw new Error("Google did not return a workspace access token");
+  const profileResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", { headers: { Authorization: `Bearer ${tokens.access_token}` } });
+  if (!profileResponse.ok) throw new Error("Google workspace identity lookup failed");
+  const profile = (await profileResponse.json()) as { email?: string; email_verified?: boolean };
+  if (!profile.email || profile.email_verified === false) throw new Error("Google account identity is invalid");
+  return { ...tokens, email: profile.email.trim().toLowerCase(), scopes: tokens.scope || googleWorkspaceScopes.join(" ") };
 }
 
 type GoogleProfile = {

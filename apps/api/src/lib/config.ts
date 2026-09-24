@@ -37,6 +37,11 @@ export const config = {
         (isProduction ? "/api/auth/google/callback" : "http://localhost:4000/api/auth/google/callback"),
       isProduction ? "/api/auth/google/callback" : "http://localhost:4000/api/auth/google/callback"
     ),
+    workspaceRedirectUri: normalizeProductionUrl(
+      process.env.GOOGLE_WORKSPACE_REDIRECT_URI ||
+        (isProduction ? "/api/integrations/google/callback" : "http://localhost:4000/api/integrations/google/callback"),
+      isProduction ? "/api/integrations/google/callback" : "http://localhost:4000/api/integrations/google/callback"
+    ),
   },
   mail: {
     host: process.env.SMTP_HOST || "smtp-relay.brevo.com",

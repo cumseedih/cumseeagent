@@ -332,6 +332,8 @@ export function ConnectionsDialog({
 }) {
   const [github, setGithub] = useState<"idle" | "connecting" | "connected" | "disconnecting">("idle");
   const [account, setAccount] = useState<string | null>(null);
+  const [google, setGoogle] = useState<"idle" | "connecting" | "connected" | "disconnecting">("idle");
+  const [googleEmail, setGoogleEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -341,6 +343,14 @@ export function ConnectionsDialog({
         if (alive) {
           setGithub(s?.connected ? "connected" : "idle");
           setAccount(s?.connection?.accountLogin || null);
+        }
+      })
+      .catch(() => undefined);
+    api.googleStatus()
+      .then((s: any) => {
+        if (alive) {
+          setGoogle(s?.connected ? "connected" : "idle");
+          setGoogleEmail(s?.email || null);
         }
       })
       .catch(() => undefined);
@@ -397,6 +407,40 @@ export function ConnectionsDialog({
         </div>
 
         <div className="mt-3 space-y-2">
+          <div className="rounded-panel border border-border-faint bg-surface-secondary p-3">
+            <div className="flex items-center gap-3">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#f8f6ee] text-xs font-semibold text-[#2e3a2f]">G</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-text-secondary">Google Workspace</p>
+                <p className="text-[11px] text-text-muted">{google === "connected" ? `Connected${googleEmail ? ` as ${googleEmail}` : ""}` : "Connect Gmail, Calendar, Drive and Docs"}</p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={google === "connecting" || google === "disconnecting"}
+                onClick={async () => {
+                  if (google !== "connected") {
+                    setGoogle("connecting");
+                    window.location.assign("/api/integrations/google/connect");
+                    return;
+                  }
+                  setGoogle("disconnecting");
+                  try {
+                    await api.googleDisconnect();
+                    setGoogle("idle");
+                    setGoogleEmail(null);
+                  } catch {
+                    setGoogle("connected");
+                  }
+                }}
+              >
+                {google === "connecting" ? "Connecting…" : google === "disconnecting" ? "Disconnecting…" : google === "connected" ? "Disconnect" : "Connect"}
+              </Button>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {["Gmail", "Calendar", "Drive", "Docs"].map((name) => <span key={name} className="rounded-md border border-border-faint bg-surface-raised px-2 py-1.5 text-center text-[11px] text-text-muted">{name}</span>)}
+            </div>
+          </div>
           {[
             ["Model providers", "OmniRoute · Devin · OpenCode · OpenAI — keys stay server-side"],
             ["Workspace terminal", "Runs as the agent user inside the session workspace"],

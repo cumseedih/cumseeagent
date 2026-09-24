@@ -20,6 +20,7 @@ model User {
   sessions         Session[]
   auditLogs        AuditLog[]
   githubConnection GitHubConnection?
+  googleConnection GoogleConnection?
   authIdentities   AuthIdentity[]
 }
 
@@ -70,6 +71,19 @@ model GitHubConnection {
   accountType    String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+model GoogleConnection {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  googleEmail          String
+  scopes               String
+  accessTokenEncrypted String
+  refreshTokenEncrypted String?
+  expiresAt            DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 model Session {

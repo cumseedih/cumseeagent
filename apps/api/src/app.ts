@@ -19,6 +19,7 @@ import { gitRoutes } from "./routes/git.js";
 import { modelRoutes } from "./routes/models.js";
 import { eventRoutes } from "./routes/events.js";
 import { githubRoutes } from "./routes/github.js";
+import { googleIntegrationRoutes } from "./routes/googleIntegrations.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -63,6 +64,7 @@ export async function buildApp() {
       // Keep the original GitHub App setup URL working while the app uses the
       // shorter /api/github endpoints internally.
       await api.register(githubRoutes, { prefix: "/integrations/github" });
+      await api.register(googleIntegrationRoutes, { prefix: "/integrations/google" });
       // Also expose health under /api
       await api.register(healthRoutes);
       await api.register(usageRoutes);

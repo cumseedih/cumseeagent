@@ -88,6 +88,8 @@ export const api = {
   githubRepositories: () => request("/github/repositories"),
   githubClone: (repositoryId: string) => request("/github/repositories/clone", { method: "POST", body: JSON.stringify({ repositoryId }) }),
   githubDisconnect: () => request("/github/connection", { method: "DELETE" }),
+  googleStatus: () => request("/integrations/google/status"),
+  googleDisconnect: () => request("/integrations/google/connection", { method: "DELETE" }),
 
   // Models
   listModels: () => request("/models"),
