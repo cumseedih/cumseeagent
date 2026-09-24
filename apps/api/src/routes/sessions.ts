@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { getUserId } from "./auth.js";
 import { eventBus } from "../lib/events.js";
+import { providerRegistry } from "../lib/providers/registry.js";
+import { config } from "../lib/config.js";
 
 const createSchema = z.object({
   projectId: z.string().optional(),
@@ -26,6 +28,8 @@ export async function sessionRoutes(app: FastifyInstance) {
 
     const userId = await getUserId(req);
     const { projectId, title, selectedModel, selectedProvider } = parsed.data;
+    const providerId = selectedProvider || providerRegistry.defaultProviderId();
+    if (!providerId) return reply.code(503).send({ error: "No production AI provider is configured" });
 
     if (projectId) {
       const project = await prisma.project.findUnique({ where: { id: projectId } });
@@ -38,8 +42,8 @@ export async function sessionRoutes(app: FastifyInstance) {
         userId,
         projectId: projectId || null,
         title: title || "New Session",
-        selectedModel: selectedModel || "mock-gpt-4o",
-        selectedProvider: selectedProvider || "mock",
+        selectedModel: selectedModel || config.agent.defaultModel,
+        selectedProvider: providerId,
         status: "active",
       },
     });

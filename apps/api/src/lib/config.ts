@@ -60,9 +60,9 @@ export const config = {
   },
   branding: {
     productName: process.env.PRODUCT_NAME || "Delvin",
-    productDomain: process.env.PRODUCT_DOMAIN || "delvin.local",
-    logoPath: process.env.LOGO_PATH || "/assets/delvin-logo.jpg",
-    faviconPath: process.env.FAVICON_PATH || "/assets/delvin-logo.jpg",
+    productDomain: process.env.PRODUCT_DOMAIN && process.env.PRODUCT_DOMAIN !== "delvin.local" ? process.env.PRODUCT_DOMAIN : "agentdelv.in",
+    logoPath: process.env.LOGO_PATH || "/assets/delvin-avatar.jpg",
+    faviconPath: process.env.FAVICON_PATH || "/assets/delvin-avatar.jpg",
     primaryColor: process.env.PRIMARY_COLOR || "#2e2b29",
     accentColor: process.env.ACCENT_COLOR || "#ffc800",
   },
@@ -83,5 +83,9 @@ export const config = {
       baseUrl: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
       apiKey: process.env.OPENAI_API_KEY || "",
     },
+  },
+  agent: {
+    defaultProvider: process.env.DEFAULT_AGENT_PROVIDER || "omniroute",
+    defaultModel: process.env.DEFAULT_AGENT_MODEL || "devin",
   },
 } as const;

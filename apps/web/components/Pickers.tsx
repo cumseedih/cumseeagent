@@ -268,7 +268,6 @@ export type Harness = "standard" | "fast" | "testing";
 const HARNESSES: { id: Harness; name: string; blurb: string }[] = [
   { id: "standard", name: "Standard harness", blurb: "Full plan → execute → verify loop with approval gates" },
   { id: "fast", name: "Fast harness", blurb: "Skips the planning pass for small, well-scoped tasks" },
-  { id: "testing", name: "Harness for testing", blurb: "Mock provider only — no external calls, for smoke tests" },
 ];
 
 export function HarnessPicker({

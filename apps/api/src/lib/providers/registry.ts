@@ -1,16 +1,11 @@
 import { config } from "../config.js";
 import type { Provider, Model, ProviderHealth } from "./types.js";
 import { OpenAICompatibleProvider } from "./openaiCompatible.js";
-import { MockProvider } from "./mockProvider.js";
 
 class ProviderRegistry {
   private providers = new Map<string, Provider>();
 
   constructor() {
-    // Always register mock for local dev/testing
-    const mock = new MockProvider();
-    this.providers.set(mock.id, mock);
-
     // OmniRoute (OpenAI-compatible, primary)
     if (config.providers.omniroute.baseUrl) {
       const p = new OpenAICompatibleProvider("omniroute", "OmniRoute", config.providers.omniroute.baseUrl, config.providers.omniroute.apiKey);
@@ -56,6 +51,12 @@ class ProviderRegistry {
 
   get(id: string): Provider | undefined {
     return this.providers.get(id);
+  }
+
+  defaultProviderId(): string | undefined {
+    return this.providers.has(config.agent.defaultProvider)
+      ? config.agent.defaultProvider
+      : this.providers.keys().next().value;
   }
 
   async listModels(): Promise<Model[]> {

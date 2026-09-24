@@ -138,10 +138,18 @@ class AgentEngine {
       for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
         const fresh = await prisma.agentRun.findUnique({ where: { id: run.id } });
         if (!fresh || fresh.status === "cancelled" || fresh.status === "paused") return;
-        const providerId = run.session.selectedProvider || "mock";
-        const model = run.session.selectedModel || "mock-gpt-4o";
+        const requestedProvider = run.session.selectedProvider;
+        // Legacy mock selections must never be used in a real run. Resolve them
+        // to the configured production provider instead of showing simulated GPT text.
+        const providerId = !requestedProvider || requestedProvider === "mock"
+          ? providerRegistry.defaultProviderId()
+          : requestedProvider;
+        const model = !run.session.selectedModel || run.session.selectedModel.startsWith("mock-")
+          ? config.agent.defaultModel
+          : run.session.selectedModel;
+        if (!providerId) throw new Error("No production AI provider is configured. Connect a provider in server settings before starting an agent run.");
         const provider = providerRegistry.get(providerId);
-        if (!provider) throw new Error(`Provider ${providerId} is not configured`);
+        if (!provider) throw new Error("No production AI provider is configured. Connect a provider in server settings before starting an agent run.");
         const stream = await provider.chat({ model, messages: await this.conversation(run), tools, stream: true, temperature: 0.2 });
         let content = "";
         const accumulated = new Map<number, Accumulator>();

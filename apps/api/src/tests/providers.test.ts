@@ -2,31 +2,14 @@ import { describe, it, expect } from "vitest";
 import { providerRegistry } from "../lib/providers/registry.js";
 
 describe("Providers", () => {
-  it("lists providers", async () => {
+  it("lists configured production providers without a simulated provider", async () => {
     const providers = providerRegistry.list();
-    expect(providers.length).toBeGreaterThan(0);
-    expect(providers.some((p) => p.id === "mock")).toBe(true);
+    expect(providers.some((p) => p.id === "mock")).toBe(false);
   });
 
-  it("lists models (mock + opencode)", async () => {
+  it("lists models from configured providers", async () => {
     const models = await providerRegistry.listModels();
-    expect(models.length).toBeGreaterThan(0);
-    expect(models.some((m) => m.providerId === "mock")).toBe(true);
-  });
-
-  it("checks health of mock", async () => {
-    const health = await providerRegistry.health("mock");
-    expect(health.status).toBe("ok");
-  });
-
-  it("handles 429/quota via mock (no throw for mock)", async () => {
-    const provider = providerRegistry.get("mock")!;
-    const stream = await provider.chat({ model: "mock-gpt-4o", messages: [{ role: "user", content: "hello" }], stream: true });
-    let content = "";
-    for await (const chunk of stream) {
-      content += chunk.choices[0]?.delta?.content || "";
-    }
-    expect(content.length).toBeGreaterThan(0);
+    expect(models.every((m) => m.providerId !== "mock")).toBe(true);
   });
 
   it("throws for unknown provider", async () => {

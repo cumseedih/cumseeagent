@@ -26,7 +26,7 @@ describe("Sessions & Messages", () => {
       method: "POST",
       url: "/api/sessions",
       headers: authHeader(token),
-      payload: { title: "Test Session", selectedModel: "mock-gpt-4o" },
+      payload: { title: "Test Session" },
     });
     expect(res.statusCode).toBe(201);
     const body = JSON.parse(res.body);
@@ -60,11 +60,11 @@ describe("Sessions & Messages", () => {
     expect(body.messages.length).toBe(1);
     expect(body.messages[0].content).toBe("Hello agent");
 
-    // Wait a bit for mock agent to create assistant message via provider
-    await new Promise((r) => setTimeout(r, 1500));
+    // The message persists independently of an external provider response.
+    await new Promise((r) => setTimeout(r, 100));
     const m3 = await app.inject({ method: "GET", url: `/api/sessions/${sessionId}/messages`, headers: authHeader(token) });
     const msgs = JSON.parse(m3.body).messages;
-    // Should have assistant response now (mock provider)
+    // The user message remains available even if an external provider is unavailable.
     expect(msgs.length).toBeGreaterThanOrEqual(1);
   });
 

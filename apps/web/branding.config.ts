@@ -4,11 +4,15 @@
  * The workspace uses Arena's restrained agent layout while every visible
  * identity token—artwork, type and the Earthy Minimal palette—belongs to Delvin.
  */
+const configuredProductDomain = process.env.NEXT_PUBLIC_PRODUCT_DOMAIN || process.env.PRODUCT_DOMAIN;
+
 export const BRANDING = {
   PRODUCT_NAME: process.env.NEXT_PUBLIC_PRODUCT_NAME || process.env.PRODUCT_NAME || "Delvin",
   PRODUCT_TAGLINE: process.env.NEXT_PUBLIC_PRODUCT_TAGLINE || "Autonomous coding agent workspace",
-  PRODUCT_DOMAIN: process.env.NEXT_PUBLIC_PRODUCT_DOMAIN || process.env.PRODUCT_DOMAIN || "delvin.local",
-  LOGO_PATH: process.env.NEXT_PUBLIC_LOGO_PATH || process.env.LOGO_PATH || "/assets/logo.png",
+  // Avoid leaking the retired local development identity when a stale environment
+  // file is present during a production build.
+  PRODUCT_DOMAIN: configuredProductDomain && configuredProductDomain !== "delvin.local" ? configuredProductDomain : "agentdelv.in",
+  LOGO_PATH: "/assets/delvin-avatar.jpg",
   FAVICON_PATH: process.env.NEXT_PUBLIC_FAVICON_PATH || process.env.FAVICON_PATH || "/assets/favicon.ico",
   APPLE_ICON_PATH: "/assets/apple-touch-icon.png",
   OG_IMAGE_PATH: "/assets/og.png",
