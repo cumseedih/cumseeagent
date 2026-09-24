@@ -1,3 +1,18 @@
+const isProduction = process.env.NODE_ENV === "production";
+const canonicalProductionOrigin = "https://agentdelv.in";
+const configuredPublicAppUrl = process.env.PUBLIC_APP_URL || (isProduction ? canonicalProductionOrigin : "http://localhost:3000");
+
+function normalizeProductionUrl(value: string, fallback: string) {
+  const url = new URL(value || fallback, configuredPublicAppUrl);
+  if (isProduction && url.hostname === "delvin.agentdomains.co") {
+    url.hostname = "agentdelv.in";
+    url.protocol = "https:";
+  }
+  return url.toString();
+}
+
+const publicAppUrl = normalizeProductionUrl(configuredPublicAppUrl, canonicalProductionOrigin).replace(/\/$/, "");
+
 export const config = {
   port: parseInt(process.env.PORT || "4000", 10),
   host: process.env.HOST || "0.0.0.0",
@@ -13,22 +28,20 @@ export const config = {
   // Bump to force re-acceptance of the Terms of Use
   touVersion: process.env.TOU_VERSION || "1",
   agentUser: process.env.AGENT_USER || "agent",
-  publicAppUrl:
-    process.env.PUBLIC_APP_URL ||
-    (process.env.NODE_ENV === "production" ? "https://delvin.agentdomains.co" : "http://localhost:3000"),
+  publicAppUrl,
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || "",
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    redirectUri:
+    redirectUri: normalizeProductionUrl(
       process.env.GOOGLE_REDIRECT_URI ||
-      (process.env.NODE_ENV === "production"
-        ? "https://delvin.agentdomains.co/api/auth/google/callback"
-        : "http://localhost:4000/api/auth/google/callback"),
+        (isProduction ? "/api/auth/google/callback" : "http://localhost:4000/api/auth/google/callback"),
+      isProduction ? "/api/auth/google/callback" : "http://localhost:4000/api/auth/google/callback"
+    ),
   },
   mail: {
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.SMTP_PORT || "465", 10),
-    secure: (process.env.SMTP_SECURE || "true") === "true",
+    host: process.env.SMTP_HOST || "smtp-relay.brevo.com",
+    port: parseInt(process.env.SMTP_PORT || "587", 10),
+    secure: (process.env.SMTP_SECURE || "false") === "true",
     user: process.env.SMTP_USER || "",
     pass: process.env.SMTP_PASS || "",
     from: process.env.SMTP_FROM || process.env.SMTP_USER || "",

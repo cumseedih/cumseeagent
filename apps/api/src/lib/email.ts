@@ -3,9 +3,16 @@ import nodemailer from "nodemailer";
 import { config } from "./config.js";
 
 const transporter = nodemailer.createTransport({
+  pool: true,
+  maxConnections: 5,
+  maxMessages: 100,
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  socketTimeout: 20_000,
   host: config.mail.host,
   port: config.mail.port,
   secure: config.mail.secure,
+  requireTLS: !config.mail.secure,
   auth: config.mail.user && config.mail.pass ? { user: config.mail.user, pass: config.mail.pass } : undefined,
 });
 
@@ -21,6 +28,7 @@ export async function sendVerificationCode(email: string, code: string) {
   if (!config.mail.user || !config.mail.pass || !config.mail.from) {
     throw new Error("Email verification is not configured");
   }
+  const startedAt = Date.now();
   await transporter.sendMail({
     from: config.mail.from,
     to: email,
@@ -54,5 +62,8 @@ export async function sendVerificationCode(email: string, code: string) {
     </table>
   </body>
 </html>`,
+  });
+  console.info("[mail] Verification email accepted by SMTP", {
+    durationMs: Date.now() - startedAt,
   });
 }
