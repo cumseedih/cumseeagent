@@ -7,6 +7,7 @@ import { connectSSE, CumseeEvent } from "../lib/sse";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { Composer, type PluginMention } from "../components/Composer";
+import { DelvinCore } from "../components/DelvinCore";
 import { PETS, PetGlyph, WorkspacePet, type PetId } from "../components/Pet";
 import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings, IconGithub, IconX } from "../components/icons";
 import { MessageList } from "../components/MessageList";
@@ -451,8 +452,9 @@ function AgentWorkspace({
               )}
             >
               {!hasConversation && (
-                <div className="pointer-events-none absolute inset-x-5 top-[42%] -translate-y-1/2 md:hidden">
-                  <h1 className="animate-hero-breathe mx-auto max-w-[360px] text-center font-serif-display text-[48px] font-light leading-[0.98] tracking-[-0.055em] text-text-tertiary">
+                <div className="pointer-events-none absolute inset-x-5 top-[39%] -translate-y-1/2 md:hidden">
+                  <DelvinCore status={status} className="mx-auto mb-3 h-[58px] w-[58px]" />
+                  <h1 className="animate-hero-breathe mx-auto max-w-[360px] text-center font-serif-display text-[42px] font-light leading-[1.02] tracking-[-0.045em] text-text-tertiary">
                     What would you like to do?
                   </h1>
                 </div>
@@ -460,7 +462,8 @@ function AgentWorkspace({
               <div className="relative mx-auto w-full max-w-[720px]">
                 {!hasConversation && (
                   <div className="pointer-events-none absolute bottom-full left-0 right-0 hidden flex-col items-center pb-6 md:flex">
-                    <h1 className="font-serif-display animate-rise text-center text-[48px] font-light leading-[1.02] tracking-[-0.055em] text-text-tertiary md:text-[54px]">
+                    <DelvinCore status={status} className="mb-4 h-[76px] w-[76px]" />
+                    <h1 className="font-serif-display animate-rise text-center text-[48px] font-light leading-[1.02] tracking-[-0.045em] text-text-tertiary md:text-[54px]">
                       What would you like to do?
                     </h1>
                   </div>
@@ -483,7 +486,7 @@ function AgentWorkspace({
                         onClick={() => setConnections(true)}
                         className="flex h-10 shrink-0 items-center gap-2 rounded-[10px] border border-border-faint bg-surface-secondary px-3 text-[14px] text-text-secondary transition-colors hover:bg-surface-raised-tertiary"
                       >
-                        <span className="grid h-5 min-w-5 place-items-center text-[12px] font-semibold" style={{ color }} aria-hidden="true">{icon}</span>
+                        <span className="plugin-sigil grid h-6 min-w-6 place-items-center text-[11px] font-semibold" style={{ color }} aria-hidden="true">{icon}</span>
                         <span>{label}</span>
                       </button>
                     ))}

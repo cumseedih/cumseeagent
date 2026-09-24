@@ -141,7 +141,7 @@ export function Composer({
         ingest(e.dataTransfer.files);
       }}
       className={cx(
-        "relative w-full rounded-[18px] border bg-surface-secondary shadow-[0_10px_32px_rgba(46,43,41,0.035)] transition-[border-color,box-shadow]",
+        "premium-composer relative w-full rounded-[20px] border bg-surface-secondary transition-[border-color,box-shadow,transform]",
         dragging ? "border-border-strong shadow-glow" : "border-border-medium"
       )}
     >

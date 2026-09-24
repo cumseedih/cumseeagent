@@ -73,9 +73,9 @@ const config: Config = {
         panel: "10px",
       },
       boxShadow: {
-        floating: "0 18px 40px -18px rgb(0 0 0 / 0.75)",
-        card: "0 1px 0 0 rgb(255 255 255 / 0.03) inset",
-        glow: "0 0 0 1px hsl(var(--border-medium)), 0 12px 32px -16px rgb(0 0 0 / 0.9)",
+        floating: "0 18px 42px -24px hsl(30 24% 27% / 0.26)",
+        card: "0 1px 0 0 hsl(0 0% 100% / 0.84) inset, 0 6px 18px -14px hsl(30 24% 27% / 0.22)",
+        glow: "0 0 0 1px hsl(var(--border-medium)), 0 12px 32px -16px hsl(30 24% 27% / 0.24)",
       },
       keyframes: {
         shimmer: {
