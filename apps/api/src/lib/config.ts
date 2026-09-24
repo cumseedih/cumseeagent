@@ -67,6 +67,11 @@ export const config = {
     accentColor: process.env.ACCENT_COLOR || "#ffc800",
   },
   providers: {
+    kimi: {
+      apiKey: process.env.KIMI_API_KEY || process.env.MOONSHOT_API_KEY || "",
+      baseUrl: process.env.KIMI_BASE_URL || process.env.MOONSHOT_BASE_URL || "https://api.moonshot.ai/v1",
+      model: process.env.KIMI_MODEL || "kimi-k2-0905-preview",
+    },
     omniroute: {
       baseUrl: process.env.OMNIROUTE_BASE_URL || "http://127.0.0.1:20128/v1",
       apiKey: process.env.OMNIROUTE_API_KEY || "",
@@ -85,7 +90,7 @@ export const config = {
     },
   },
   agent: {
-    defaultProvider: process.env.DEFAULT_AGENT_PROVIDER || "omniroute",
-    defaultModel: process.env.DEFAULT_AGENT_MODEL || "devin",
+    defaultProvider: process.env.DEFAULT_AGENT_PROVIDER || (process.env.KIMI_API_KEY || process.env.MOONSHOT_API_KEY ? "kimi" : "omniroute"),
+    defaultModel: process.env.DEFAULT_AGENT_MODEL || process.env.KIMI_MODEL || (process.env.KIMI_API_KEY || process.env.MOONSHOT_API_KEY ? "kimi-k2-0905-preview" : "devin"),
   },
 } as const;

@@ -328,6 +328,28 @@
   background: linear-gradient(145deg, hsl(var(--surface-secondary)), hsl(38 34% 97%));
   box-shadow: 0 2px 3px hsl(30 22% 33% / 0.025), 0 15px 34px -25px hsl(30 24% 32% / 0.28), inset 0 1px 0 hsl(0 0% 100% / 0.96);
 }
+.liquid-composer {
+  overflow: visible;
+  background: hsl(var(--surface-floating) / .72);
+  backdrop-filter: blur(20px) saturate(1.18);
+  -webkit-backdrop-filter: blur(20px) saturate(1.18);
+  box-shadow: 0 2px 3px hsl(30 22% 33% / .025), 0 18px 40px -28px hsl(30 24% 32% / .32), inset 0 1px 0 hsl(0 0% 100% / .96), inset 0 -1px 0 hsl(var(--brand-tertiary) / .35);
+}
+.liquid-composer::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(112deg, hsl(0 0% 100% / .48), transparent 24%, transparent 70%, hsl(var(--brand-tertiary) / .22));
+  opacity: .72;
+}
+.liquid-popover {
+  background: hsl(var(--surface-floating) / .82);
+  backdrop-filter: blur(24px) saturate(1.22);
+  -webkit-backdrop-filter: blur(24px) saturate(1.22);
+  box-shadow: 0 16px 42px hsl(30 20% 22% / .16), inset 0 1px 0 hsl(0 0% 100% / .9);
+}
 .premium-composer:focus-within {
   border-color: hsl(var(--brand-secondary));
   box-shadow: 0 0 0 3px hsl(var(--brand-secondary) / 0.08), 0 18px 38px -25px hsl(30 24% 32% / 0.32), inset 0 1px 0 hsl(0 0% 100% / 0.96);

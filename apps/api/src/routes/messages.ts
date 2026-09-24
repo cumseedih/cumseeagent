@@ -21,6 +21,7 @@ const createSchema = z.object({
   // Mention identities are sent separately from visible text so tool routing can
   // safely distinguish a selected integration from an arbitrary @word.
   mentions: z.array(pluginMentionSchema).max(8).optional().default([]),
+  effort: z.enum(["quick", "standard", "deep"]).optional().default("standard"),
 });
 
 export async function messageRoutes(app: FastifyInstance) {
@@ -35,8 +36,8 @@ export async function messageRoutes(app: FastifyInstance) {
     if (!session) return reply.code(404).send({ error: "Session not found" });
     if (session.userId !== userId) return reply.code(403).send({ error: "Forbidden" });
 
-    const { role, content, selectedModel, selectedProvider, mentions } = parsed.data;
-    const metadataJson = mentions.length ? JSON.stringify({ mentions }) : null;
+    const { role, content, selectedModel, selectedProvider, mentions, effort } = parsed.data;
+    const metadataJson = JSON.stringify({ mentions, effort });
 
     const message = await prisma.message.create({
       // The generated client is refreshed by `prisma generate` during deploy.
@@ -87,7 +88,7 @@ export async function messageRoutes(app: FastifyInstance) {
       });
       await prisma.plan.create({ data: { agentRunId: agentRun.id, planJson, status: "pending" } });
 
-      await eventBus.emitEvent(sessionId, "agent.started", { agentRunId: agentRun.id, goal: content });
+      await eventBus.emitEvent(sessionId, "agent.started", { agentRunId: agentRun.id, goal: content, effort });
       await eventBus.emitEvent(sessionId, "agent.thinking", { agentRunId: agentRun.id, step: "Analyzing your request..." });
       await eventBus.emitEvent(sessionId, "agent.plan.created", { agentRunId: agentRun.id, plan: JSON.parse(planJson) });
 

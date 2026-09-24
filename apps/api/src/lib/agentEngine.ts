@@ -11,6 +11,18 @@ import { config } from "./config.js";
 
 const MAX_ITERATIONS = Number(process.env.AGENT_MAX_ITERATIONS || 20);
 const MAX_FILE_BYTES = 1_000_000;
+type Effort = "quick" | "standard" | "deep";
+
+function requestedEffort(messages: Array<{ role: string; metadataJson?: string | null }>): Effort {
+  const latest = [...messages].reverse().find((message) => message.role === "user" && message.metadataJson);
+  if (!latest?.metadataJson) return "standard";
+  try {
+    const effort = JSON.parse(latest.metadataJson)?.effort;
+    return effort === "quick" || effort === "deep" ? effort : "standard";
+  } catch {
+    return "standard";
+  }
+}
 
 const tools = [
   { type: "function", function: { name: "terminal", description: "Run a shell command in the project workspace.", parameters: { type: "object", properties: { command: { type: "string" }, cwd: { type: "string" } }, required: ["command"], additionalProperties: false } } },
@@ -131,26 +143,35 @@ class AgentEngine {
     const workspaceRoot = await this.workspaceFor(run.session);
     await fs.mkdir(workspaceRoot, { recursive: true });
     try {
+      // `metadataJson` is present in the schema; retain this cast so a clean
+      // checkout whose Prisma client has not yet been regenerated can still typecheck.
+      const latestMessages = await (prisma.message as any).findMany({ where: { sessionId: run.sessionId }, orderBy: { createdAt: "desc" }, take: 8, select: { role: true, metadataJson: true } });
+      const effort = requestedEffort(latestMessages);
+      const effortConfig = {
+        quick: { iterations: Math.min(MAX_ITERATIONS, 8), temperature: 0.35, maxTokens: 2048 },
+        standard: { iterations: MAX_ITERATIONS, temperature: 0.2, maxTokens: 4096 },
+        deep: { iterations: Math.max(MAX_ITERATIONS, 30), temperature: 0.15, maxTokens: 8192 },
+      }[effort];
       const approved = await prisma.toolCall.findFirst({ where: { agentRunId: run.id, approvalStatus: "approved", executionStatus: "running", resultJson: null }, orderBy: { startedAt: "asc" } });
       if (approved) await this.runTool(run, approved, JSON.parse(approved.argumentsJson), workspaceRoot, true);
       await prisma.agentRun.update({ where: { id: run.id }, data: { status: "running", currentStep: "model" } });
 
-      for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+      for (let iteration = 0; iteration < effortConfig.iterations; iteration++) {
         const fresh = await prisma.agentRun.findUnique({ where: { id: run.id } });
         if (!fresh || fresh.status === "cancelled" || fresh.status === "paused") return;
         const requestedProvider = run.session.selectedProvider;
         // Legacy mock selections must never be used in a real run. Resolve them
         // to the configured production provider instead of showing simulated GPT text.
-        const providerId = !requestedProvider || requestedProvider === "mock"
+        const providerId = !requestedProvider || requestedProvider === "mock" || (requestedProvider === "devin" && config.agent.defaultProvider !== "devin")
           ? providerRegistry.defaultProviderId()
           : requestedProvider;
-        const model = !run.session.selectedModel || run.session.selectedModel.startsWith("mock-")
+        const model = !run.session.selectedModel || run.session.selectedModel.startsWith("mock-") || (run.session.selectedModel === "devin" && config.agent.defaultModel !== "devin")
           ? config.agent.defaultModel
           : run.session.selectedModel;
         if (!providerId) throw new Error("No production AI provider is configured. Connect a provider in server settings before starting an agent run.");
         const provider = providerRegistry.get(providerId);
         if (!provider) throw new Error("No production AI provider is configured. Connect a provider in server settings before starting an agent run.");
-        const stream = await provider.chat({ model, messages: await this.conversation(run), tools, stream: true, temperature: 0.2 });
+        const stream = await provider.chat({ model, messages: await this.conversation(run), tools, stream: true, temperature: effortConfig.temperature, max_tokens: effortConfig.maxTokens });
         let content = "";
         const accumulated = new Map<number, Accumulator>();
         for await (const chunk of stream) {

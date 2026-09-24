@@ -12,6 +12,13 @@ export type PluginMention = {
   pluginId: "github" | "google-drive" | "google-docs" | "google-sheets" | "google-slides" | "gmail" | "google-calendar" | "notion" | "linear";
   displayName: string;
 };
+export type AgentEffort = "quick" | "standard" | "deep";
+
+const EFFORT_OPTIONS: Array<{ id: AgentEffort; label: string; detail: string }> = [
+  { id: "quick", label: "Quick", detail: "Fast response" },
+  { id: "standard", label: "Balanced", detail: "Recommended" },
+  { id: "deep", label: "Deep", detail: "More planning" },
+];
 
 const PLUGINS: Array<PluginMention & { mark: string; color: string; connection: "github" | "google" | null }> = [
   { type: "plugin", pluginId: "google-drive", displayName: "Google Drive", mark: "D", color: "#4285F4", connection: "google" },
@@ -41,7 +48,7 @@ export function Composer({
   onOpenWorkspace,
   footer,
 }: {
-  onSend: (text: string, files: { name: string; size: number; content: string }[], mentions: PluginMention[]) => void;
+  onSend: (text: string, files: { name: string; size: number; content: string }[], mentions: PluginMention[], effort: AgentEffort) => void;
   disabled?: boolean;
   busy?: boolean;
   onStop?: () => void;
@@ -59,6 +66,7 @@ export function Composer({
   const [googleConnected, setGoogleConnected] = useState(false);
   const [mentions, setMentions] = useState<PluginMention[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [effort, setEffort] = useState<AgentEffort>("standard");
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const toolsRef = useRef<HTMLDivElement>(null);
@@ -102,7 +110,7 @@ export function Composer({
   function submit() {
     const value = text.trim();
     if (!value || disabled) return;
-    onSend(value, attachments, mentions);
+    onSend(value, attachments, mentions, effort);
     setText("");
     setAttachments([]);
     setMentions([]);
@@ -141,7 +149,7 @@ export function Composer({
         ingest(e.dataTransfer.files);
       }}
       className={cx(
-        "premium-composer relative w-full rounded-[20px] border bg-surface-secondary transition-[border-color,box-shadow,transform]",
+        "premium-composer liquid-composer relative w-full rounded-[20px] border bg-surface-secondary transition-[border-color,box-shadow,transform]",
         dragging ? "border-border-strong shadow-glow" : "border-border-medium"
       )}
     >
@@ -259,8 +267,25 @@ export function Composer({
                     id="composer-tools-menu"
                     role="dialog"
                     aria-label="Connections and tools"
-                    className="absolute bottom-full left-0 z-40 mb-2 w-[min(320px,calc(100vw-40px))] overflow-hidden rounded-xl border border-border-medium bg-surface-floating text-left shadow-[0_12px_36px_rgba(24,24,24,0.14)] animate-composer-popover"
+                    className="liquid-popover absolute bottom-full left-0 z-40 mb-2 w-[min(320px,calc(100vw-40px))] overflow-hidden rounded-xl border border-border-medium bg-surface-floating text-left shadow-[0_12px_36px_rgba(24,24,24,0.14)] animate-composer-popover"
                   >
+                    <div className="border-b border-border-faint px-3.5 py-2.5">
+                      <div className="mb-2 text-[13px] font-medium text-text-secondary">Agent effort</div>
+                      <div className="grid grid-cols-3 gap-1">
+                        {EFFORT_OPTIONS.map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            aria-pressed={effort === option.id}
+                            onClick={() => setEffort(option.id)}
+                            className={cx("rounded-lg px-2 py-1.5 text-left transition-colors", effort === option.id ? "bg-surface-raised text-text-primary shadow-sm" : "text-text-muted hover:bg-surface-raised/70")}
+                          >
+                            <span className="block text-[12px] font-medium">{option.label}</span>
+                            <span className="block text-[10px] leading-tight opacity-75">{option.detail}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div className="border-b border-border-faint px-3.5 py-2.5 text-[13px] font-medium text-text-secondary">Connections</div>
                     <button
                       type="button"

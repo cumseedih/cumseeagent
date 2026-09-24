@@ -46,11 +46,13 @@ export function MessageList({
   messages,
   streaming,
   thinking,
+  streamingText = "",
   events = [],
 }: {
   messages: Message[];
   streaming?: boolean;
   thinking?: boolean;
+  streamingText?: string;
   events?: AgentEvent[];
 }) {
   if (!messages.length) return null;
@@ -116,6 +118,15 @@ export function MessageList({
           </div>
         );
       })}
+
+      {streamingText && (
+        <div className="group animate-stage-in flex gap-3" aria-live="polite">
+          <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border-faint bg-surface-secondary">
+            <Mark className="h-3.5 w-3.5 text-text-tertiary" />
+          </div>
+          <div className="min-w-0 flex-1"><Markdown text={streamingText} /></div>
+        </div>
+      )}
 
       {(streaming || thinking) && activity.length > 0 && (
         <div className="ml-1 space-y-2.5" aria-live="polite" aria-label="Agent activity">

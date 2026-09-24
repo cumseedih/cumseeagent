@@ -78,6 +78,7 @@ export class OpenAICompatibleProvider extends BaseProvider {
           stream: true,
           tools: request.tools,
           temperature: request.temperature ?? 0.7,
+          ...(request.max_tokens ? { max_tokens: request.max_tokens } : {}),
         }),
       });
       if (!res.ok) {
@@ -118,14 +119,17 @@ export class OpenAICompatibleProvider extends BaseProvider {
           try {
             const json = JSON.parse(data);
             // Normalize to ChatChunk
+            const choiceList = json.choices || [];
             const chunk: ChatChunk = {
               id: json.id || "stream",
-              choices: json.choices?.map((c: any) => ({
-                delta: c.delta || { content: c.text || c.content },
+              choices: choiceList.map((c: any) => ({
+                // Different OpenAI-compatible gateways place final text in
+                // delta.content, message.content, text, or content.
+                delta: c.delta || { content: c.message?.content || c.text || c.content || json.output_text || "" },
                 finish_reason: c.finish_reason,
-              })) || [{ delta: { content: data } }],
+              })) || [{ delta: { content: json.output_text || "" } }],
             };
-            yield chunk;
+            if (chunk.choices.some((choice) => choice.delta.content)) yield chunk;
           } catch {
             // raw text
             yield { id: "stream", choices: [{ delta: { content: data } }] };

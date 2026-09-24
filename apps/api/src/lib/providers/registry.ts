@@ -6,6 +6,13 @@ class ProviderRegistry {
   private providers = new Map<string, Provider>();
 
   constructor() {
+    // Kimi / Moonshot is OpenAI-compatible and can be used directly without
+    // routing through another gateway.
+    if (config.providers.kimi.apiKey) {
+      const p = new OpenAICompatibleProvider("kimi", "Kimi", config.providers.kimi.baseUrl, config.providers.kimi.apiKey);
+      this.providers.set(p.id, p);
+    }
+
     // OmniRoute (OpenAI-compatible, primary)
     if (config.providers.omniroute.baseUrl) {
       const p = new OpenAICompatibleProvider("omniroute", "OmniRoute", config.providers.omniroute.baseUrl, config.providers.omniroute.apiKey);

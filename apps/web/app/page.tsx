@@ -6,7 +6,7 @@ import { api } from "../lib/api";
 import { connectSSE, CumseeEvent } from "../lib/sse";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { Composer, type PluginMention } from "../components/Composer";
+import { Composer, type AgentEffort, type PluginMention } from "../components/Composer";
 import { DelvinCore } from "../components/DelvinCore";
 import { PETS, PetGlyph, WorkspacePet, type PetId } from "../components/Pet";
 import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings, IconGithub, IconPencil, IconX } from "../components/icons";
@@ -52,6 +52,7 @@ function AgentWorkspace({
   const [messages, setMessages] = useState<any[]>([]);
   const [events, setEvents] = useState<CumseeEvent[]>([]);
   const [toolCalls, setToolCalls] = useState<any[]>([]);
+  const [streamingText, setStreamingText] = useState("");
   const [harness, setHarness] = useState<Harness>("standard");
   const [quota, setQuota] = useState<{ remaining: number | null; limit: number; exhausted: boolean; unlimited: boolean } | null>(null);
   const [repoPicker, setRepoPicker] = useState(false);
@@ -145,15 +146,23 @@ function AgentWorkspace({
       (ev) => {
         setEvents((prev) => [...prev.slice(-400), ev]);
         const type = ev.eventType;
-        if (type === "agent.started") setStatus("running");
-        if (type === "agent.thinking") setStatus("thinking");
+        if (type === "agent.started") { setStatus("running"); setStreamingText(""); }
+        if (type === "agent.thinking") {
+          setStatus("thinking");
+          if (typeof ev.payload?.delta === "string") setStreamingText((current) => `${current}${ev.payload.delta}`);
+        }
         if (type === "agent.completed") {
           setStatus("completed");
+          setStreamingText("");
           api.getUsage().then(setQuota).catch(() => undefined);
           api.listMessages(sessionId).then((m) => setMessages(m.messages || []));
           api.listToolCalls(sessionId).then((t) => setToolCalls(t.toolCalls || []));
         }
-        if (type === "agent.failed") setStatus("failed");
+        if (type === "agent.failed") {
+          setStatus("failed");
+          setStreamingText("");
+          setError(ev.payload?.error || "The agent could not complete this request.");
+        }
         if (type.startsWith("tool.") || type.startsWith("file.")) {
           api.listToolCalls(sessionId).then((t) => setToolCalls(t.toolCalls || []));
           if (type === "tool.requested") setStatus("waiting");
@@ -221,7 +230,7 @@ function AgentWorkspace({
     }
   }
 
-  async function sendMessage(text: string, files: { name: string; size: number; content: string }[], mentions: PluginMention[]) {
+  async function sendMessage(text: string, files: { name: string; size: number; content: string }[], mentions: PluginMention[], effort: AgentEffort) {
     if (guest) {
       onRequestLogin?.();
       return;
@@ -247,6 +256,7 @@ function AgentWorkspace({
         role: "user",
         content: payloadContent,
         mentions,
+        effort,
       });
       setMessages((prev) => [...prev, res.message || { id: `local-${Date.now()}`, role: "user", content: payloadContent, status: "completed", createdAt: new Date().toISOString() }]);
       setStatus("running");
@@ -437,7 +447,7 @@ function AgentWorkspace({
                 <div className="mx-auto w-full max-w-3xl py-6">
                   {errorNote}
                   {approvalNote}
-                  <MessageList messages={messages} events={events} thinking={status === "thinking"} streaming={status === "running"} />
+                  <MessageList messages={messages} events={events} thinking={status === "thinking"} streaming={status === "running"} streamingText={streamingText} />
                 </div>
               </div>
             )}
