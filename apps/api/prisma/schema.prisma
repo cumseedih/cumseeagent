@@ -105,13 +105,14 @@ model Session {
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  sessionId String
-  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  role      String
-  content   String
-  status    String   @default("completed")
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  sessionId    String
+  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role         String
+  content      String
+  metadataJson String?
+  status       String   @default("completed")
+  createdAt    DateTime @default(now())
 }
 
 model AgentRun {

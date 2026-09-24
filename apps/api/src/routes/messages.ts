@@ -6,12 +6,21 @@ import { eventBus } from "../lib/events.js";
 import { agentEngine } from "../lib/agentEngine.js";
 import { config } from "../lib/config.js";
 
+const pluginMentionSchema = z.object({
+  type: z.literal("plugin"),
+  pluginId: z.enum(["github", "google-drive", "google-docs", "google-sheets", "google-slides", "gmail", "google-calendar", "notion", "linear"]),
+  displayName: z.string().min(1).max(80),
+});
+
 const createSchema = z.object({
   role: z.enum(["user", "assistant", "system"]).default("user"),
   content: z.string().min(1).max(50000),
   // Optional: if client wants to trigger agent immediately
   selectedModel: z.string().optional(),
   selectedProvider: z.string().optional(),
+  // Mention identities are sent separately from visible text so tool routing can
+  // safely distinguish a selected integration from an arbitrary @word.
+  mentions: z.array(pluginMentionSchema).max(8).optional().default([]),
 });
 
 export async function messageRoutes(app: FastifyInstance) {
@@ -26,10 +35,14 @@ export async function messageRoutes(app: FastifyInstance) {
     if (!session) return reply.code(404).send({ error: "Session not found" });
     if (session.userId !== userId) return reply.code(403).send({ error: "Forbidden" });
 
-    const { role, content, selectedModel, selectedProvider } = parsed.data;
+    const { role, content, selectedModel, selectedProvider, mentions } = parsed.data;
+    const metadataJson = mentions.length ? JSON.stringify({ mentions }) : null;
 
     const message = await prisma.message.create({
-      data: { sessionId, role, content, status: "completed" },
+      // The generated client is refreshed by `prisma generate` during deploy.
+      // Keep this cast so source typechecks also work before that generated
+      // artifact has been refreshed in a clean checkout.
+      data: { sessionId, role, content, metadataJson, status: "completed" } as any,
     });
 
     // Also create an agent run if user message — start orchestration
@@ -70,6 +83,7 @@ export async function messageRoutes(app: FastifyInstance) {
           { id: "4", title: "Verify and complete", status: "pending" },
         ],
         goal: content,
+        mentions,
       });
       await prisma.plan.create({ data: { agentRunId: agentRun.id, planJson, status: "pending" } });
 

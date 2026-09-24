@@ -6,7 +6,7 @@ import { api } from "../lib/api";
 import { connectSSE, CumseeEvent } from "../lib/sse";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { Composer } from "../components/Composer";
+import { Composer, type PluginMention } from "../components/Composer";
 import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings, IconGithub, IconX } from "../components/icons";
 import { MessageList } from "../components/MessageList";
 import { ToolTimeline } from "../components/ToolTimeline";
@@ -219,7 +219,7 @@ function AgentWorkspace({
     }
   }
 
-  async function sendMessage(text: string, files: { name: string; size: number; content: string }[]) {
+  async function sendMessage(text: string, files: { name: string; size: number; content: string }[], mentions: PluginMention[]) {
     if (guest) {
       onRequestLogin?.();
       return;
@@ -244,6 +244,7 @@ function AgentWorkspace({
       const res = await api.sendMessage(target, {
         role: "user",
         content: payloadContent,
+        mentions,
       });
       setMessages((prev) => [...prev, res.message || { id: `local-${Date.now()}`, role: "user", content: payloadContent, status: "completed", createdAt: new Date().toISOString() }]);
       setStatus("running");
