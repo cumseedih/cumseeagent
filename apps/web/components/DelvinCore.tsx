@@ -1,9 +1,8 @@
 "use client";
 
 import { cx } from "./ui";
-import { BRANDING } from "../branding.config";
 
-/** Delvin's living brand mark: a restrained portrait seal with useful status motion. */
+/** Delvin's living agent presence: a quiet Saturn system with status-aware motion. */
 export function DelvinCore({ status = "idle", className }: { status?: string; className?: string }) {
   const working = status === "thinking" || status === "running";
   return (
@@ -20,10 +19,12 @@ export function DelvinCore({ status = "idle", className }: { status?: string; cl
       <span className="delvin-core-satellite delvin-core-satellite--two" aria-hidden="true" />
       <span className="delvin-core-shadow" aria-hidden="true" />
       <span className="delvin-core-sphere" aria-hidden="true">
-        <img src={BRANDING.LOGO_PATH} alt="" className="delvin-core-portrait" />
+        <span className="delvin-core-band delvin-core-band--one" />
+        <span className="delvin-core-band delvin-core-band--two" />
         <span className="delvin-core-glint" />
-        <span className="delvin-core-inner-ring" />
       </span>
+      <span className="delvin-core-ring delvin-core-ring--back" aria-hidden="true" />
+      <span className="delvin-core-ring delvin-core-ring--front" aria-hidden="true" />
     </div>
   );
 }

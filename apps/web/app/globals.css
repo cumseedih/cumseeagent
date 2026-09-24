@@ -186,7 +186,7 @@
   font-size: 26px;
 }
 
-/* Delvin's living brand seal: polished depth, but never a generic 3D blob. */
+/* Delvin's living Saturn: an intentional agent presence, not a generic blob. */
 .delvin-core-scene {
   --core-speed: 24s;
   position: relative;
@@ -229,7 +229,10 @@
   overflow: hidden;
   border: 1px solid hsl(0 0% 100% / 0.96);
   border-radius: 50%;
-  background: hsl(var(--surface-floating));
+  background:
+    radial-gradient(ellipse at 30% 22%, hsl(0 0% 100% / .96) 0 6%, transparent 25%),
+    radial-gradient(ellipse at 68% 76%, hsl(16 45% 64% / .78), transparent 49%),
+    linear-gradient(145deg, hsl(39 48% 98%), hsl(37 32% 83%) 56%, hsl(31 25% 72%));
   box-shadow:
     inset 0 0 0 4px hsl(0 0% 100% / .35),
     0 12px 24px hsl(30 22% 31% / 0.13),
@@ -238,14 +241,9 @@
   animation: delvin-core-breathe 6.6s ease-in-out infinite;
   transform-style: preserve-3d;
 }
-.delvin-core-portrait {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 30%;
-  filter: saturate(.82) contrast(1.05);
-  transform: scale(1.13);
-}
+.delvin-core-band { position: absolute; left: -12%; right: -12%; height: 15%; border-radius: 50%; opacity: .35; transform: rotate(-22deg); }
+.delvin-core-band--one { top: 43%; background: hsl(var(--brand-secondary)); box-shadow: 0 1px 0 hsl(0 0% 100% / .45); }
+.delvin-core-band--two { top: 62%; height: 8%; background: hsl(var(--accent)); opacity: .25; }
 .delvin-core-glint {
   position: absolute;
   left: 19%;
@@ -257,13 +255,18 @@
   filter: blur(3px);
   transform: rotate(-37deg) translateZ(14px);
 }
-.delvin-core-inner-ring {
+.delvin-core-ring {
   position: absolute;
-  inset: 22%;
-  border: 1px solid hsl(0 0% 100% / 0.55);
+  z-index: 2;
+  width: 83%;
+  height: 27%;
+  border: 1.5px solid hsl(var(--brand-secondary) / .48);
   border-radius: 50%;
-  transform: rotateX(68deg) rotateZ(-24deg) translateZ(8px);
+  box-shadow: 0 1px 0 hsl(0 0% 100% / .75), 0 4px 9px hsl(var(--brand-secondary) / .1);
+  transform: rotateX(72deg) rotateZ(-24deg) translateZ(38px);
 }
+.delvin-core-ring--back { z-index: 0; opacity: .42; transform: rotateX(72deg) rotateZ(-24deg) translateZ(-2px); }
+.delvin-core-ring--front { clip-path: inset(49% 0 0); }
 .delvin-core-satellite {
   position: absolute;
   z-index: 3;
@@ -275,8 +278,8 @@
   box-shadow: 0 3px 8px hsl(var(--accent) / 0.3);
   transform: translateZ(32px);
 }
-.delvin-core-satellite--one { top: 16%; right: 16%; }
-.delvin-core-satellite--two { bottom: 20%; left: 15%; width: 5%; height: 5%; background: hsl(var(--brand-secondary)); box-shadow: 0 3px 7px hsl(var(--brand-secondary) / .28); }
+.delvin-core-satellite--one { top: 16%; right: 16%; animation: delvin-planet-one 10s linear infinite; }
+.delvin-core-satellite--two { bottom: 20%; left: 15%; width: 5%; height: 5%; background: hsl(var(--brand-secondary)); box-shadow: 0 3px 7px hsl(var(--brand-secondary) / .28); animation: delvin-planet-two 13s linear infinite; }
 .delvin-core-shadow {
   position: absolute;
   z-index: -1;
@@ -290,12 +293,14 @@
 }
 .delvin-core-scene--working { --core-speed: 7s; }
 .delvin-core-scene--working .delvin-core-sphere { animation-duration: 2.5s; }
-.delvin-core-scene--working .delvin-core-satellite { animation: delvin-satellite 2.2s ease-in-out infinite; }
+.delvin-core-scene--working .delvin-core-satellite--one { animation-duration: 3.2s; }
+.delvin-core-scene--working .delvin-core-satellite--two { animation-duration: 4.2s; }
 
 @keyframes delvin-orbit { from { rotate: 0deg; } to { rotate: 360deg; } }
 @keyframes delvin-core-breathe { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
 @keyframes delvin-core-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -7px; } }
-@keyframes delvin-satellite { 0%, 100% { translate: 0 0; } 50% { translate: -5px 4px; } }
+@keyframes delvin-planet-one { 0% { translate: 0 0; } 25% { translate: -14px 8px; } 50% { translate: -28px 1px; } 75% { translate: -13px -8px; } 100% { translate: 0 0; } }
+@keyframes delvin-planet-two { 0% { translate: 0 0; } 25% { translate: 16px -7px; } 50% { translate: 26px 1px; } 75% { translate: 14px 9px; } 100% { translate: 0 0; } }
 
 /* Calm, original companions — expression comes from motion and silhouette, not emoji faces. */
 .delvin-pet { --pet-tone: #536c7a; --pet-tint: #d8e2e2; }
