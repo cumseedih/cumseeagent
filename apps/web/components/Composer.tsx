@@ -184,7 +184,7 @@ export function Composer({
                   aria-controls="composer-tools-menu"
                   onClick={() => setToolsOpen((open) => !open)}
                   className={cx(
-                    "inline-flex h-8 items-center gap-1 rounded-lg px-1.5 text-text-secondary transition-colors hover:bg-surface-raised hover:text-interactive-active md:h-9",
+                    "inline-flex h-8 items-center gap-1 rounded-lg px-1.5 text-text-secondary transition-[background-color,color,transform] duration-150 hover:bg-surface-raised hover:text-interactive-active active:scale-[0.96] md:h-9",
                     toolsOpen && "bg-surface-raised text-interactive-active"
                   )}
                 >
@@ -196,7 +196,7 @@ export function Composer({
                     id="composer-tools-menu"
                     role="dialog"
                     aria-label="Connections and tools"
-                    className="absolute bottom-full left-0 z-40 mb-2 w-[min(320px,calc(100vw-40px))] overflow-hidden rounded-xl border border-border-medium bg-surface-floating text-left shadow-[0_12px_36px_rgba(24,24,24,0.14)] animate-fade"
+                    className="absolute bottom-full left-0 z-40 mb-2 w-[min(320px,calc(100vw-40px))] overflow-hidden rounded-xl border border-border-medium bg-surface-floating text-left shadow-[0_12px_36px_rgba(24,24,24,0.14)] animate-composer-popover"
                   >
                     <div className="border-b border-border-faint px-3.5 py-2.5 text-[13px] font-medium text-text-secondary">Connections</div>
                     <button
@@ -239,7 +239,7 @@ export function Composer({
                 onClick={onOpenWorkspace}
                 aria-label="Open workspace files"
                 title="Open workspace files"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-raised hover:text-interactive-active md:h-9 md:w-9"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-[background-color,color,transform] duration-150 hover:bg-surface-raised hover:text-interactive-active active:scale-[0.96] md:h-9 md:w-9"
               >
                 <IconWorkspacePreview className="h-[19px] w-[19px]" />
               </button>
