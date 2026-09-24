@@ -195,6 +195,7 @@
   perspective: 620px;
   transform-style: preserve-3d;
   isolation: isolate;
+  animation: delvin-core-float 5.8s ease-in-out infinite;
 }
 .delvin-core-orbit {
   position: absolute;
@@ -290,6 +291,7 @@
 
 @keyframes delvin-orbit { from { rotate: 0deg; } to { rotate: 360deg; } }
 @keyframes delvin-core-breathe { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
+@keyframes delvin-core-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -7px; } }
 @keyframes delvin-satellite { 0%, 100% { translate: 0 0; } 50% { translate: -5px 4px; } }
 
 .premium-composer {
@@ -312,7 +314,7 @@
 button:hover .plugin-sigil { transform: translateY(-1px) rotateX(9deg); box-shadow: 0 3px 6px hsl(32 22% 31% / 0.12), inset 0 1px 0 hsl(0 0% 100% / 0.9); }
 
 @media (prefers-reduced-motion: reduce) {
-  .delvin-core-orbit, .delvin-core-sphere, .delvin-core-satellite { animation: none !important; }
+  .delvin-core-scene, .delvin-core-orbit, .delvin-core-sphere, .delvin-core-satellite { animation: none !important; }
 }
 
 html,

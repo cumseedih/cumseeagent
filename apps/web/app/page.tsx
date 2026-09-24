@@ -452,8 +452,8 @@ function AgentWorkspace({
               )}
             >
               {!hasConversation && (
-                <div className="pointer-events-none absolute inset-x-5 top-[39%] -translate-y-1/2 md:hidden">
-                  <DelvinCore status={status} className="mx-auto mb-3 h-[58px] w-[58px]" />
+                <div className="pointer-events-none absolute inset-x-5 top-[37%] -translate-y-1/2 md:hidden">
+                  <DelvinCore status={status} className="mx-auto mb-5 h-[82px] w-[82px]" />
                   <h1 className="animate-hero-breathe mx-auto max-w-[360px] text-center font-serif-display text-[42px] font-light leading-[1.02] tracking-[-0.045em] text-text-tertiary">
                     What would you like to do?
                   </h1>
@@ -462,7 +462,7 @@ function AgentWorkspace({
               <div className="relative mx-auto w-full max-w-[720px]">
                 {!hasConversation && (
                   <div className="pointer-events-none absolute bottom-full left-0 right-0 hidden flex-col items-center pb-6 md:flex">
-                    <DelvinCore status={status} className="mb-4 h-[76px] w-[76px]" />
+                    <DelvinCore status={status} className="mb-5 h-[112px] w-[112px]" />
                     <h1 className="font-serif-display animate-rise text-center text-[48px] font-light leading-[1.02] tracking-[-0.045em] text-text-tertiary md:text-[54px]">
                       What would you like to do?
                     </h1>
