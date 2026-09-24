@@ -412,7 +412,7 @@ export function ConnectionsDialog({
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#f8f6ee] text-xs font-semibold text-[#2e3a2f]">G</span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-text-secondary">Google Workspace</p>
-                <p className="text-[11px] text-text-muted">{google === "connected" ? `Connected${googleEmail ? ` as ${googleEmail}` : ""}` : "Connect Gmail, Calendar, Drive and Docs"}</p>
+                <p className="text-[11px] text-text-muted">{google === "connected" ? `Connected${googleEmail ? ` as ${googleEmail}` : ""}` : "Connect Gmail, Calendar, Drive, Docs, Sheets and Slides"}</p>
               </div>
               <Button
                 variant="secondary"
@@ -438,7 +438,7 @@ export function ConnectionsDialog({
               </Button>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {["Gmail", "Calendar", "Drive", "Docs"].map((name) => <span key={name} className="rounded-md border border-border-faint bg-surface-raised px-2 py-1.5 text-center text-[11px] text-text-muted">{name}</span>)}
+              {["Gmail", "Calendar", "Drive", "Docs", "Sheets", "Slides"].map((name) => <span key={name} className="rounded-md border border-border-faint bg-surface-raised px-2 py-1.5 text-center text-[11px] text-text-muted">{name}</span>)}
             </div>
           </div>
           {[

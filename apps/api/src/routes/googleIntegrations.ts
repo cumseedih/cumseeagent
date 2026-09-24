@@ -6,7 +6,7 @@ import { getUserId } from "./auth.js";
 import { prisma } from "../lib/prisma.js";
 import { seal } from "../lib/secretBox.js";
 
-const services = ["gmail", "calendar", "drive", "docs"] as const;
+const services = ["gmail", "calendar", "drive", "docs", "sheets", "slides"] as const;
 
 async function findConnection(userId: string) {
   const rows = await prisma.$queryRaw<Array<{ googleEmail: string; scopes: string }>>`SELECT "googleEmail", "scopes" FROM "GoogleConnection" WHERE "userId" = ${userId} LIMIT 1`;
