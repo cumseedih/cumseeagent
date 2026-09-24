@@ -25,6 +25,7 @@ const emailCodeVerifySchema = z.object({
 const profileSchema = z.object({
   displayName: z.string().trim().max(60).nullable().optional(),
   avatarUrl: z.string().max(2_000_000).nullable().optional(),
+  petId: z.enum(["orbit", "sprout", "ember", "moss", "lumen", "none"]).nullable().optional(),
 });
 
 const sessionCookie = () => ({
@@ -159,8 +160,8 @@ export async function authRoutes(app: FastifyInstance) {
       const payload = verifyToken(token);
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
-        select: { id: true, email: true, username: true, displayName: true, avatarUrl: true, createdAt: true },
-      });
+        select: { id: true, email: true, username: true, displayName: true, avatarUrl: true, petId: true, createdAt: true },
+      } as any);
       if (!user) return reply.code(401).send({ error: "User not found" });
       return { user };
     } catch (e) {
@@ -177,9 +178,9 @@ export async function authRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "Invalid profile" });
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { displayName: parsed.data.displayName ?? undefined, avatarUrl: parsed.data.avatarUrl ?? undefined },
-      select: { id: true, email: true, username: true, displayName: true, avatarUrl: true, createdAt: true },
-    });
+      data: { displayName: parsed.data.displayName ?? undefined, avatarUrl: parsed.data.avatarUrl ?? undefined, petId: parsed.data.petId ?? undefined },
+      select: { id: true, email: true, username: true, displayName: true, avatarUrl: true, petId: true, createdAt: true },
+    } as any);
     return { user };
   });
 

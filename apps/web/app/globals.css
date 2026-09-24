@@ -469,3 +469,15 @@ body {
   border-radius: 4px;
   padding: 0.1em 0.35em;
 }
+
+@keyframes delvin-pet-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-7px) rotate(1deg); }
+}
+@keyframes delvin-pet-idle {
+  0%, 44%, 48%, 100% { transform: scaleY(1); }
+  46% { transform: scaleY(.88); }
+}
+.delvin-pet-float { animation: delvin-pet-float 3.6s ease-in-out infinite; }
+.delvin-pet-idle { animation: delvin-pet-idle 4.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .delvin-pet-float, .delvin-pet-idle { animation: none; } }
