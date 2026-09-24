@@ -9,7 +9,7 @@ import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { Composer, type PluginMention } from "../components/Composer";
 import { DelvinCore } from "../components/DelvinCore";
 import { PETS, PetGlyph, WorkspacePet, type PetId } from "../components/Pet";
-import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings, IconGithub, IconX } from "../components/icons";
+import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings, IconGithub, IconPencil, IconX } from "../components/icons";
 import { MessageList } from "../components/MessageList";
 import { ToolTimeline } from "../components/ToolTimeline";
 import { Terminal } from "../components/Terminal";
@@ -724,21 +724,38 @@ function LoginSheet({ open, error, onClose, onAuthenticated }: { open: boolean; 
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
+  const [secondsRemaining, setSecondsRemaining] = useState(120);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (!codeSent || secondsRemaining <= 0) return;
+    const timer = window.setTimeout(() => setSecondsRemaining((seconds) => Math.max(0, seconds - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [codeSent, secondsRemaining]);
   if (!open) return null;
-  async function continueWithEmail() {
+  const formattedRemaining = `${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, "0")}`;
+  async function sendCode(resend = false) {
     setBusy(true);
     setNotice(null);
     try {
-      if (!codeSent) {
-        await api.requestEmailCode(email);
-        setCodeSent(true);
-        setNotice("Verification code sent. Check your inbox.");
-      } else {
-        const result = await api.verifyEmailCode(email, code);
-        onAuthenticated(result.user);
-      }
+      await api.requestEmailCode(email);
+      setCodeSent(true);
+      setCode("");
+      setSecondsRemaining(120);
+      setNotice(resend ? "A new verification code was sent. Check your inbox." : "Verification code sent. Check your inbox.");
+    } catch (e: any) {
+      setNotice(e.message || "Could not send verification code");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function continueWithEmail() {
+    if (!codeSent) return sendCode();
+    setBusy(true);
+    setNotice(null);
+    try {
+      const result = await api.verifyEmailCode(email, code);
+      onAuthenticated(result.user);
     } catch (e: any) {
       setNotice(e.message || "Could not verify email");
     } finally {
@@ -753,12 +770,12 @@ function LoginSheet({ open, error, onClose, onAuthenticated }: { open: boolean; 
       <h2 id="login-title" className="text-center font-serif-display text-[28px] leading-tight tracking-[-0.04em] text-text-primary">Log In or Create Account</h2>
       <p className="mx-auto mt-2 max-w-[440px] text-center text-sm leading-5 text-text-tertiary">Your current chat history will be saved to your new account so you can access your work from any device.</p>
       {(error || notice) && <p role="alert" className="mt-4 rounded-lg bg-surface-raised px-3 py-2 text-center text-xs text-text-secondary">{error || notice}</p>}
-      <button type="button" onClick={() => window.location.assign("/api/auth/google")} className="mt-5 flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-border-faint bg-surface-secondary text-[15px] text-text-secondary hover:bg-surface-raised"><GoogleIcon />Continue with Google</button>
-      <div className="my-5 flex items-center gap-3 text-[11px] text-text-muted"><span className="h-px flex-1 bg-border-faint" />OR<span className="h-px flex-1 bg-border-faint" /></div>
-      <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" disabled={codeSent || busy} placeholder="Your email" className="h-14 w-full rounded-lg border border-border-faint bg-surface-secondary px-4 text-[15px] text-text-primary outline-none placeholder:text-text-placeholder focus:border-border-strong disabled:opacity-60" />
-      {codeSent && <input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit verification code" className="mt-2 h-14 w-full rounded-lg border border-border-faint bg-surface-secondary px-4 text-center text-[18px] tracking-[0.35em] text-text-primary outline-none placeholder:text-text-placeholder focus:border-border-strong" />}
+      {!codeSent && <><button type="button" onClick={() => window.location.assign("/api/auth/google")} className="mt-5 flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-border-faint bg-surface-secondary text-[15px] text-text-secondary hover:bg-surface-raised"><GoogleIcon />Continue with Google</button><div className="my-5 flex items-center gap-3 text-[11px] text-text-muted"><span className="h-px flex-1 bg-border-faint" />OR<span className="h-px flex-1 bg-border-faint" /></div></>}
+      {codeSent ? <div className="rounded-lg border border-border-faint bg-surface-raised/50 px-4 py-3"><div className="flex items-center justify-between gap-3"><div className="min-w-0"><p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-muted">Code sent to</p><p className="truncate pt-0.5 text-sm text-text-primary">{email}</p></div><button type="button" disabled={busy} onClick={() => { setCodeSent(false); setCode(""); setNotice(null); setSecondsRemaining(120); }} aria-label="Edit email address" title="Edit email address" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border-faint bg-surface-secondary text-text-secondary transition-colors hover:bg-surface-raised disabled:opacity-50"><IconPencil className="h-4 w-4" /></button></div></div> : <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" disabled={busy} placeholder="Your email" className="h-14 w-full rounded-lg border border-border-faint bg-surface-secondary px-4 text-[15px] text-text-primary outline-none placeholder:text-text-placeholder focus:border-border-strong disabled:opacity-60" />}
+      {codeSent && <><input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit verification code" className="mt-2 h-14 w-full rounded-lg border border-border-faint bg-surface-secondary px-4 text-center text-[18px] tracking-[0.35em] text-text-primary outline-none placeholder:text-text-placeholder focus:border-border-strong" /><div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-text-muted">{secondsRemaining > 0 ? <span>Didn&apos;t receive it? Resend available in {formattedRemaining}</span> : <button type="button" disabled={busy} onClick={() => sendCode(true)} className="font-medium text-interactive-link underline-offset-4 hover:underline disabled:opacity-50">Resend code</button>}</div></>}
       <button type="button" disabled={busy || !email || (codeSent && code.length !== 6)} onClick={continueWithEmail} className="mt-2 h-14 w-full rounded-lg bg-interactive-cta text-[15px] font-medium text-interactive-on-cta hover:bg-interactive-cta-hover disabled:opacity-50">{busy ? "Please wait…" : codeSent ? "Verify email" : "Continue with email"}</button>
       <p className="mt-4 text-center text-[11px] leading-5 text-text-muted">By continuing, you agree to Delvin&apos;s Terms of Use and Privacy Policy.</p>
+      <p className="mt-2 text-center text-[12px] text-text-secondary">Need help? <a href="mailto:help@agentdelv.in" className="font-medium text-interactive-link underline-offset-4 hover:underline">Contact support</a></p>
     </div>
   </div>;
 }

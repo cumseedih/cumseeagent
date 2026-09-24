@@ -152,6 +152,12 @@ export const IconX = (p: IconProps) => (
   </Base>
 );
 
+export const IconPencil = (p: IconProps) => (
+  <Base {...p}>
+    <path d="m14.8 5.2 4 4M4.5 19.5l3.6-.8L19 7.8a2.1 2.1 0 0 0-3-3L5.1 15.7l-.6 3.8z" />
+  </Base>
+);
+
 export const IconChevronDown = (p: IconProps) => (
   <Base {...p}>
     <path d="M6 9.5l6 6 6-6" />
