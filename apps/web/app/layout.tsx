@@ -2,13 +2,21 @@ import type { Metadata, Viewport } from "next";
 import { BRANDING } from "../branding.config";
 import "./globals.css";
 
+const SITE_URL = "https://agentdelv.in";
+const SITE_DESCRIPTION =
+  "Delvin is an approval-first coding agent for GitHub repositories. Connect a repository, plan work, run commands, and ship changes with confidence.";
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ||
-      (BRANDING.PRODUCT_DOMAIN === "localhost" ? "http://localhost:3000" : `https://${BRANDING.PRODUCT_DOMAIN}`)
-  ),
-  title: `${BRANDING.PRODUCT_NAME} Agent`,
-  description: BRANDING.HERO_SUBTITLE,
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Delvin Agent — Approval-first coding agent",
+    template: "%s | Delvin Agent",
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: "Delvin Agent",
+  keywords: ["coding agent", "AI coding agent", "GitHub coding agent", "repository automation", "developer tools"],
+  alternates: { canonical: SITE_URL },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   icons: {
     icon: [
       { url: BRANDING.FAVICON_PATH, sizes: "any" },
@@ -17,14 +25,20 @@ export const metadata: Metadata = {
     apple: [{ url: BRANDING.APPLE_ICON_PATH, sizes: "180x180" }],
   },
   openGraph: {
-    title: `${BRANDING.PRODUCT_NAME} Agent`,
-    description: BRANDING.HERO_SUBTITLE,
-    url: `https://${BRANDING.PRODUCT_DOMAIN}`,
-    siteName: BRANDING.PRODUCT_NAME,
+    title: "Delvin Agent — Approval-first coding agent",
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    siteName: "Delvin Agent",
     type: "website",
-    images: [{ url: BRANDING.OG_IMAGE_PATH, width: 1200, height: 630 }],
+    locale: "en_US",
+    images: [{ url: "/assets/og.png", width: 1200, height: 630, alt: "Delvin Agent coding workspace" }],
   },
-  twitter: { card: "summary_large_image", images: [BRANDING.OG_IMAGE_PATH] },
+  twitter: {
+    card: "summary_large_image",
+    title: "Delvin Agent — Approval-first coding agent",
+    description: SITE_DESCRIPTION,
+    images: ["/assets/og.png"],
+  },
 };
 
 export const viewport: Viewport = {
@@ -35,10 +49,22 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Delvin Agent",
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "Web",
+    url: SITE_URL,
+    description: SITE_DESCRIPTION,
+    image: `${SITE_URL}/assets/og.png`,
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  };
+
   return (
     <html lang="en">
       <body className="min-h-screen bg-surface-primary text-text-primary antialiased">
-        {/* Brand channels + font stacks are injected once; components read CSS vars only. */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
         <style
           dangerouslySetInnerHTML={{
             __html: `:root{
