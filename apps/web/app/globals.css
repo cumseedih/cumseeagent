@@ -120,66 +120,76 @@
 .delvin-wordmark {
   position: relative;
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   width: max-content;
   isolation: isolate;
-  font-family: var(--font-display);
+  /* A quiet editorial logotype: custom-feeling without turning the product
+     name into an illustration.  The old underline/dots competed with the
+     supplied portrait at the compact sidebar size. */
+  font-family: var(--font-serif);
   font-size: 1em;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.075em;
+  font-weight: 300;
+  line-height: 0.9;
+  letter-spacing: -0.065em;
   color: hsl(var(--text-primary));
   text-transform: none;
+  font-feature-settings: "liga" 1, "kern" 1;
+  text-rendering: optimizeLegibility;
 }
 
 .delvin-wordmark__text {
   position: relative;
   z-index: 1;
   display: inline-block;
-  color: hsl(var(--primary));
-  transition: color 180ms ease;
+  padding: 0.08em 0.1em 0.14em 0.02em;
+  color: hsl(var(--text-primary));
+  transition: color 180ms ease, transform 180ms ease;
 }
 
 .delvin-wordmark::after {
   content: "";
   position: absolute;
   z-index: -1;
-  left: 0.07em;
-  right: 0.02em;
-  bottom: -0.13em;
-  height: 0.28em;
-  border-radius: 0.12em 0.24em 0.12em 0.2em;
-  background: hsl(var(--brand-tertiary) / 0.82);
-  transform: skewX(-13deg) rotate(-1.5deg);
-  transform-origin: left bottom;
-  transition: background-color 180ms ease, transform 180ms ease;
+  left: 0.05em;
+  right: 0.08em;
+  bottom: 0;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, hsl(var(--brand-secondary) / .78), hsl(var(--accent) / .48));
+  opacity: .68;
+  transform: scaleX(.7);
+  transform-origin: left center;
+  transition: transform 200ms ease, opacity 200ms ease;
 }
 
 .delvin-wordmark::before {
-  content: "";
+  content: "AI";
   position: absolute;
-  right: -0.16em;
-  top: -0.08em;
-  height: 0.22em;
-  width: 0.22em;
-  border-radius: 999px;
-  background: hsl(var(--accent));
-  box-shadow: -0.24em 0.24em 0 -0.08em hsl(var(--brand-secondary));
-  transform: scale(0.78);
-  transition: transform 180ms ease;
+  right: -0.72em;
+  top: 0.03em;
+  font-family: var(--font-ui);
+  font-size: .28em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .08em;
+  color: hsl(var(--brand-secondary));
+  opacity: .82;
+  transition: color 180ms ease, opacity 180ms ease;
 }
 
 .delvin-wordmark:hover .delvin-wordmark__text {
-  color: hsl(var(--brand-secondary));
+  color: hsl(var(--primary));
+  transform: translateY(-1px);
 }
 
 .delvin-wordmark:hover::after {
-  background: hsl(var(--brand-tertiary));
-  transform: skewX(-13deg) rotate(-1.5deg) scaleY(1.18);
+  transform: scaleX(1);
+  opacity: 1;
 }
 
 .delvin-wordmark:hover::before {
-  transform: scale(1);
+  color: hsl(var(--accent));
+  opacity: 1;
 }
 
 .delvin-wordmark--login {
