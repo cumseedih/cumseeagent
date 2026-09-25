@@ -307,29 +307,24 @@
 .delvin-core-scene--working .delvin-core-satellite--one { animation-duration: 3.2s; }
 .delvin-core-scene--working .delvin-core-satellite--two { animation-duration: 4.2s; }
 
+/* The chat companion reuses the same core silhouette. Its cool Uranus-like
+   surface applies only to the miniature, leaving the hero core unchanged. */
+.delvin-companion { animation: delvin-companion-drift 4.8s ease-in-out infinite; }
+.delvin-core-scene--companion { --core-speed: 9s; filter: drop-shadow(0 9px 10px hsl(192 22% 28% / .13)); }
+.delvin-core-scene--companion .delvin-core-aura { background: radial-gradient(circle, hsl(182 42% 74% / .38), transparent 70%); }
+.delvin-core-scene--companion .delvin-core-sphere { background: radial-gradient(ellipse at 30% 22%, hsl(0 0% 100% / .95) 0 6%, transparent 25%), radial-gradient(ellipse at 67% 78%, hsl(190 33% 63% / .72), transparent 49%), linear-gradient(145deg, hsl(185 48% 95%), hsl(188 33% 75%) 57%, hsl(194 24% 62%)); }
+.delvin-core-scene--companion .delvin-core-ring { border-color: hsl(184 25% 42% / .62); background: hsl(182 48% 86% / .18); }
+.delvin-core-scene--companion .delvin-core-band--one { background: hsl(185 28% 36%); }
+.delvin-core-scene--companion .delvin-core-band--two { background: hsl(196 43% 63%); }
+.delvin-core-scene--companion .delvin-core-satellite--one { background: hsl(185 42% 64%); }
+@keyframes delvin-companion-drift { 0%, 100% { transform: translate3d(0, 0, 0) rotate(-2deg); } 50% { transform: translate3d(-3px, -10px, 0) rotate(2deg); } }
+
 @keyframes delvin-orbit { from { rotate: 0deg; } to { rotate: 360deg; } }
 @keyframes delvin-core-breathe { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
 @keyframes delvin-core-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -7px; } }
 @keyframes delvin-planet-one { 0% { translate: 0 0; } 25% { translate: -14px 8px; } 50% { translate: -28px 1px; } 75% { translate: -13px -8px; } 100% { translate: 0 0; } }
 @keyframes delvin-planet-two { 0% { translate: 0 0; } 25% { translate: 16px -7px; } 50% { translate: 26px 1px; } 75% { translate: 14px 9px; } 100% { translate: 0 0; } }
 
-/* Calm, original companions — expression comes from motion and silhouette, not emoji faces. */
-.delvin-pet { --pet-tone: #536c7a; --pet-tint: #d8e2e2; }
-.delvin-pet__halo { position: absolute; inset: 8%; border-radius: 50%; background: var(--pet-tint); opacity: .72; filter: blur(4px); }
-.delvin-pet__body { position: absolute; z-index: 1; inset: 19% 16% 14%; border: 1px solid color-mix(in srgb, var(--pet-tone), #fff 40%); border-radius: 43% 43% 47% 47%; background: var(--pet-tone); box-shadow: inset 0 2px 0 rgb(255 255 255 / .24), 0 5px 10px rgb(46 43 41 / .14); }
-.delvin-pet__ear { position: absolute; z-index: 0; top: 18%; width: 23%; height: 27%; border-radius: 55% 55% 35% 35%; background: var(--pet-tone); }
-.delvin-pet__ear--left { left: 16%; transform: rotate(-26deg); }
-.delvin-pet__ear--right { right: 16%; transform: rotate(26deg); }
-.delvin-pet__face { position: absolute; z-index: 2; top: 43%; display: flex; align-items: center; justify-content:center; gap: 18%; width: 43%; height: 18%; }
-.delvin-pet__face i { width: 14%; aspect-ratio: 1; border-radius: 50%; background: #f9f7f2; }
-.delvin-pet__face b { position: absolute; bottom: -45%; width: 20%; height: 22%; border-bottom: 1.5px solid #f9f7f2; border-radius: 0 0 999px 999px; }
-.delvin-pet--leaf .delvin-pet__ear--left { top: 7%; left: 39%; width: 23%; height: 29%; border-radius: 100% 0 100% 0; transform: rotate(-34deg); }
-.delvin-pet--leaf .delvin-pet__ear--right { display: none; }
-.delvin-pet--flare .delvin-pet__ear { top: 12%; height: 32%; border-radius: 70% 70% 25% 25%; }
-.delvin-pet--soft .delvin-pet__body { border-radius: 45% 45% 42% 42%; }
-.delvin-pet--signal .delvin-pet__ear { top: 8%; width: 10%; height: 27%; border-radius: 999px; }
-.delvin-pet-idle { animation: delvin-pet-bob 3.8s ease-in-out infinite; }
-@keyframes delvin-pet-bob { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-4%) rotate(1.5deg); } }
 
 .delvin-brand-portrait { box-shadow: 0 1px 0 rgb(255 255 255 / .85), 0 4px 12px rgb(46 43 41 / .12); }
 
@@ -375,7 +370,7 @@
 button:hover .plugin-sigil { transform: translateY(-1px) rotateX(9deg); box-shadow: 0 3px 6px hsl(32 22% 31% / 0.12), inset 0 1px 0 hsl(0 0% 100% / 0.9); }
 
 @media (prefers-reduced-motion: reduce) {
-  .delvin-core-scene, .delvin-core-orbit, .delvin-core-sphere, .delvin-core-satellite, .delvin-pet-idle { animation: none !important; }
+  .delvin-core-scene, .delvin-core-orbit, .delvin-core-sphere, .delvin-core-satellite, .delvin-companion { animation: none !important; }
 }
 
 html,
@@ -662,14 +657,4 @@ body {
   padding: 0.1em 0.35em;
 }
 
-@keyframes delvin-pet-float {
-  0%, 100% { transform: translateY(0) rotate(-1deg); }
-  50% { transform: translateY(-7px) rotate(1deg); }
-}
-@keyframes delvin-pet-idle {
-  0%, 44%, 48%, 100% { transform: scaleY(1); }
-  46% { transform: scaleY(.88); }
-}
-.delvin-pet-float { animation: delvin-pet-float 3.6s ease-in-out infinite; }
-.delvin-pet-idle { animation: delvin-pet-idle 4.8s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .delvin-pet-float, .delvin-pet-idle { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .delvin-companion { animation: none; } }

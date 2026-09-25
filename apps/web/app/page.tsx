@@ -8,7 +8,7 @@ import { SessionSidebar } from "../components/SessionSidebar";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { Composer, type AgentEffort, type PluginMention } from "../components/Composer";
 import { DelvinCore } from "../components/DelvinCore";
-import { PETS, PetGlyph, WorkspacePet, type PetId } from "../components/Pet";
+import { WorkspacePet } from "../components/Pet";
 import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings, IconGithub, IconPencil, IconX } from "../components/icons";
 import { MessageList } from "../components/MessageList";
 import { ToolTimeline } from "../components/ToolTimeline";
@@ -27,7 +27,7 @@ import {
 } from "../components/Pickers";
 
 type RailTab = "terminal" | "files" | "activity";
-type AuthUser = { id: string; email: string; username?: string | null; displayName?: string | null; avatarUrl?: string | null; petId?: string | null; createdAt?: string };
+type AuthUser = { id: string; email: string; username?: string | null; displayName?: string | null; avatarUrl?: string | null; createdAt?: string };
 
 function ProfileAvatar({ user, className = "h-8 w-8" }: { user?: Pick<AuthUser, "email" | "displayName" | "avatarUrl"> | null; className?: string }) {
   const label = (user?.displayName || user?.email || "U").trim();
@@ -320,7 +320,7 @@ function AgentWorkspace({
 
   return (
     <div className="flex h-[100dvh] overflow-hidden bg-surface-primary">
-      <WorkspacePet petId={user?.petId} />
+      <WorkspacePet active={hasConversation} status={status} />
       {!guest && <TermsGate onAccepted={() => undefined} />}
       <WorkspaceSheet open={workspaceOpen} onClose={() => setWorkspaceOpen(false)} project={project} refreshKey={workspaceRefreshKey} />
 
@@ -797,14 +797,13 @@ function LoginSheet({ open, error, onClose, onAuthenticated }: { open: boolean; 
 function AccountSheet({ open, user, onClose, onSignOut, onUserUpdated, onAccountDeleted }: { open: boolean; user: AuthUser | null; onClose: () => void; onSignOut: () => void; onUserUpdated: (user: AuthUser) => void; onAccountDeleted: () => void }) {
   const [displayName, setDisplayName] = useState(user?.displayName || "");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
-  const [petId, setPetId] = useState<PetId>((user?.petId as PetId) || "orbit");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  useEffect(() => { setDisplayName(user?.displayName || ""); setAvatarUrl(user?.avatarUrl || ""); setPetId((user?.petId as PetId) || "orbit"); }, [user?.id, user?.displayName, user?.avatarUrl, user?.petId]);
+  useEffect(() => { setDisplayName(user?.displayName || ""); setAvatarUrl(user?.avatarUrl || ""); }, [user?.id, user?.displayName, user?.avatarUrl]);
   if (!open || !user) return null;
   async function saveProfile() {
     setBusy(true); setNotice(null);
-    try { const result = await api.updateProfile({ displayName: displayName.trim() || null, avatarUrl: avatarUrl || null, petId }); onUserUpdated(result.user); setNotice("Profile saved"); } catch (e: any) { setNotice(e.message || "Could not save profile"); } finally { setBusy(false); }
+    try { const result = await api.updateProfile({ displayName: displayName.trim() || null, avatarUrl: avatarUrl || null }); onUserUpdated(result.user); setNotice("Profile saved"); } catch (e: any) { setNotice(e.message || "Could not save profile"); } finally { setBusy(false); }
   }
   async function chooseAvatar(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]; if (!file) return;
@@ -819,15 +818,6 @@ function AccountSheet({ open, user, onClose, onSignOut, onUserUpdated, onAccount
     <div className="w-full max-w-[600px] animate-sheet-up rounded-[24px] border border-white/60 bg-white/85 p-6 shadow-floating backdrop-blur-xl">
       <div className="flex items-center gap-3"><label className="relative cursor-pointer"><ProfileAvatar user={{ ...user, avatarUrl }} className="h-14 w-14" /><input type="file" accept="image/*" onChange={chooseAvatar} className="sr-only" /></label><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-text-primary">{user.displayName || "Your profile"}</p><p className="truncate text-xs text-text-secondary">{user.email}</p></div><button type="button" aria-label="Close account" onClick={onClose} className="text-text-muted"><IconX className="h-5 w-5" /></button></div>
       <label className="mt-6 block text-xs font-medium text-text-secondary">Display name<input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" className="mt-1 h-12 w-full rounded-lg border border-border-faint bg-white/70 px-3 text-sm outline-none focus:border-border-strong" /></label>
-      <section className="mt-6" aria-labelledby="pet-choice-title">
-        <div className="flex items-baseline justify-between"><h3 id="pet-choice-title" className="text-sm font-medium text-text-primary">Pet</h3><span className="text-[11px] text-text-muted">Choose your companion</span></div>
-        <div className="mt-2 max-h-[270px] space-y-1.5 overflow-y-auto pr-1">
-          {PETS.map((pet) => <button key={pet.id} type="button" onClick={() => setPetId(pet.id)} className={cx("flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors", petId === pet.id ? "border-border-strong bg-surface-raised" : "border-border-faint bg-white/45 hover:bg-surface-raised") }>
-            <PetGlyph id={pet.id} className="h-9 w-9" animated={petId === pet.id} /><span className="min-w-0 flex-1"><span className="block text-sm font-medium text-text-primary">{pet.name}</span><span className="block text-xs text-text-secondary">{pet.description}</span></span><span className={cx("grid h-5 w-5 place-items-center rounded-full border-2", petId === pet.id ? "border-text-primary" : "border-text-muted")}><span className={cx("h-2.5 w-2.5 rounded-full bg-text-primary", petId === pet.id ? "block" : "hidden")} /></span>
-          </button>)}
-          <button type="button" onClick={() => setPetId("none")} className={cx("flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors", petId === "none" ? "border-border-strong bg-surface-raised" : "border-border-faint bg-white/45 hover:bg-surface-raised") }><span className="grid h-9 w-9 place-items-center rounded-full border border-border-medium text-text-muted">—</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium text-text-primary">Do not show pet</span><span className="block text-xs text-text-secondary">Use the classic Delvin workspace.</span></span><span className={cx("grid h-5 w-5 place-items-center rounded-full border-2", petId === "none" ? "border-text-primary" : "border-text-muted")}><span className={cx("h-2.5 w-2.5 rounded-full bg-text-primary", petId === "none" ? "block" : "hidden")} /></span></button>
-        </div>
-      </section>
       {notice && <p className="mt-3 text-xs text-text-secondary">{notice}</p>}
       <label className="mt-5 flex items-center gap-3 text-sm text-text-secondary"><input type="checkbox" className="h-5 w-5 rounded border-border-medium" />Yes, keep me posted on what&apos;s new</label>
       <button type="button" disabled={busy} onClick={saveProfile} className="mt-5 h-12 w-full rounded-lg border border-border-faint bg-white text-[15px] font-medium text-text-primary hover:bg-surface-raised disabled:opacity-50">{busy ? "Saving…" : "Save profile"}</button>

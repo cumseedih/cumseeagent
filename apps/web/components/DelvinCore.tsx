@@ -3,11 +3,11 @@
 import { cx } from "./ui";
 
 /** Delvin's living agent presence: a quiet Saturn system with status-aware motion. */
-export function DelvinCore({ status = "idle", className }: { status?: string; className?: string }) {
+export function DelvinCore({ status = "idle", className, variant = "hero" }: { status?: string; className?: string; variant?: "hero" | "companion" }) {
   const working = status === "thinking" || status === "running";
   return (
     <div
-      className={cx("delvin-core-scene", working && "delvin-core-scene--working", className)}
+      className={cx("delvin-core-scene", working && "delvin-core-scene--working", variant === "companion" && "delvin-core-scene--companion", className)}
       data-state={working ? "working" : status}
       role="img"
       aria-label={working ? "Delvin agent is working" : "Delvin agent is ready"}
