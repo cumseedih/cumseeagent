@@ -39,6 +39,7 @@ export const api = {
   listSessions: () => request("/sessions"),
   createSession: (body: any) => request("/sessions", { method: "POST", body: JSON.stringify(body) }),
   getSession: (id: string) => request(`/sessions/${id}`),
+  updateSession: (id: string, body: { title?: string; status?: string }) => request(`/sessions/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   deleteSession: (id: string) => request(`/sessions/${id}`, { method: "DELETE" }),
   stopSession: (id: string) => request(`/sessions/${id}/stop`, { method: "POST" }),
 

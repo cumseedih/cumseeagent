@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { BRANDING } from "../branding.config";
 import { SkeletonRows, cx } from "./ui";
-import { IconPanelLeft, IconPlusChat, IconRefresh, IconSearch, IconTrash } from "./icons";
+import { IconCheck, IconPanelLeft, IconPencil, IconPlusChat, IconRefresh, IconSearch, IconTrash, IconX } from "./icons";
 import { Wordmark } from "./Wordmark";
 
 type Session = {
@@ -36,6 +36,7 @@ export function SessionSidebar({
   onOpenSearch,
   refreshKey,
   onDeleted,
+  onRenamed,
   guest = false,
   user,
   onRequestLogin,
@@ -54,6 +55,7 @@ export function SessionSidebar({
   onOpenRepository?: () => void;
   onOpenHarness?: () => void;
   onDeleted?: (id: string) => void;
+  onRenamed?: (session: { id: string; title: string }) => void;
   guest?: boolean;
   user?: { email: string; displayName?: string | null; avatarUrl?: string | null } | null;
   onRequestLogin?: () => void;
@@ -65,6 +67,9 @@ export function SessionSidebar({
   const [query, setQuery] = useState("");
   const [actionSessionId, setActionSessionId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressed = useRef(false);
 
@@ -96,6 +101,43 @@ export function SessionSidebar({
       setError(e.message || "Unable to delete session");
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  function startRename(session: Session) {
+    setError(null);
+    setEditingId(session.id);
+    setTitleDraft(session.title || "Untitled session");
+    setActionSessionId(null);
+  }
+
+  function cancelRename() {
+    setEditingId(null);
+    setTitleDraft("");
+  }
+
+  async function saveRename(session: Session) {
+    const title = titleDraft.trim();
+    if (!title) {
+      setError("Give the session a name before saving.");
+      return;
+    }
+    if (title === session.title) {
+      cancelRename();
+      return;
+    }
+    setSavingTitle(true);
+    setError(null);
+    try {
+      const result = await api.updateSession(session.id, { title });
+      const renamed = result.session as Session;
+      setSessions((current) => current.map((item) => (item.id === session.id ? renamed : item)));
+      onRenamed?.({ id: session.id, title: renamed.title });
+      cancelRename();
+    } catch (e: any) {
+      setError(e.message || "Unable to rename session");
+    } finally {
+      setSavingTitle(false);
     }
   }
 
@@ -223,6 +265,7 @@ export function SessionSidebar({
               </div>
               {items.map((s) => {
                 const actionsOpen = actionSessionId === s.id;
+                const editing = editingId === s.id;
                 return (
                   <div
                     key={s.id}
@@ -233,7 +276,24 @@ export function SessionSidebar({
                         : "text-text-tertiary hover:bg-sidebar-accent/70 hover:text-text-secondary"
                     )}
                   >
-                    <button
+                    {editing ? (
+                      <div className="flex min-w-0 flex-1 items-center gap-1 px-1 py-1">
+                        <input
+                          autoFocus
+                          value={titleDraft}
+                          maxLength={200}
+                          onChange={(event) => setTitleDraft(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") { event.preventDefault(); void saveRename(s); }
+                            if (event.key === "Escape") { event.preventDefault(); cancelRename(); }
+                          }}
+                          aria-label="Session name"
+                          className="h-7 min-w-0 flex-1 rounded-md border border-border-strong bg-surface-secondary px-2 text-sm text-text-primary outline-none"
+                        />
+                        <button type="button" onClick={() => void saveRename(s)} disabled={savingTitle} aria-label="Save session name" className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-interactive-positive hover:bg-interactive-positive/10 disabled:opacity-50"><IconCheck className="h-4 w-4" /></button>
+                        <button type="button" onClick={cancelRename} disabled={savingTitle} aria-label="Cancel rename" className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-text-muted hover:bg-sidebar-accent disabled:opacity-50"><IconX className="h-4 w-4" /></button>
+                      </div>
+                    ) : <button
                       type="button"
                       onPointerDown={() => startHold(s.id)}
                       onPointerUp={cancelHold}
@@ -263,18 +323,12 @@ export function SessionSidebar({
                           minute: "2-digit",
                         })}
                       </span>
-                    </button>
+                    </button>}
                     {actionsOpen && (
-                      <button
-                        type="button"
-                        onClick={() => deleteSession(s)}
-                        disabled={deletingId === s.id}
-                        className="animate-action-reveal inline-flex w-[74px] shrink-0 items-center justify-center gap-1.5 border-l border-interactive-negative/15 bg-interactive-negative/[0.08] text-[11px] font-semibold text-interactive-negative transition-colors hover:bg-interactive-negative/[0.14] disabled:opacity-50"
-                        aria-label={`Delete ${s.title || "session"}`}
-                      >
-                        <IconTrash className="h-3.5 w-3.5" />
-                        {deletingId === s.id ? "Deleting" : "Delete"}
-                      </button>
+                      <div className="animate-action-reveal flex shrink-0 border-l border-border-faint bg-sidebar-accent/50">
+                        <button type="button" onClick={() => startRename(s)} className="inline-flex w-[70px] items-center justify-center gap-1 text-[11px] font-semibold text-text-secondary transition-colors hover:bg-sidebar-accent" aria-label={`Rename ${s.title || "session"}`}><IconPencil className="h-3.5 w-3.5" />Rename</button>
+                        <button type="button" onClick={() => deleteSession(s)} disabled={deletingId === s.id} className="inline-flex w-[74px] items-center justify-center gap-1.5 border-l border-interactive-negative/15 bg-interactive-negative/[0.08] text-[11px] font-semibold text-interactive-negative transition-colors hover:bg-interactive-negative/[0.14] disabled:opacity-50" aria-label={`Delete ${s.title || "session"}`}><IconTrash className="h-3.5 w-3.5" />{deletingId === s.id ? "Deleting" : "Delete"}</button>
+                      </div>
                     )}
                   </div>
                 );

@@ -391,6 +391,10 @@ function AgentWorkspace({
             }
             refreshSessions();
           }}
+          onRenamed={({ id, title }) => {
+            if (sessionId === id) setSessionTitle(title);
+            refreshSessions();
+          }}
           selectedId={sessionId || undefined}
           onSelect={(id) => {
             setSessionId(id);

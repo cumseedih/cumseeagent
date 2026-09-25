@@ -14,7 +14,7 @@ const createSchema = z.object({
 });
 
 const patchSchema = z.object({
-  title: z.string().max(200).optional(),
+  title: z.string().trim().min(1).max(200).optional(),
   status: z.enum(["active", "paused", "completed", "failed", "cancelled"]).optional(),
   selectedModel: z.string().max(100).optional(),
   selectedProvider: z.string().max(100).optional(),
