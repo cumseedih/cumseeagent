@@ -319,6 +319,20 @@
 .delvin-core-scene--companion .delvin-core-satellite--one { background: hsl(185 42% 64%); }
 @keyframes delvin-companion-drift { 0%, 100% { transform: translate3d(0, 0, 0) rotate(-2deg); } 50% { transform: translate3d(-3px, -10px, 0) rotate(2deg); } }
 
+/* Secondary orbiting presence placed in the open canvas: a deeper Neptune
+   palette with a brighter ice ring, distinct from the Uranus companion near
+   the composer. */
+.delvin-neptune-companion { animation: delvin-neptune-drift 6.2s cubic-bezier(.37,.01,.24,1) infinite; }
+.delvin-core-scene--neptune { --core-speed: 12s; filter: drop-shadow(0 10px 13px hsl(220 58% 26% / .2)); }
+.delvin-core-scene--neptune .delvin-core-aura { background: radial-gradient(circle, hsl(214 77% 65% / .34), transparent 70%); }
+.delvin-core-scene--neptune .delvin-core-sphere { background: radial-gradient(ellipse at 29% 20%, hsl(0 0% 100% / .88) 0 5%, transparent 24%), radial-gradient(ellipse at 72% 76%, hsl(231 62% 34% / .76), transparent 50%), linear-gradient(145deg, hsl(204 85% 78%), hsl(216 76% 52%) 54%, hsl(231 65% 35%)); box-shadow: inset 0 0 0 4px hsl(200 88% 92% / .22), 0 10px 22px hsl(221 58% 27% / .24), 0 27px 48px -32px hsl(225 66% 23% / .58); }
+.delvin-core-scene--neptune .delvin-core-ring { border-color: hsl(194 78% 84% / .78); background: hsl(202 72% 84% / .12); box-shadow: 0 1px 0 hsl(0 0% 100% / .82), 0 5px 12px hsl(217 66% 32% / .2), inset 0 1px 0 hsl(0 0% 100% / .52); }
+.delvin-core-scene--neptune .delvin-core-band--one { background: hsl(208 75% 34%); opacity: .3; }
+.delvin-core-scene--neptune .delvin-core-band--two { background: hsl(191 78% 72%); opacity: .26; }
+.delvin-core-scene--neptune .delvin-core-satellite--one { background: hsl(195 77% 72%); box-shadow: 0 3px 8px hsl(204 82% 43% / .42); }
+.delvin-core-scene--neptune .delvin-core-satellite--two { background: hsl(226 56% 43%); box-shadow: 0 3px 7px hsl(226 62% 30% / .38); }
+@keyframes delvin-neptune-drift { 0%, 100% { transform: translate3d(0, 0, 0) rotate(2deg); } 38% { transform: translate3d(8px, -9px, 0) rotate(-2deg); } 72% { transform: translate3d(2px, -4px, 0) rotate(1deg); } }
+
 @keyframes delvin-orbit { from { rotate: 0deg; } to { rotate: 360deg; } }
 @keyframes delvin-core-breathe { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
 @keyframes delvin-core-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -7px; } }
@@ -370,7 +384,7 @@
 button:hover .plugin-sigil { transform: translateY(-1px) rotateX(9deg); box-shadow: 0 3px 6px hsl(32 22% 31% / 0.12), inset 0 1px 0 hsl(0 0% 100% / 0.9); }
 
 @media (prefers-reduced-motion: reduce) {
-  .delvin-core-scene, .delvin-core-orbit, .delvin-core-sphere, .delvin-core-satellite, .delvin-companion { animation: none !important; }
+  .delvin-core-scene, .delvin-core-orbit, .delvin-core-sphere, .delvin-core-satellite, .delvin-companion, .delvin-neptune-companion { animation: none !important; }
 }
 
 html,
@@ -657,4 +671,4 @@ body {
   padding: 0.1em 0.35em;
 }
 
-@media (prefers-reduced-motion: reduce) { .delvin-companion { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .delvin-companion, .delvin-neptune-companion { animation: none; } }
