@@ -47,6 +47,66 @@ export async function runRoutes(app: FastifyInstance) {
     return { run };
   });
 
+  // POST /api/runs/:runId/retry — create a fresh run from a failed attempt.
+  // A new row keeps the original failure/audit trail intact and avoids adding
+  // the user's message to the conversation a second time.
+  app.post("/runs/:runId/retry", async (req, reply) => {
+    const { runId } = req.params as any;
+    const userId = await getUserId(req);
+    const failedRun = await prisma.agentRun.findUnique({
+      where: { id: runId },
+      include: { session: true, plans: { orderBy: { createdAt: "desc" }, take: 1 } },
+    });
+    if (!failedRun) return reply.code(404).send({ error: "Run not found" });
+    if (failedRun.session.userId !== userId) return reply.code(403).send({ error: "Forbidden" });
+    if (failedRun.status !== "failed") return reply.code(409).send({ error: "Only a failed run can be retried" });
+
+    const activeRun = await prisma.agentRun.findFirst({
+      where: { sessionId: failedRun.sessionId, status: { in: ["running", "waiting_approval"] } },
+      select: { id: true },
+    });
+    if (activeRun) return reply.code(409).send({ error: "This session already has an active run" });
+
+    const goal = failedRun.goal || "Retry agent task";
+    const planJson = failedRun.plans[0]?.planJson || JSON.stringify({
+      goal,
+      steps: [
+        { id: "1", title: "Analyze goal", status: "completed" },
+        { id: "2", title: "Create execution plan", status: "pending" },
+        { id: "3", title: "Execute tools", status: "pending" },
+        { id: "4", title: "Verify and complete", status: "pending" },
+      ],
+    });
+
+    const retriedRun = await prisma.$transaction(async (tx) => {
+      const created = await tx.agentRun.create({
+        data: { sessionId: failedRun.sessionId, status: "running", goal, currentStep: "analyzing" },
+      });
+      await tx.plan.create({ data: { agentRunId: created.id, planJson, status: "pending" } });
+      await tx.session.update({
+        where: { id: failedRun.sessionId },
+        data: { status: "active", completedAt: null },
+      });
+      await tx.auditLog.create({
+        data: {
+          userId,
+          sessionId: failedRun.sessionId,
+          action: "agent.retry",
+          metadataJson: JSON.stringify({ failedRunId: failedRun.id, retriedRunId: created.id }),
+          ipAddress: req.ip,
+        },
+      });
+      return created;
+    });
+
+    await eventBus.emitEvent(failedRun.sessionId, "agent.started", { agentRunId: retriedRun.id, goal, retryOf: failedRun.id });
+    await eventBus.emitEvent(failedRun.sessionId, "agent.thinking", { agentRunId: retriedRun.id, step: "Retrying your request..." });
+    await eventBus.emitEvent(failedRun.sessionId, "agent.plan.created", { agentRunId: retriedRun.id, plan: JSON.parse(planJson) });
+    agentEngine.start(retriedRun.id);
+
+    return reply.code(201).send({ run: retriedRun });
+  });
+
   // POST /api/runs/:runId/pause
   app.post("/runs/:runId/pause", async (req, reply) => {
     const { runId } = req.params as any;

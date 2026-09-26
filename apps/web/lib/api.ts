@@ -50,6 +50,7 @@ export const api = {
   // Runs
   listRuns: (sessionId: string) => request(`/sessions/${sessionId}/runs`),
   getRun: (runId: string) => request(`/runs/${runId}`),
+  retryRun: (runId: string) => request(`/runs/${runId}/retry`, { method: "POST" }),
   pauseRun: (runId: string) => request(`/runs/${runId}/pause`, { method: "POST" }),
   resumeRun: (runId: string) => request(`/runs/${runId}/resume`, { method: "POST" }),
   cancelRun: (runId: string) => request(`/runs/${runId}/cancel`, { method: "POST" }),

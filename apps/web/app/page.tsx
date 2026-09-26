@@ -53,6 +53,8 @@ function AgentWorkspace({
   const [events, setEvents] = useState<CumseeEvent[]>([]);
   const [toolCalls, setToolCalls] = useState<any[]>([]);
   const [streamingText, setStreamingText] = useState("");
+  const [failedRunId, setFailedRunId] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
   const [harness, setHarness] = useState<Harness>("standard");
   const [quota, setQuota] = useState<{ remaining: number | null; limit: number; exhausted: boolean; unlimited: boolean } | null>(null);
   const [repoPicker, setRepoPicker] = useState(false);
@@ -127,15 +129,18 @@ function AgentWorkspace({
 
     (async () => {
       try {
-        const [m, e, t] = await Promise.all([
+        const [m, e, t, r] = await Promise.all([
           api.listMessages(sessionId),
           api.listEvents(sessionId),
           api.listToolCalls(sessionId),
+          api.listRuns(sessionId),
         ]);
         if (!alive) return;
         setMessages(m.messages || []);
         setEvents(e.events || []);
         setToolCalls(t.toolCalls || []);
+        const latestRun = r.runs?.[0];
+        setFailedRunId(latestRun?.status === "failed" ? latestRun.id : null);
       } catch (e: any) {
         if (alive) setError(e.message || "Failed to load session");
       }
@@ -146,7 +151,7 @@ function AgentWorkspace({
       (ev) => {
         setEvents((prev) => [...prev.slice(-400), ev]);
         const type = ev.eventType;
-        if (type === "agent.started") { setStatus("running"); setStreamingText(""); }
+        if (type === "agent.started") { setStatus("running"); setStreamingText(""); setFailedRunId(null); setError(null); }
         if (type === "agent.thinking") {
           setStatus("thinking");
           if (typeof ev.payload?.delta === "string") setStreamingText((current) => `${current}${ev.payload.delta}`);
@@ -161,6 +166,7 @@ function AgentWorkspace({
         if (type === "agent.failed") {
           setStatus("failed");
           setStreamingText("");
+          setFailedRunId(typeof ev.payload?.agentRunId === "string" && typeof ev.payload?.error === "string" ? ev.payload.agentRunId : null);
           setError(ev.payload?.error || "The agent could not complete this request.");
         }
         if (type.startsWith("tool.") || type.startsWith("file.")) {
@@ -268,6 +274,35 @@ function AgentWorkspace({
     }
   }
 
+  async function retryFailedRun() {
+    if (!sessionId || retrying) return;
+    setRetrying(true);
+    try {
+      let runId = failedRunId;
+      if (!runId) {
+        const result = await api.listRuns(sessionId);
+        runId = result.runs?.find((run: any) => run.status === "failed")?.id || null;
+      }
+      if (!runId) throw new Error("No failed run is available to retry.");
+      const result = await api.retryRun(runId);
+      setFailedRunId(null);
+      setError(null);
+      setStreamingText("");
+      setStatus("running");
+      setEvents((current) => [...current, {
+        id: `local-retry-${Date.now()}`,
+        sessionId,
+        eventType: "agent.started",
+        payload: { agentRunId: result.run.id, retryOf: runId },
+        createdAt: new Date().toISOString(),
+      } as CumseeEvent]);
+    } catch (e: any) {
+      setError(e.message || "Could not retry this request");
+    } finally {
+      setRetrying(false);
+    }
+  }
+
   const stopRun = useCallback(async () => {
     if (!sessionId) return;
     try {
@@ -300,7 +335,7 @@ function AgentWorkspace({
   // composer on the empty state — one definition, two mount points.
   const errorNote = error ? (
     <div className="mb-4">
-      <ErrorNote onRetry={() => setError(null)}>{error}</ErrorNote>
+      <ErrorNote onRetry={retrying ? undefined : failedRunId ? () => void retryFailedRun() : () => window.location.reload()}>{retrying ? "Retrying your request…" : error}</ErrorNote>
     </div>
   ) : null;
 
