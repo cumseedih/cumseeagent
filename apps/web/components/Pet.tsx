@@ -9,10 +9,15 @@ import { DelvinCore } from "./DelvinCore";
  */
 export function WorkspacePet({ active, status }: { active: boolean; status?: string }) {
   if (!active) return null;
+  const working = status === "thinking" || status === "running";
 
   return (
     <>
-      <div className="pointer-events-none fixed left-4 top-[142px] z-30 select-none sm:left-[72px] sm:top-[128px]" aria-label="Neptune companion">
+      <div
+        className={`pointer-events-none fixed left-4 top-[142px] z-30 select-none transition-[opacity,transform,visibility] duration-300 sm:left-[72px] sm:top-[128px] ${working ? "visible scale-100 opacity-100" : "invisible scale-75 opacity-0"}`}
+        aria-label="Neptune companion"
+        aria-hidden={!working}
+      >
         <div className="delvin-neptune-companion relative grid h-[62px] w-[62px] place-items-center sm:h-[70px] sm:w-[70px]">
           <DelvinCore status={status} variant="neptune" className="h-[58px] w-[58px] sm:h-[64px] sm:w-[64px]" />
         </div>
