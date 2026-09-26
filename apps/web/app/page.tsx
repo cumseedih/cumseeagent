@@ -141,6 +141,7 @@ function AgentWorkspace({
         setToolCalls(t.toolCalls || []);
         const latestRun = r.runs?.[0];
         setFailedRunId(latestRun?.status === "failed" ? latestRun.id : null);
+        if (latestRun?.status) setStatus(latestRun.status);
       } catch (e: any) {
         if (alive) setError(e.message || "Failed to load session");
       }

@@ -10,6 +10,7 @@ import { DelvinCore } from "./DelvinCore";
 export function WorkspacePet({ active, status }: { active: boolean; status?: string }) {
   if (!active) return null;
   const working = status === "thinking" || status === "running";
+  const completed = status === "completed";
 
   return (
     <>
@@ -20,6 +21,16 @@ export function WorkspacePet({ active, status }: { active: boolean; status?: str
       >
         <div className="delvin-neptune-companion relative grid h-[62px] w-[62px] place-items-center sm:h-[70px] sm:w-[70px]">
           <DelvinCore status={status} variant="neptune" className="h-[58px] w-[58px] sm:h-[64px] sm:w-[64px]" />
+        </div>
+      </div>
+      <div
+        className={`pointer-events-none fixed left-4 top-[142px] z-30 select-none transition-[opacity,transform,visibility] duration-500 sm:left-[72px] sm:top-[128px] ${completed ? "visible scale-100 opacity-100" : "invisible scale-75 opacity-0"}`}
+        aria-label="Completed task sun"
+        aria-hidden={!completed}
+      >
+        <div className="delvin-sun-companion relative grid h-[62px] w-[62px] place-items-center sm:h-[70px] sm:w-[70px]">
+          <span className="delvin-sun-corona" aria-hidden="true" />
+          <span className="delvin-sun-core" aria-hidden="true"><i /><b /></span>
         </div>
       </div>
       <div className="pointer-events-none fixed bottom-[138px] right-3 z-30 select-none sm:bottom-[100px] sm:right-4" aria-label="Delvin companion">
