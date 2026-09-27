@@ -307,45 +307,44 @@
 .delvin-core-scene--working .delvin-core-satellite--one { animation-duration: 3.2s; }
 .delvin-core-scene--working .delvin-core-satellite--two { animation-duration: 4.2s; }
 
-/* The chat companion reuses the same core silhouette. Its cool Uranus-like
-   surface applies only to the miniature, leaving the hero core unchanged. */
-.delvin-companion { animation: delvin-companion-drift 4.8s ease-in-out infinite; }
-.delvin-core-scene--companion { --core-speed: 9s; filter: drop-shadow(0 9px 10px hsl(192 22% 28% / .13)); }
-.delvin-core-scene--companion .delvin-core-aura { background: radial-gradient(circle, hsl(182 42% 74% / .38), transparent 70%); }
-.delvin-core-scene--companion .delvin-core-sphere { background: radial-gradient(ellipse at 30% 22%, hsl(0 0% 100% / .95) 0 6%, transparent 25%), radial-gradient(ellipse at 67% 78%, hsl(190 33% 63% / .72), transparent 49%), linear-gradient(145deg, hsl(185 48% 95%), hsl(188 33% 75%) 57%, hsl(194 24% 62%)); }
-.delvin-core-scene--companion .delvin-core-ring { border-color: hsl(184 25% 42% / .62); background: hsl(182 48% 86% / .18); }
-.delvin-core-scene--companion .delvin-core-band--one { background: hsl(185 28% 36%); }
-.delvin-core-scene--companion .delvin-core-band--two { background: hsl(196 43% 63%); }
-.delvin-core-scene--companion .delvin-core-satellite--one { background: hsl(185 42% 64%); }
-@keyframes delvin-companion-drift { 0%, 100% { transform: translate3d(0, 0, 0) rotate(-2deg); } 50% { transform: translate3d(-3px, -10px, 0) rotate(2deg); } }
-
-/* Secondary orbiting presence placed in the open canvas: a deeper Neptune
-   palette with a brighter ice ring, distinct from the Uranus companion near
-   the composer. */
-.delvin-neptune-companion { animation: delvin-neptune-drift 6.2s cubic-bezier(.37,.01,.24,1) infinite; }
-.delvin-core-scene--neptune { --core-speed: 12s; filter: drop-shadow(0 10px 13px hsl(220 58% 26% / .2)); }
-.delvin-core-scene--neptune .delvin-core-aura { background: radial-gradient(circle, hsl(214 77% 65% / .34), transparent 70%); }
-.delvin-core-scene--neptune .delvin-core-sphere { background: radial-gradient(ellipse at 29% 20%, hsl(0 0% 100% / .88) 0 5%, transparent 24%), radial-gradient(ellipse at 72% 76%, hsl(231 62% 34% / .76), transparent 50%), linear-gradient(145deg, hsl(204 85% 78%), hsl(216 76% 52%) 54%, hsl(231 65% 35%)); box-shadow: inset 0 0 0 4px hsl(200 88% 92% / .22), 0 10px 22px hsl(221 58% 27% / .24), 0 27px 48px -32px hsl(225 66% 23% / .58); }
-.delvin-core-scene--neptune .delvin-core-ring { border-color: hsl(194 78% 84% / .78); background: hsl(202 72% 84% / .12); box-shadow: 0 1px 0 hsl(0 0% 100% / .82), 0 5px 12px hsl(217 66% 32% / .2), inset 0 1px 0 hsl(0 0% 100% / .52); }
-.delvin-core-scene--neptune .delvin-core-band--one { background: hsl(208 75% 34%); opacity: .3; }
-.delvin-core-scene--neptune .delvin-core-band--two { background: hsl(191 78% 72%); opacity: .26; }
-.delvin-core-scene--neptune .delvin-core-satellite--one { background: hsl(195 77% 72%); box-shadow: 0 3px 8px hsl(204 82% 43% / .42); }
-.delvin-core-scene--neptune .delvin-core-satellite--two { background: hsl(226 56% 43%); box-shadow: 0 3px 7px hsl(226 62% 30% / .38); }
-@keyframes delvin-neptune-drift { 0%, 100% { transform: translate3d(0, 0, 0) rotate(2deg); } 38% { transform: translate3d(8px, -9px, 0) rotate(-2deg); } 72% { transform: translate3d(2px, -4px, 0) rotate(1deg); } }
-
-/* Completion state: the working Neptune resolves into a warm, living sun.
-   Two independently animated layers keep the flame corona organic without
-   introducing a heavy image asset. */
-.delvin-sun-companion { filter: drop-shadow(0 9px 14px hsl(24 88% 48% / .28)); animation: delvin-sun-float 5s ease-in-out infinite; }
-.delvin-sun-corona { position: absolute; inset: 5%; border-radius: 43%; background: repeating-conic-gradient(from 8deg, hsl(31 96% 57%) 0deg 8deg, hsl(47 100% 70%) 9deg 15deg, transparent 16deg 25deg); filter: blur(1.2px); animation: delvin-sun-spin 14s linear infinite; }
-.delvin-sun-corona::after { content: ""; position: absolute; inset: 13%; border-radius: 50%; background: hsl(39 100% 65%); box-shadow: 0 0 12px hsl(38 100% 61% / .72), 0 0 28px hsl(24 92% 57% / .38); }
-.delvin-sun-core { position: relative; z-index: 1; display: block; width: 57%; height: 57%; overflow: hidden; border: 1px solid hsl(48 100% 91% / .92); border-radius: 50%; background: radial-gradient(circle at 34% 26%, hsl(55 100% 94%) 0 5%, transparent 22%), radial-gradient(circle at 67% 69%, hsl(20 91% 54% / .7), transparent 45%), linear-gradient(145deg, hsl(51 100% 74%), hsl(34 100% 57%) 58%, hsl(20 91% 47%)); box-shadow: inset 0 0 8px hsl(56 100% 92% / .55), 0 0 16px hsl(38 100% 58% / .7); animation: delvin-sun-pulse 2.7s ease-in-out infinite; }
-.delvin-sun-core i, .delvin-sun-core b { position: absolute; display: block; border-radius: 50%; background: hsl(23 86% 46% / .24); }
-.delvin-sun-core i { left: 18%; top: 57%; width: 13%; height: 13%; }
-.delvin-sun-core b { right: 19%; top: 27%; width: 9%; height: 9%; }
-@keyframes delvin-sun-float { 0%, 100% { transform: translate3d(0, 0, 0) rotate(-1deg); } 50% { transform: translate3d(5px, -8px, 0) rotate(1.5deg); } }
-@keyframes delvin-sun-spin { to { transform: rotate(360deg); } }
-@keyframes delvin-sun-pulse { 0%, 100% { transform: scale(.96); filter: saturate(.96); } 50% { transform: scale(1.04); filter: saturate(1.12) brightness(1.04); } }
+/* A tiny Pluto-like work companion. It only appears inline beside the current
+   agent status; the main hero core keeps its original treatment. */
+.delvin-working-pet {
+  filter: drop-shadow(0 2px 3px hsl(225 34% 15% / .22));
+  animation: delvin-pluto-hop 2.8s cubic-bezier(.37, .01, .24, 1) infinite;
+}
+.delvin-core-scene--pluto { --core-speed: 6s; }
+.delvin-core-scene--pluto .delvin-core-aura {
+  inset: 18%;
+  background: radial-gradient(circle, hsl(220 32% 34% / .24), transparent 70%);
+  filter: blur(3px);
+}
+.delvin-core-scene--pluto .delvin-core-sphere {
+  width: 55%;
+  height: 55%;
+  border-width: 1px;
+  background:
+    radial-gradient(circle at 34% 27%, hsl(0 0% 100% / .52) 0 5%, transparent 25%),
+    radial-gradient(circle at 69% 72%, hsl(270 19% 26% / .72), transparent 48%),
+    linear-gradient(145deg, hsl(220 22% 58%), hsl(231 24% 31%) 55%, hsl(268 20% 20%));
+  box-shadow: inset 0 0 0 1px hsl(217 30% 86% / .24), 0 2px 4px hsl(226 42% 15% / .28);
+}
+.delvin-core-scene--pluto .delvin-core-ring {
+  width: 126%;
+  height: 38%;
+  border-width: 1px;
+  border-color: hsl(215 26% 74% / .8);
+  background: transparent;
+  box-shadow: 0 1px 2px hsl(229 31% 16% / .2);
+}
+.delvin-core-scene--pluto .delvin-core-band { opacity: .2; }
+.delvin-core-scene--pluto .delvin-core-satellite { display: none; }
+.delvin-core-scene--pluto .delvin-core-shadow { bottom: 8%; filter: blur(2px); }
+@keyframes delvin-pluto-hop {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  45% { transform: translateY(-2px) rotate(2deg); }
+  58% { transform: translateY(-1px) rotate(1deg); }
+}
 
 @keyframes delvin-orbit { from { rotate: 0deg; } to { rotate: 360deg; } }
 @keyframes delvin-core-breathe { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
@@ -398,7 +397,7 @@
 button:hover .plugin-sigil { transform: translateY(-1px) rotateX(9deg); box-shadow: 0 3px 6px hsl(32 22% 31% / 0.12), inset 0 1px 0 hsl(0 0% 100% / 0.9); }
 
 @media (prefers-reduced-motion: reduce) {
-  .delvin-core-scene, .delvin-core-orbit, .delvin-core-sphere, .delvin-core-satellite, .delvin-companion, .delvin-neptune-companion, .delvin-sun-companion, .delvin-sun-corona, .delvin-sun-core { animation: none !important; }
+  .delvin-core-scene, .delvin-core-orbit, .delvin-core-sphere, .delvin-core-satellite, .delvin-working-pet { animation: none !important; }
 }
 
 html,
@@ -684,5 +683,3 @@ body {
   border-radius: 4px;
   padding: 0.1em 0.35em;
 }
-
-@media (prefers-reduced-motion: reduce) { .delvin-companion, .delvin-neptune-companion, .delvin-sun-companion, .delvin-sun-corona, .delvin-sun-core { animation: none; } }

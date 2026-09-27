@@ -3,6 +3,7 @@
 import { Markdown } from "../lib/markdown";
 import { BRANDING } from "../branding.config";
 import { Mark } from "./Wordmark";
+import { WorkingPet } from "./Pet";
 import { cx } from "./ui";
 
 type Message = {
@@ -140,18 +141,12 @@ export function MessageList({
                 className="animate-stage-in flex items-center gap-2.5 text-[12px] text-text-tertiary"
                 style={{ animationDelay: `${Math.min(index * 45, 180)}ms` }}
               >
-                <span
+                {current && !failed && !done ? <WorkingPet className="h-5 w-5" /> : <span
                   className={cx(
                     "h-2 w-2 shrink-0 rounded-full",
-                    failed
-                      ? "bg-interactive-negative"
-                      : done
-                        ? "bg-interactive-positive"
-                        : current
-                          ? "animate-orchestrate bg-primary"
-                          : "bg-[hsl(var(--brand-secondary))]"
+                    failed ? "bg-interactive-negative" : done ? "bg-interactive-positive" : "bg-[hsl(var(--brand-secondary))]"
                   )}
-                />
+                />}
                 <span className={cx(current && !failed && "activity-shimmer-text")}>{label}</span>
                 {done && <span className="text-interactive-positive">✓</span>}
               </div>
@@ -162,14 +157,14 @@ export function MessageList({
 
       {thinking && activity.length === 0 && (
         <div className="animate-stage-in flex items-center gap-2.5 pl-1 text-[12px] text-text-tertiary" aria-live="polite">
-          <span className="h-2 w-2 animate-orchestrate rounded-full bg-primary" />
+          <WorkingPet className="h-5 w-5" />
           <span className="activity-shimmer-text">Orchestrating…</span>
         </div>
       )}
 
       {streaming && !thinking && activity.length === 0 && (
         <div className="animate-stage-in flex items-center gap-2.5 pl-1 text-[12px] text-text-tertiary" aria-live="polite">
-          <span className="h-2 w-2 animate-orchestrate rounded-full bg-primary" />
+          <WorkingPet className="h-5 w-5" />
           <span className="activity-shimmer-text">Starting agent…</span>
         </div>
       )}

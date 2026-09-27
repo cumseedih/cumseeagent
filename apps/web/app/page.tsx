@@ -8,7 +8,6 @@ import { SessionSidebar } from "../components/SessionSidebar";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { Composer, type AgentEffort, type PluginMention } from "../components/Composer";
 import { DelvinCore } from "../components/DelvinCore";
-import { WorkspacePet } from "../components/Pet";
 import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings, IconGithub, IconPencil, IconX } from "../components/icons";
 import { MessageList } from "../components/MessageList";
 import { ToolTimeline } from "../components/ToolTimeline";
@@ -356,7 +355,6 @@ function AgentWorkspace({
 
   return (
     <div className="flex h-[100dvh] overflow-hidden bg-surface-primary">
-      <WorkspacePet active={hasConversation} status={status} />
       {!guest && <TermsGate onAccepted={() => undefined} />}
       <WorkspaceSheet open={workspaceOpen} onClose={() => setWorkspaceOpen(false)} project={project} refreshKey={workspaceRefreshKey} />
 
