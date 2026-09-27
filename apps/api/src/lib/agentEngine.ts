@@ -208,7 +208,11 @@ class AgentEngine {
         }
         const requested = [...accumulated.values()].filter((x) => x.name).map((x, i) => ({ id: x.id || `call_${run.id}_${iteration}_${i}`, name: x.name, arguments: x.arguments }));
         if (!requested.length) {
-          const assistant = await prisma.message.create({ data: { sessionId: run.sessionId, role: "assistant", content: content || "Task completed.", status: "completed" } });
+          const finalContent = content.trim();
+          // Never turn an empty provider response into a fake success. A real
+          // empty response is retryable and should retain the run's audit trail.
+          if (!finalContent) throw new Error("The model returned an empty response. Please retry this request.");
+          const assistant = await prisma.message.create({ data: { sessionId: run.sessionId, role: "assistant", content: finalContent, status: "completed" } });
           await prisma.agentRun.update({ where: { id: run.id }, data: { status: "completed", currentStep: "completed", completedAt: new Date() } });
           await prisma.plan.updateMany({ where: { agentRunId: run.id }, data: { status: "completed" } });
           await prisma.session.update({ where: { id: run.sessionId }, data: { status: "completed", completedAt: new Date() } });

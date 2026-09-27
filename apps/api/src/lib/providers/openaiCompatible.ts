@@ -122,14 +122,26 @@ export class OpenAICompatibleProvider extends BaseProvider {
             const choiceList = json.choices || [];
             const chunk: ChatChunk = {
               id: json.id || "stream",
-              choices: choiceList.map((c: any) => ({
-                // Different OpenAI-compatible gateways place final text in
-                // delta.content, message.content, text, or content.
-                delta: c.delta || { content: c.message?.content || c.text || c.content || json.output_text || "" },
-                finish_reason: c.finish_reason,
-              })) || [{ delta: { content: json.output_text || "" } }],
+              choices: choiceList.length
+                ? choiceList.map((c: any) => {
+                    // Gateways may put text in message/text/content while tool
+                    // calls remain in delta. Merge both instead of choosing
+                    // one representation and accidentally dropping tool calls.
+                    const delta = c.delta || {};
+                    return {
+                      delta: {
+                        ...delta,
+                        content: delta.content ?? c.message?.content ?? c.text ?? c.content ?? json.output_text ?? "",
+                        tool_calls: delta.tool_calls ?? c.message?.tool_calls,
+                      },
+                      finish_reason: c.finish_reason,
+                    };
+                  })
+                : [{ delta: { content: json.output_text || "" } }],
             };
-            if (chunk.choices.some((choice) => choice.delta.content)) yield chunk;
+            // Tool-call deltas frequently contain no text. They must still be
+            // forwarded or the agent sees an empty completion and terminates.
+            if (chunk.choices.some((choice) => choice.delta.content || choice.delta.tool_calls?.length)) yield chunk;
           } catch {
             // raw text
             yield { id: "stream", choices: [{ delta: { content: data } }] };
