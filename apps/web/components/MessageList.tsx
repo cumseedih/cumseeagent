@@ -1,8 +1,6 @@
 "use client";
 
 import { Markdown } from "../lib/markdown";
-import { BRANDING } from "../branding.config";
-import { Mark } from "./Wordmark";
 import { WorkingPet } from "./Pet";
 import { cx } from "./ui";
 
@@ -86,46 +84,12 @@ export function MessageList({
           );
         }
 
-        return (
-          <div key={m.id} className="group animate-stage-in flex gap-3">
-            <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border-faint bg-surface-secondary">
-              <Mark className="h-3.5 w-3.5 text-text-tertiary" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="mb-1.5 flex items-center gap-2 text-[11px] text-text-muted">
-                <span className="font-medium text-text-tertiary">{BRANDING.PRODUCT_NAME}</span>
-                {m.status && m.status !== "completed" && (
-                  <span
-                    className={cx(
-                      "rounded-full border px-1.5",
-                      m.status === "failed"
-                        ? "border-interactive-negative/40 text-interactive-negative"
-                        : "border-border-faint text-text-muted"
-                    )}
-                  >
-                    {m.status}
-                  </span>
-                )}
-                {timeOf(m.createdAt) && <span className="ml-auto">{timeOf(m.createdAt)}</span>}
-                <button
-                  onClick={() => navigator.clipboard?.writeText(m.content)}
-                  className="opacity-0 transition-opacity hover:text-text-tertiary group-hover:opacity-100"
-                >
-                  Copy
-                </button>
-              </div>
-              <Markdown text={m.content} />
-            </div>
-          </div>
-        );
+        return <div key={m.id} className="animate-stage-in min-w-0"><Markdown text={m.content} /></div>;
       })}
 
       {streamingText && (
-        <div className="group animate-stage-in flex gap-3" aria-live="polite">
-          <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border-faint bg-surface-secondary">
-            <Mark className="h-3.5 w-3.5 text-text-tertiary" />
-          </div>
-          <div className="min-w-0 flex-1"><Markdown text={streamingText} /></div>
+        <div className="animate-stage-in min-w-0" aria-live="polite">
+          <Markdown text={streamingText} />
         </div>
       )}
 
