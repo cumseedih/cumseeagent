@@ -45,16 +45,16 @@ export function WorkspaceHeader({
 }) {
 
   return (
-    <header className="flex min-h-[72px] shrink-0 items-center gap-2 overflow-hidden border-b border-border-faint bg-surface-primary/90 px-4 backdrop-blur sm:min-h-[56px]">
-      <div className="flex min-w-0 flex-1 items-center gap-3 sm:hidden">
-        <button onClick={onToggleSidebar} aria-label="Open sessions" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border-faint bg-surface-secondary text-text-primary shadow-[0_3px_12px_rgba(46,43,41,0.06)]">
-          <span className="flex w-[19px] flex-col gap-[5px]" aria-hidden="true"><span className="h-px w-full bg-current" /><span className="h-px w-full bg-current" /><span className="h-px w-full bg-current" /></span>
+    <header className="flex h-[66px] shrink-0 items-start gap-2 overflow-hidden bg-white px-[19px] pt-[23px] sm:h-[56px] sm:items-center sm:border-b sm:border-border-faint sm:bg-surface-primary/90 sm:px-4 sm:pt-0 sm:backdrop-blur">
+      <div className="flex min-w-0 flex-1 items-center gap-[12px] sm:hidden">
+        <button onClick={onToggleSidebar} aria-label="Open sessions" className="grid h-[43px] w-[44px] shrink-0 place-items-center rounded-full bg-white text-[#161616] shadow-[0_2px_9px_rgba(0,0,0,0.08)]">
+          <span className="flex w-[19px] flex-col gap-[6px]" aria-hidden="true"><span className="h-[1.5px] w-full bg-current" /><span className="h-[1.5px] w-full bg-current" /></span>
         </button>
-        <span className="min-w-0 truncate text-[16px] font-semibold text-text-primary">{sessionTitle || "New chat"}</span>
+        <span className="min-w-0 truncate text-[14px] font-medium leading-[14px] text-[#111]">{sessionTitle || "New chat"}</span>
       </div>
-      <div className="flex shrink-0 items-center overflow-hidden rounded-full border border-border-faint bg-surface-secondary shadow-[0_3px_12px_rgba(46,43,41,0.06)] sm:hidden">
-        <button type="button" onClick={onNewChat} aria-label="New chat" className="grid h-11 w-11 place-items-center text-text-primary transition-colors hover:bg-surface-raised"><IconPencil className="h-5 w-5" /></button>
-        <button type="button" onClick={onOpenWorkspace} aria-label="Open workspace menu" className="grid h-11 w-11 place-items-center text-text-primary transition-colors hover:bg-surface-raised"><IconDots className="h-5 w-5" /></button>
+      <div className="flex h-[43px] shrink-0 items-center overflow-hidden rounded-full bg-white shadow-[0_2px_9px_rgba(0,0,0,0.07)] sm:hidden">
+        <button type="button" onClick={onNewChat} aria-label="New chat" className="grid h-[43px] w-[42px] place-items-center text-[#111] transition-colors hover:bg-[#ebebeb]"><IconPencil className="h-[17px] w-[17px]" /></button>
+        <button type="button" onClick={onOpenWorkspace} aria-label="Open workspace menu" className="grid h-[43px] w-[42px] place-items-center text-[#111] transition-colors hover:bg-[#ebebeb]"><IconDots className="h-[17px] w-[17px]" /></button>
       </div>
       <button
         onClick={onToggleSidebar}

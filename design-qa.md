@@ -1,31 +1,23 @@
-# Delvin mobile landing UI — visual QA
-
-Final result: **passed**
+# Design QA
 
 ## Reference
 
-- Source: user-supplied Arena mobile screenshot (`01-1000042470.png`)
-- Compared area: application viewport only; Android and browser chrome were intentionally excluded.
-- QA viewport: 390 × 844 CSS pixels.
+- `/workspace/scratch/2a678fd5a677/upload/01-1000042930.png`
+- Mobile viewport: 390 × 844 CSS pixels
 
-## Measured implementation
+## Implementation capture
 
-| Element | Measurement | Result |
-| --- | ---: | --- |
-| Composer | x 16, y 705, 358 × 111 px | Matches the reference's near-full-width bottom dock and compact two-row ratio |
-| Headline | x 12, y 363, 366 × 30 px | Single line, centered, light Roboto Slab treatment |
-| Header | 68 px high | Left panel control and right repository control align with the reference |
-| Bottom inset | 28 px | Matches the reference's breathing room below the composer |
+- `/workspace/scratch/delvin-mobile-chat-1790528661757.jpg`
 
-## Visual checks
+## Review
 
-- Warm off-white canvas, white composer surface, fine neutral borders, and restrained shadow match the reference.
-- Empty-state headline, upper controls, input placeholder, tool row, repository selector, branch selector, and settings control are all present in the same visual hierarchy.
-- Delvin's requested Roboto Slab / Roboto / Oswald branding remains intact.
-- No Android status bar or browser navigation controls were recreated inside the application.
-- Desktop behavior, dialogs, agent submission, attachments, model selection, repository selection, and branch selection remain functional.
+- Header geometry, title, and circular controls match the reference hierarchy.
+- User and assistant message spacing, response actions, and typography match the compact mobile layout.
+- Composer uses the reference bottom-docked geometry, circular add/mic/send controls, and voice state.
+- Effort menu exposes the verified `Instant` and `Thinking` states and updates interactively.
+- Delvin's existing animated companion remains in place instead of copying the reference service mark.
+- Desktop behavior remains on the existing Delvin layout through responsive breakpoints.
 
-## Verification
+## Result
 
-- Browser preview reviewed at the QA viewport after the final styling pass.
-- Production Next.js build completed successfully.
+**PASS** — visual and interaction QA completed against the supplied reference.

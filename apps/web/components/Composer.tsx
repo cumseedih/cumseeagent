@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../lib/api";
 import { KeyCap, cx } from "./ui";
-import { IconAppsPlus, IconChevronDown, IconCloudUpload, IconGithub, IconPaperclip, IconPlus, IconSendArrow, IconSparkle, IconStop, IconWorkspacePreview } from "./icons";
+import { IconAppsPlus, IconChevronDown, IconCloudUpload, IconGithub, IconMicrophone, IconPaperclip, IconPlus, IconSendArrow, IconSparkle, IconStop, IconVoiceWave, IconWorkspacePreview } from "./icons";
 
 const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
@@ -15,9 +15,8 @@ export type PluginMention = {
 export type AgentEffort = "quick" | "standard" | "deep";
 
 const EFFORT_OPTIONS: Array<{ id: AgentEffort; label: string; detail: string }> = [
-  { id: "quick", label: "Quick", detail: "Fast response" },
-  { id: "standard", label: "Balanced", detail: "Recommended" },
-  { id: "deep", label: "Deep", detail: "More planning" },
+  { id: "quick", label: "Instant", detail: "Answers right away" },
+  { id: "deep", label: "Thinking", detail: "Reasons longer before answering" },
 ];
 
 const PLUGINS: Array<PluginMention & { mark: string; color: string; connection: "github" | "google" | null }> = [
@@ -69,7 +68,7 @@ export function Composer({
   const [googleConnected, setGoogleConnected] = useState(false);
   const [mentions, setMentions] = useState<PluginMention[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
-  const [effort, setEffort] = useState<AgentEffort>("standard");
+  const [effort, setEffort] = useState<AgentEffort>("quick");
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const toolsRef = useRef<HTMLDivElement>(null);
@@ -161,7 +160,7 @@ export function Composer({
       }}
       className={cx(
         "premium-composer liquid-composer relative w-full border bg-surface-secondary transition-[border-color,box-shadow,transform]",
-        conversationMode ? "rounded-[28px] shadow-[0_12px_36px_rgba(46,43,41,0.10)] md:rounded-[24px]" : "rounded-[20px]",
+        conversationMode ? "rounded-[29px] bg-white shadow-[0_6px_18px_rgba(0,0,0,0.10)] md:rounded-[28px] md:bg-surface-secondary" : "rounded-[20px]",
         dragging ? "border-border-strong shadow-glow" : "border-border-medium"
       )}
     >
@@ -171,7 +170,7 @@ export function Composer({
         </div>
       )}
 
-      <div className={cx("flex w-full flex-col items-start justify-center px-4 pb-3 md:px-5 md:pb-3", conversationMode ? "pt-5" : "pt-4 md:pt-5")}>
+      <div className={cx("flex w-full flex-col items-start justify-center", conversationMode ? "px-[10px] pb-[8px] pt-[11px] md:px-5 md:pb-3 md:pt-5" : "px-4 pb-3 pt-4 md:px-5 md:pt-5")}>
         {attachments.length > 0 && (
           <div className="mb-1.5 flex w-full flex-wrap gap-1.5 px-1">
             {attachments.map((a, idx) => (
@@ -225,7 +224,7 @@ export function Composer({
                 submit();
               }
             }}
-            className={cx("agent-composer-input max-h-[40vh] w-full resize-none border-0 bg-transparent px-0 py-0 text-[15px] leading-relaxed text-text-primary outline-none placeholder:text-text-placeholder focus:border-0 focus:outline-none focus:ring-0 md:text-[15px]", conversationMode ? "min-h-[72px]" : "min-h-[54px] md:min-h-[68px]")}
+            className={cx("agent-composer-input max-h-[40vh] w-full resize-none border-0 bg-transparent px-0 py-0 text-text-primary outline-none placeholder:text-[#888] focus:border-0 focus:outline-none focus:ring-0", conversationMode ? "min-h-[28px] px-0 text-[16px] leading-7 md:min-h-[68px] md:text-[15px]" : "min-h-[54px] text-[15px] leading-relaxed md:min-h-[68px]")}
           />
           {mentionOptions.length > 0 && (
             <div role="listbox" aria-label="Available integrations" className="absolute bottom-[58px] left-4 z-30 w-[min(300px,calc(100%-32px))] overflow-hidden rounded-xl border border-border-medium bg-surface-floating py-1 shadow-[0_12px_36px_rgba(24,24,24,0.14)] md:bottom-[64px] md:left-5">
@@ -240,8 +239,8 @@ export function Composer({
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-4">
-            <div className="mr-1 flex h-8 min-w-0 items-center gap-2 md:h-8">
+          <div className={cx("flex items-center justify-between gap-4", conversationMode && "mt-[7px] md:mt-0")}>
+            <div className="mr-1 flex h-[34px] min-w-0 items-center gap-2 md:h-8">
               <input
                 ref={fileRef}
                 type="file"
@@ -253,13 +252,13 @@ export function Composer({
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 aria-label="Add files"
-                className={cx("inline-flex h-8 w-8 items-center justify-center text-text-secondary transition-colors duration-150 hover:bg-surface-raised hover:text-interactive-active md:h-9 md:w-9", conversationMode ? "rounded-full border border-border-faint" : "rounded-lg")}
+                className={cx("inline-flex items-center justify-center text-text-secondary transition-colors duration-150 hover:bg-surface-raised hover:text-interactive-active", conversationMode ? "h-[34px] w-[34px] rounded-full border border-[#dedede] md:h-9 md:w-9" : "h-8 w-8 rounded-lg md:h-9 md:w-9")}
               >
                 <span className="grid place-items-center">
                   {dragging ? <IconCloudUpload className="h-[19px] w-[19px]" /> : conversationMode ? <IconPlus className="h-5 w-5" /> : <IconAppsPlus className="h-[19px] w-[19px]" />}
                 </span>
               </button>
-              <div ref={toolsRef} className="relative flex h-8 items-center md:h-9">
+              <div ref={toolsRef} className={cx("relative h-8 items-center md:h-9", conversationMode ? "hidden md:flex" : "flex")}>
                 <button
                   type="button"
                   aria-label="Open connections and tools"
@@ -283,7 +282,7 @@ export function Composer({
                   >
                     <div className="border-b border-border-faint px-3.5 py-2.5">
                       <div className="mb-2 text-[13px] font-medium text-text-secondary">Agent effort</div>
-                      <div className="grid grid-cols-3 gap-1">
+                      <div className="grid grid-cols-2 gap-1">
                         {EFFORT_OPTIONS.map((option) => (
                           <button
                             key={option.id}
@@ -330,19 +329,19 @@ export function Composer({
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-[6px] md:gap-1.5">
               {conversationMode && (
                 <div ref={effortRef} className="relative">
-                  <button type="button" aria-label="Choose agent effort" aria-expanded={effortOpen} onClick={() => setEffortOpen((open) => !open)} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border-faint bg-surface-secondary px-3 text-[13px] font-medium text-text-secondary transition-colors hover:bg-surface-raised">
+                  <button type="button" aria-label="Choose agent effort" aria-expanded={effortOpen} onClick={() => setEffortOpen((open) => !open)} className="inline-flex h-[34px] items-center gap-1.5 rounded-full border border-[#dedede] bg-white px-3 text-[13px] font-medium text-[#222] transition-colors hover:bg-[#f1f1f1] md:h-9 md:border-border-faint md:bg-surface-secondary md:text-text-secondary">
                     {EFFORT_OPTIONS.find((option) => option.id === effort)?.label}
                     <IconChevronDown className={cx("h-3.5 w-3.5 transition-transform", effortOpen && "rotate-180")} />
                   </button>
                   {effortOpen && (
-                    <div className="liquid-popover absolute bottom-full right-0 z-50 mb-2 w-[min(270px,calc(100vw-48px))] overflow-hidden rounded-2xl border border-border-medium bg-surface-floating py-1.5 shadow-[0_14px_42px_rgba(24,24,24,0.16)] animate-composer-popover">
+                    <div className="liquid-popover absolute bottom-full right-0 z-50 mb-[9px] w-[231px] overflow-hidden rounded-[11px] border border-[#ededed] bg-white py-1 shadow-[0_4px_12px_rgba(0,0,0,0.18)] animate-composer-popover md:w-[270px] md:rounded-2xl md:border-border-medium md:bg-surface-floating">
                       {EFFORT_OPTIONS.map((option) => (
-                        <button key={option.id} type="button" aria-pressed={effort === option.id} onClick={() => { setEffort(option.id); setEffortOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-raised">
-                          <span className="flex-1"><span className="block text-[14px] font-medium text-text-primary">{option.label}</span><span className="mt-0.5 block text-[12px] text-text-muted">{option.detail}</span></span>
-                          {effort === option.id && <span aria-hidden="true" className="text-lg text-text-primary">✓</span>}
+                        <button key={option.id} type="button" aria-pressed={effort === option.id} onClick={() => { setEffort(option.id); setEffortOpen(false); }} className="flex w-full items-center gap-3 border-b border-[#efefef] px-[15px] py-[9px] text-left transition-colors last:border-b-0 hover:bg-[#f5f5f5] md:px-4 md:py-3">
+                          <span className="flex-1"><span className="block text-[14px] font-medium text-[#222]">{option.label}</span><span className="mt-0.5 block text-[11px] text-[#888] md:text-[12px]">{option.detail}</span></span>
+                          {effort === option.id && <span aria-hidden="true" className="text-[16px] text-[#222]">✓</span>}
                         </button>
                       ))}
                     </div>
@@ -352,12 +351,17 @@ export function Composer({
               <span className="hidden items-center gap-1 text-[11px] text-text-muted md:flex">
                 <KeyCap>⏎</KeyCap> send · <KeyCap>⇧⏎</KeyCap> newline
               </span>
+              {conversationMode && (
+                <button type="button" onClick={() => taRef.current?.focus()} aria-label="Voice input" className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[#dedede] bg-white text-[#222] transition-colors hover:bg-[#f1f1f1] md:hidden">
+                  <IconMicrophone className="h-[19px] w-[19px]" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onOpenWorkspace}
                 aria-label="Open workspace files"
                 title="Open workspace files"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-[background-color,color,transform] duration-150 hover:bg-surface-raised hover:text-interactive-active active:scale-[0.96] md:h-9 md:w-9"
+                className={cx("h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-[background-color,color,transform] duration-150 hover:bg-surface-raised hover:text-interactive-active active:scale-[0.96] md:h-9 md:w-9", conversationMode ? "hidden md:inline-flex" : "inline-flex")}
               >
                 <IconWorkspacePreview className="h-[19px] w-[19px]" />
               </button>
@@ -366,23 +370,24 @@ export function Composer({
                   type="button"
                   onClick={onStop}
                   aria-label="Stop run"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border-medium bg-primary text-white transition-[transform,background-color] hover:scale-[1.02] hover:bg-[hsl(var(--brand-secondary))] md:h-10 md:w-10"
+                  className={cx("inline-flex items-center justify-center border bg-primary text-white transition-[transform,background-color] hover:scale-[1.02] hover:bg-[hsl(var(--brand-secondary))]", conversationMode ? "h-[34px] w-[34px] rounded-full border-transparent md:h-10 md:w-10" : "h-8 w-8 rounded-lg border-border-medium md:h-10 md:w-10")}
                 >
                   <IconStop className="h-4 w-4" />
                 </button>
               ) : <button
                 type="button"
-                onClick={submit}
-                disabled={!canSend}
-                aria-label="Send message"
+                onClick={() => canSend ? submit() : taRef.current?.focus()}
+                aria-label={canSend ? "Send message" : "Compose a message"}
                 className={cx(
-                  "inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors md:h-10 md:w-10",
-                  canSend
-                    ? "border-border-medium bg-surface-raised text-interactive-active hover:bg-surface-highlight"
-                    : "pointer-events-none border-border-faint text-text-muted opacity-50"
+                  "inline-flex items-center justify-center border transition-colors",
+                  conversationMode
+                    ? "h-[34px] w-[34px] rounded-full border-transparent bg-[#0863d9] text-white hover:bg-[#1c6fdc] md:h-10 md:w-10 md:rounded-md"
+                    : canSend
+                      ? "h-8 w-8 rounded-md border-border-medium bg-surface-raised text-interactive-active hover:bg-surface-highlight md:h-10 md:w-10"
+                      : "pointer-events-none h-8 w-8 rounded-md border-border-faint text-text-muted opacity-50 md:h-10 md:w-10"
                 )}
               >
-                <IconSendArrow className="h-5 w-5" />
+                {canSend ? <IconSendArrow className="h-5 w-5" /> : conversationMode ? <IconVoiceWave className="h-[18px] w-[18px]" /> : <IconSendArrow className="h-5 w-5" />}
               </button>}
             </div>
           </div>

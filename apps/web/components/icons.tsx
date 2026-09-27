@@ -80,6 +80,21 @@ export const IconShare = (p: IconProps) => (
   </Base>
 );
 
+/** Tabler-style microphone path retained from the approved 12UI conversion. */
+export const IconMicrophone = (p: IconProps) => (
+  <Base {...p} strokeWidth={2}>
+    <path d="M9 5a3 3 0 0 1 3-3 3 3 0 0 1 3 3v5a3 3 0 0 1-3 3 3 3 0 0 1-3-3V5" />
+    <path d="M5 10a7 7 0 0 0 14 0M8 21h8M12 17v4" />
+  </Base>
+);
+
+/** Compact audio waveform for the voice action. */
+export const IconVoiceWave = (p: IconProps) => (
+  <Base {...p} strokeWidth={2}>
+    <path d="M5 10v4M8.5 7.5v9M12 4v16M15.5 7.5v9M19 10v4" />
+  </Base>
+);
+
 export const IconTrophy = (p: IconProps) => (
   <Base {...p}>
     <path d="M8 4h8v5a4 4 0 0 1-8 0V4z" />

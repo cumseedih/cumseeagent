@@ -354,7 +354,7 @@ function AgentWorkspace({
   ) : null;
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden bg-surface-primary">
+    <div className={cx("flex h-[100dvh] overflow-hidden", hasConversation ? "bg-white md:bg-surface-primary" : "bg-surface-primary")}>
       {!guest && <TermsGate onAccepted={() => undefined} />}
       <WorkspaceSheet open={workspaceOpen} onClose={() => setWorkspaceOpen(false)} project={project} refreshKey={workspaceRefreshKey} />
 
@@ -482,8 +482,8 @@ function AgentWorkspace({
           {/* Conversation column */}
           <div className="flex min-w-0 flex-1 flex-col">
             {hasConversation && (
-              <div className="animate-workspace-enter min-h-0 flex-1 overflow-y-auto px-5 md:px-4">
-                <div className="mx-auto w-full max-w-3xl py-7 md:py-6">
+              <div className="animate-workspace-enter min-h-0 flex-1 overflow-y-auto px-[19px] md:px-4">
+                <div className="mx-auto w-full max-w-3xl py-[22px] md:py-6">
                   {errorNote}
                   {approvalNote}
                   <MessageList messages={messages} events={events} thinking={status === "thinking"} streaming={status === "running"} streamingText={streamingText} />
@@ -496,7 +496,7 @@ function AgentWorkspace({
               className={cx(
                 "shrink-0",
                 hasConversation
-                  ? "px-5 pb-5 pt-2 md:px-4 md:pb-4"
+                  ? "px-[19px] pb-[22px] pt-2 md:px-4 md:pb-4"
                   : "relative flex min-h-0 flex-1 flex-col justify-end overflow-hidden px-4 pb-7 pt-4 md:justify-center md:pb-0 md:pt-0"
               )}
             >

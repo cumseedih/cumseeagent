@@ -33,15 +33,6 @@ function activityLabel(event: AgentEvent) {
   return null;
 }
 
-function timeOf(iso?: string) {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return "";
-  }
-}
-
 /** Conversation transcript: assistant turns render markdown, user turns a bubble. */
 export function MessageList({
   messages,
@@ -65,23 +56,14 @@ export function MessageList({
     .slice(-5);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 md:gap-7">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-[19px] md:gap-7">
       {messages.map((m) => {
         const isUser = m.role === "user";
         if (isUser) {
           return (
             <div key={m.id} className="animate-message-in flex justify-end">
-              <div className="group max-w-[82%] rounded-[22px] rounded-br-[7px] bg-surface-raised/70 px-4 py-2.5 shadow-[inset_0_0_0_1px_hsl(var(--border-faint))] md:max-w-[75%]">
-                <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-text-primary">{m.content}</p>
-                <div className="mt-1.5 flex items-center justify-end gap-2 text-[10px] text-text-muted">
-                  <button
-                    onClick={() => navigator.clipboard?.writeText(m.content)}
-                    className="opacity-0 transition-opacity hover:text-text-tertiary group-hover:opacity-100"
-                  >
-                    Copy
-                  </button>
-                  {timeOf(m.createdAt)}
-                </div>
+              <div className="group max-w-[82%] rounded-[19px] bg-[#f1f1f3] px-[15px] py-[8px] md:max-w-[75%] md:rounded-[22px] md:bg-surface-raised/70 md:px-4 md:py-2.5 md:shadow-[inset_0_0_0_1px_hsl(var(--border-faint))]">
+                <p className="whitespace-pre-wrap break-words text-[14px] leading-[19px] text-[#111] md:text-[15px] md:leading-relaxed md:text-text-primary">{m.content}</p>
               </div>
             </div>
           );
@@ -90,15 +72,16 @@ export function MessageList({
         const vote = rated[m.id];
         return (
           <article key={m.id} className="animate-stage-in min-w-0">
-            <div className="min-w-0 text-[15px] leading-[1.75]"><Markdown text={m.content} /></div>
-            <div className="mt-3 flex items-center gap-1 text-text-muted" aria-label="Response actions">
-              <button type="button" aria-label="Good response" aria-pressed={vote === "up"} onClick={() => setRated((current) => ({ ...current, [m.id]: current[m.id] === "up" ? undefined : "up" }))} className={cx("grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-surface-raised hover:text-text-primary", vote === "up" && "bg-surface-raised text-text-primary")}><IconThumbUp className="h-[19px] w-[19px]" /></button>
-              <button type="button" aria-label="Bad response" aria-pressed={vote === "down"} onClick={() => setRated((current) => ({ ...current, [m.id]: current[m.id] === "down" ? undefined : "down" }))} className={cx("grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-surface-raised hover:text-text-primary", vote === "down" && "bg-surface-raised text-text-primary")}><IconThumbDown className="h-[19px] w-[19px]" /></button>
-              <button type="button" aria-label="Copy response" onClick={() => navigator.clipboard?.writeText(m.content)} className="grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-surface-raised hover:text-text-primary"><IconCopy className="h-[19px] w-[19px]" /></button>
+            <WorkingPet className="ml-[5px] h-[22px] w-[22px] md:h-6 md:w-6" />
+            <div className="mt-[18px] min-w-0 text-[14px] leading-[1.55] text-[#353535] [&_.agent-md]:text-[#353535] md:mt-4 md:text-[15px] md:leading-[1.75] md:text-text-primary md:[&_.agent-md]:text-text-secondary"><Markdown text={m.content} /></div>
+            <div className="ml-[11px] mt-[17px] flex items-center gap-[21px] text-[#777] md:ml-0 md:mt-3 md:gap-2 md:text-text-muted" aria-label="Response actions">
+              <button type="button" aria-label="Good response" aria-pressed={vote === "up"} onClick={() => setRated((current) => ({ ...current, [m.id]: current[m.id] === "up" ? undefined : "up" }))} className={cx("grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary", vote === "up" && "text-[#222] md:bg-surface-raised md:text-text-primary")}><IconThumbUp className="h-[20px] w-[20px]" /></button>
+              <button type="button" aria-label="Bad response" aria-pressed={vote === "down"} onClick={() => setRated((current) => ({ ...current, [m.id]: current[m.id] === "down" ? undefined : "down" }))} className={cx("grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary", vote === "down" && "text-[#222] md:bg-surface-raised md:text-text-primary")}><IconThumbDown className="h-[20px] w-[20px]" /></button>
+              <button type="button" aria-label="Copy response" onClick={() => navigator.clipboard?.writeText(m.content)} className="grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary"><IconCopy className="h-[19px] w-[19px]" /></button>
               <button type="button" aria-label="Share response" onClick={async () => {
                 if (navigator.share) await navigator.share({ text: m.content }).catch(() => undefined);
                 else await navigator.clipboard?.writeText(m.content);
-              }} className="grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-surface-raised hover:text-text-primary"><IconShare className="h-[19px] w-[19px]" /></button>
+              }} className="grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary"><IconShare className="h-[19px] w-[19px]" /></button>
             </div>
           </article>
         );
