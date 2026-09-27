@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../lib/api";
 import { KeyCap, cx } from "./ui";
-import { IconAppsPlus, IconChevronDown, IconCloudUpload, IconGithub, IconPaperclip, IconSendArrow, IconSparkle, IconStop, IconWorkspacePreview } from "./icons";
+import { IconAppsPlus, IconChevronDown, IconCloudUpload, IconGithub, IconPaperclip, IconPlus, IconSendArrow, IconSparkle, IconStop, IconWorkspacePreview } from "./icons";
 
 const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
@@ -47,6 +47,7 @@ export function Composer({
   onOpenConnections,
   onOpenWorkspace,
   footer,
+  conversationMode = false,
 }: {
   onSend: (text: string, files: { name: string; size: number; content: string }[], mentions: PluginMention[], effort: AgentEffort) => void;
   disabled?: boolean;
@@ -57,11 +58,13 @@ export function Composer({
   onAttach?: (files: { name: string; size: number; content: string }[]) => void;
   onOpenConnections?: () => void;
   onOpenWorkspace?: () => void;
+  conversationMode?: boolean;
 }) {
   const [text, setText] = useState("");
   const [dragging, setDragging] = useState(false);
   const [attachments, setAttachments] = useState<{ name: string; size: number; content: string }[]>([]);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [effortOpen, setEffortOpen] = useState(false);
   const [githubConnected, setGithubConnected] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [mentions, setMentions] = useState<PluginMention[]>([]);
@@ -70,16 +73,24 @@ export function Composer({
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const toolsRef = useRef<HTMLDivElement>(null);
+  const effortRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!toolsOpen) return;
-    api.githubStatus().then((status: any) => setGithubConnected(Boolean(status?.connected))).catch(() => setGithubConnected(false));
-    api.googleStatus().then((status: any) => setGoogleConnected(Boolean(status?.connected))).catch(() => setGoogleConnected(false));
+    if (!toolsOpen && !effortOpen) return;
+    if (toolsOpen) {
+      api.githubStatus().then((status: any) => setGithubConnected(Boolean(status?.connected))).catch(() => setGithubConnected(false));
+      api.googleStatus().then((status: any) => setGoogleConnected(Boolean(status?.connected))).catch(() => setGoogleConnected(false));
+    }
     function closeOnOutsideClick(event: PointerEvent) {
-      if (event.target instanceof Node && !toolsRef.current?.contains(event.target)) setToolsOpen(false);
+      if (!(event.target instanceof Node)) return;
+      if (!toolsRef.current?.contains(event.target)) setToolsOpen(false);
+      if (!effortRef.current?.contains(event.target)) setEffortOpen(false);
     }
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setToolsOpen(false);
+      if (event.key === "Escape") {
+        setToolsOpen(false);
+        setEffortOpen(false);
+      }
     }
     document.addEventListener("pointerdown", closeOnOutsideClick);
     document.addEventListener("keydown", closeOnEscape);
@@ -87,7 +98,7 @@ export function Composer({
       document.removeEventListener("pointerdown", closeOnOutsideClick);
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [toolsOpen]);
+  }, [toolsOpen, effortOpen]);
 
   async function ingest(list: FileList | null) {
     if (!list?.length) return;
@@ -149,7 +160,8 @@ export function Composer({
         ingest(e.dataTransfer.files);
       }}
       className={cx(
-        "premium-composer liquid-composer relative w-full rounded-[20px] border bg-surface-secondary transition-[border-color,box-shadow,transform]",
+        "premium-composer liquid-composer relative w-full border bg-surface-secondary transition-[border-color,box-shadow,transform]",
+        conversationMode ? "rounded-[28px] shadow-[0_12px_36px_rgba(46,43,41,0.10)] md:rounded-[24px]" : "rounded-[20px]",
         dragging ? "border-border-strong shadow-glow" : "border-border-medium"
       )}
     >
@@ -159,7 +171,7 @@ export function Composer({
         </div>
       )}
 
-      <div className="flex w-full flex-col items-start justify-center px-4 pb-3 pt-4 md:px-5 md:pb-3 md:pt-5">
+      <div className={cx("flex w-full flex-col items-start justify-center px-4 pb-3 md:px-5 md:pb-3", conversationMode ? "pt-5" : "pt-4 md:pt-5")}>
         {attachments.length > 0 && (
           <div className="mb-1.5 flex w-full flex-wrap gap-1.5 px-1">
             {attachments.map((a, idx) => (
@@ -213,7 +225,7 @@ export function Composer({
                 submit();
               }
             }}
-            className="agent-composer-input max-h-[40vh] min-h-[54px] w-full resize-none border-0 bg-transparent px-0 py-0 text-[15px] leading-relaxed text-text-primary outline-none placeholder:text-text-placeholder focus:border-0 focus:outline-none focus:ring-0 md:min-h-[68px] md:text-[15px]"
+            className={cx("agent-composer-input max-h-[40vh] w-full resize-none border-0 bg-transparent px-0 py-0 text-[15px] leading-relaxed text-text-primary outline-none placeholder:text-text-placeholder focus:border-0 focus:outline-none focus:ring-0 md:text-[15px]", conversationMode ? "min-h-[72px]" : "min-h-[54px] md:min-h-[68px]")}
           />
           {mentionOptions.length > 0 && (
             <div role="listbox" aria-label="Available integrations" className="absolute bottom-[58px] left-4 z-30 w-[min(300px,calc(100%-32px))] overflow-hidden rounded-xl border border-border-medium bg-surface-floating py-1 shadow-[0_12px_36px_rgba(24,24,24,0.14)] md:bottom-[64px] md:left-5">
@@ -241,10 +253,10 @@ export function Composer({
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 aria-label="Add files"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors duration-150 hover:bg-surface-raised hover:text-interactive-active md:h-9 md:w-9"
+                className={cx("inline-flex h-8 w-8 items-center justify-center text-text-secondary transition-colors duration-150 hover:bg-surface-raised hover:text-interactive-active md:h-9 md:w-9", conversationMode ? "rounded-full border border-border-faint" : "rounded-lg")}
               >
                 <span className="grid place-items-center">
-                  {dragging ? <IconCloudUpload className="h-[19px] w-[19px]" /> : <IconAppsPlus className="h-[19px] w-[19px]" />}
+                  {dragging ? <IconCloudUpload className="h-[19px] w-[19px]" /> : conversationMode ? <IconPlus className="h-5 w-5" /> : <IconAppsPlus className="h-[19px] w-[19px]" />}
                 </span>
               </button>
               <div ref={toolsRef} className="relative flex h-8 items-center md:h-9">
@@ -319,6 +331,24 @@ export function Composer({
             </div>
 
             <div className="flex items-center gap-1.5">
+              {conversationMode && (
+                <div ref={effortRef} className="relative">
+                  <button type="button" aria-label="Choose agent effort" aria-expanded={effortOpen} onClick={() => setEffortOpen((open) => !open)} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border-faint bg-surface-secondary px-3 text-[13px] font-medium text-text-secondary transition-colors hover:bg-surface-raised">
+                    {EFFORT_OPTIONS.find((option) => option.id === effort)?.label}
+                    <IconChevronDown className={cx("h-3.5 w-3.5 transition-transform", effortOpen && "rotate-180")} />
+                  </button>
+                  {effortOpen && (
+                    <div className="liquid-popover absolute bottom-full right-0 z-50 mb-2 w-[min(270px,calc(100vw-48px))] overflow-hidden rounded-2xl border border-border-medium bg-surface-floating py-1.5 shadow-[0_14px_42px_rgba(24,24,24,0.16)] animate-composer-popover">
+                      {EFFORT_OPTIONS.map((option) => (
+                        <button key={option.id} type="button" aria-pressed={effort === option.id} onClick={() => { setEffort(option.id); setEffortOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-raised">
+                          <span className="flex-1"><span className="block text-[14px] font-medium text-text-primary">{option.label}</span><span className="mt-0.5 block text-[12px] text-text-muted">{option.detail}</span></span>
+                          {effort === option.id && <span aria-hidden="true" className="text-lg text-text-primary">✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <span className="hidden items-center gap-1 text-[11px] text-text-muted md:flex">
                 <KeyCap>⏎</KeyCap> send · <KeyCap>⇧⏎</KeyCap> newline
               </span>

@@ -38,6 +38,48 @@ export const IconPlusChat = (p: IconProps) => (
   </Base>
 );
 
+export const IconPlus = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Base>
+);
+
+export const IconDots = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+    <circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" />
+  </Base>
+);
+
+export const IconThumbUp = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M8.5 10.5 11 4.8c.5-1.1 2.1-.8 2.2.4l.2 3.8h4.2a2 2 0 0 1 1.9 2.6l-1.8 6a2 2 0 0 1-1.9 1.4H8.5z" />
+    <path d="M4 10.5h4.5V20H5.8A1.8 1.8 0 0 1 4 18.2z" />
+  </Base>
+);
+
+export const IconThumbDown = (p: IconProps) => (
+  <Base {...p}>
+    <path d="m8.5 13.5 2.5 5.7c.5 1.1 2.1.8 2.2-.4l.2-3.8h4.2a2 2 0 0 0 1.9-2.6l-1.8-6A2 2 0 0 0 15.8 5H8.5z" />
+    <path d="M4 13.5h4.5V4H5.8A1.8 1.8 0 0 0 4 5.8z" />
+  </Base>
+);
+
+export const IconCopy = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="8" y="8" width="11" height="11" rx="2" />
+    <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+  </Base>
+);
+
+export const IconShare = (p: IconProps) => (
+  <Base {...p}>
+    <path d="m14 5 5 4-5 4" />
+    <path d="M19 9h-7a7 7 0 0 0-7 7v3c1.8-3.3 4.2-5 7-5h2" />
+  </Base>
+);
+
 export const IconTrophy = (p: IconProps) => (
   <Base {...p}>
     <path d="M8 4h8v5a4 4 0 0 1-8 0V4z" />

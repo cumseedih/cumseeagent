@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Markdown } from "../lib/markdown";
+import { IconCopy, IconShare, IconThumbDown, IconThumbUp } from "./icons";
 import { WorkingPet } from "./Pet";
 import { cx } from "./ui";
 
@@ -54,6 +56,7 @@ export function MessageList({
   streamingText?: string;
   events?: AgentEvent[];
 }) {
+  const [rated, setRated] = useState<Record<string, "up" | "down" | undefined>>({});
   if (!messages.length) return null;
 
   const activity = events
@@ -62,14 +65,14 @@ export function MessageList({
     .slice(-5);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 md:gap-7">
       {messages.map((m) => {
         const isUser = m.role === "user";
         if (isUser) {
           return (
             <div key={m.id} className="animate-message-in flex justify-end">
-              <div className="group max-w-[85%] rounded-panel rounded-br-sm border border-border-faint bg-surface-raised/50 px-3.5 py-2.5">
-                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-text-primary">{m.content}</p>
+              <div className="group max-w-[82%] rounded-[22px] rounded-br-[7px] bg-surface-raised/70 px-4 py-2.5 shadow-[inset_0_0_0_1px_hsl(var(--border-faint))] md:max-w-[75%]">
+                <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-text-primary">{m.content}</p>
                 <div className="mt-1.5 flex items-center justify-end gap-2 text-[10px] text-text-muted">
                   <button
                     onClick={() => navigator.clipboard?.writeText(m.content)}
@@ -84,7 +87,21 @@ export function MessageList({
           );
         }
 
-        return <div key={m.id} className="animate-stage-in min-w-0"><Markdown text={m.content} /></div>;
+        const vote = rated[m.id];
+        return (
+          <article key={m.id} className="animate-stage-in min-w-0">
+            <div className="min-w-0 text-[15px] leading-[1.75]"><Markdown text={m.content} /></div>
+            <div className="mt-3 flex items-center gap-1 text-text-muted" aria-label="Response actions">
+              <button type="button" aria-label="Good response" aria-pressed={vote === "up"} onClick={() => setRated((current) => ({ ...current, [m.id]: current[m.id] === "up" ? undefined : "up" }))} className={cx("grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-surface-raised hover:text-text-primary", vote === "up" && "bg-surface-raised text-text-primary")}><IconThumbUp className="h-[19px] w-[19px]" /></button>
+              <button type="button" aria-label="Bad response" aria-pressed={vote === "down"} onClick={() => setRated((current) => ({ ...current, [m.id]: current[m.id] === "down" ? undefined : "down" }))} className={cx("grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-surface-raised hover:text-text-primary", vote === "down" && "bg-surface-raised text-text-primary")}><IconThumbDown className="h-[19px] w-[19px]" /></button>
+              <button type="button" aria-label="Copy response" onClick={() => navigator.clipboard?.writeText(m.content)} className="grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-surface-raised hover:text-text-primary"><IconCopy className="h-[19px] w-[19px]" /></button>
+              <button type="button" aria-label="Share response" onClick={async () => {
+                if (navigator.share) await navigator.share({ text: m.content }).catch(() => undefined);
+                else await navigator.clipboard?.writeText(m.content);
+              }} className="grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-surface-raised hover:text-text-primary"><IconShare className="h-[19px] w-[19px]" /></button>
+            </div>
+          </article>
+        );
       })}
 
       {streamingText && (
