@@ -23,6 +23,10 @@ model User {
   githubConnection GitHubConnection?
   googleConnection GoogleConnection?
   authIdentities   AuthIdentity[]
+  artifacts        Artifact[]
+  agentSkills      AgentSkill[]
+  workflows        Workflow[]
+  workflowRuns     WorkflowRun[]
 }
 
 model AuthIdentity {
@@ -61,6 +65,7 @@ model Project {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
+  artifacts     Artifact[]
 }
 
 model GitHubConnection {
@@ -103,6 +108,7 @@ model Session {
   messages         Message[]
   agentRuns        AgentRun[]
   events           Event[]
+  artifacts        Artifact[]
 }
 
 model Message {
@@ -129,6 +135,7 @@ model AgentRun {
   plans        Plan[]
   toolCalls    ToolCall[]
   fileChanges  FileChange[]
+  artifacts    Artifact[]
 }
 
 model Plan {
@@ -212,4 +219,90 @@ model AuditLog {
   metadataJson String?
   ipAddress    String?
   createdAt    DateTime @default(now())
+}
+
+// A durable, user-scoped deliverable produced by an agent run: reports,
+// spreadsheets, decks, code archives, or deployed-app metadata. Files stay in
+// the user's project workspace; this record stores only safe metadata/path.
+model Artifact {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId    String?
+  project      Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  sessionId    String?
+  session      Session?  @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  agentRunId   String?
+  agentRun     AgentRun? @relation(fields: [agentRunId], references: [id], onDelete: SetNull)
+  name         String
+  kind         String
+  mimeType     String?
+  workspacePath String
+  sizeBytes    Int?
+  status       String    @default("ready")
+  metadataJson String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([projectId])
+  @@index([sessionId])
+}
+
+// Reusable, user-owned agent workflows. Definitions are data, not executable
+// code, and are interpreted only by the server-side tool registry.
+model AgentSkill {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  slug           String
+  description    String?
+  definitionJson String
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, slug])
+  @@index([userId, enabled])
+}
+
+// A scheduled or manually-triggered orchestration. Secrets/tokens are never
+// stored in the definition; integrations are resolved from user connections.
+model Workflow {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId      String?
+  name           String
+  description    String?
+  prompt         String
+  triggerType    String        @default("manual")
+  schedule       String?
+  skillIdsJson   String?
+  enabled        Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  runs           WorkflowRun[]
+
+  @@index([userId, enabled])
+  @@index([projectId])
+}
+
+model WorkflowRun {
+  id          String    @id @default(cuid())
+  workflowId  String
+  workflow    Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentRunId  String?
+  status      String    @default("queued")
+  triggeredBy String    @default("manual")
+  startedAt   DateTime?
+  completedAt DateTime?
+  errorMessage String?
+  createdAt   DateTime  @default(now())
+
+  @@index([workflowId, createdAt])
+  @@index([userId, createdAt])
 }
