@@ -19,6 +19,7 @@ export type EventType =
   | "file.created"
   | "file.modified"
   | "file.deleted"
+  | "artifact.created"
   | "git.status.updated"
   | "test.started"
   | "test.completed"

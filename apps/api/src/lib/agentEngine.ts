@@ -29,6 +29,7 @@ const tools = [
   { type: "function", function: { name: "read_file", description: "Read a UTF-8 file from the workspace.", parameters: { type: "object", properties: { path: { type: "string" } }, required: ["path"], additionalProperties: false } } },
   { type: "function", function: { name: "write_file", description: "Create or replace a UTF-8 file in the workspace.", parameters: { type: "object", properties: { path: { type: "string" }, content: { type: "string" } }, required: ["path", "content"], additionalProperties: false } } },
   { type: "function", function: { name: "list_files", description: "List a workspace directory.", parameters: { type: "object", properties: { path: { type: "string" } }, additionalProperties: false } } },
+  { type: "function", function: { name: "create_artifact", description: "Create a finished user-facing deliverable in the project workspace, such as a report, CSV, HTML page, or Markdown document.", parameters: { type: "object", properties: { name: { type: "string" }, content: { type: "string" }, kind: { type: "string", description: "Examples: report, spreadsheet, webpage, document" }, mimeType: { type: "string" } }, required: ["name", "content", "kind"], additionalProperties: false } } },
 ];
 
 const systemPrompt = `You are a coding agent operating inside one project workspace.
@@ -129,6 +130,32 @@ class AgentEngine {
       const absolute = validateWorkspacePath(workspaceRoot, args.path || ".");
       const entries = await fs.readdir(absolute, { withFileTypes: true });
       result = { path: args.path || ".", entries: entries.slice(0, 500).map((e) => ({ name: e.name, type: e.isDirectory() ? "directory" : "file" })) };
+    } else if (tc.toolName === "create_artifact") {
+      const name = path.basename(String(args.name || "deliverable.md")).replace(/[^a-zA-Z0-9._-]/g, "-");
+      if (!name || name === "." || name === "..") throw new Error("Invalid artifact name");
+      const content = String(args.content || "");
+      if (Buffer.byteLength(content) > MAX_FILE_BYTES) throw new Error("Artifact exceeds 1MB limit");
+      const relativePath = path.posix.join("artifacts", name);
+      const absolute = validateWorkspacePath(workspaceRoot, relativePath);
+      await fs.mkdir(path.dirname(absolute), { recursive: true });
+      await fs.writeFile(absolute, content, "utf8");
+      // Cast keeps a clean checkout buildable until Prisma Client is refreshed
+      // as part of the deployment migration.
+      const artifact = await (prisma as any).artifact.create({ data: {
+        userId: run.session.userId,
+        projectId: run.session.projectId || null,
+        sessionId: run.sessionId,
+        agentRunId: run.id,
+        name,
+        kind: String(args.kind || "document"),
+        mimeType: args.mimeType ? String(args.mimeType) : "text/plain",
+        workspacePath: relativePath,
+        sizeBytes: Buffer.byteLength(content),
+      } });
+      await prisma.fileChange.create({ data: { agentRunId: run.id, path: relativePath, changeType: "created" } });
+      await eventBus.emitEvent(run.sessionId, "artifact.created", { artifactId: artifact.id, name, kind: artifact.kind, path: relativePath });
+      await eventBus.emitEvent(run.sessionId, "file.created", { path: relativePath });
+      result = { artifactId: artifact.id, name, path: relativePath, bytesWritten: Buffer.byteLength(content) };
     } else {
       throw new Error(`Unknown tool: ${tc.toolName}`);
     }
