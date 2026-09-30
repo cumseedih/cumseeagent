@@ -95,10 +95,15 @@ export async function terminalRoutes(app: FastifyInstance) {
       });
       toolCallId = tc.id;
       await prisma.terminalCommand.update({ where: { id: terminalCmd.id }, data: { toolCallId } });
-      await eventBus.emitEvent(sessionId, "tool.started", { toolCallId, command });
     }
 
-    await eventBus.emitEvent(sessionId, "tool.started", { command, terminalCommandId: terminalCmd.id });
+    await eventBus.emitEvent(sessionId, "tool.started", {
+      toolCallId,
+      terminalCommandId: terminalCmd.id,
+      toolName: "terminal",
+      command,
+      cwd: cwd || workspaceRoot,
+    });
 
     // Stream execution
     try {
@@ -123,17 +128,35 @@ export async function terminalRoutes(app: FastifyInstance) {
       if (toolCallId) {
         await prisma.toolCall.update({
           where: { id: toolCallId },
-          data: { executionStatus: result.exitCode === 0 ? "completed" : "failed", completedAt: new Date(), exitCode: result.exitCode, errorMessage: result.exitCode !== 0 ? result.stderr : null },
+          data: { executionStatus: result.exitCode === 0 ? "completed" : "failed", resultJson: JSON.stringify(result), completedAt: new Date(), exitCode: result.exitCode, errorMessage: result.exitCode !== 0 ? result.stderr : null },
         });
-        const eventType = result.exitCode === 0 ? "tool.completed" : "tool.failed";
-        await eventBus.emitEvent(sessionId, eventType as any, { toolCallId, exitCode: result.exitCode });
       }
+      const eventType = result.exitCode === 0 ? "tool.completed" : "tool.failed";
+      await eventBus.emitEvent(sessionId, eventType as any, {
+        toolCallId,
+        terminalCommandId: terminalCmd.id,
+        toolName: "terminal",
+        command,
+        cwd: cwd || workspaceRoot,
+        result,
+      });
 
       await prisma.auditLog.create({ data: { userId, sessionId, action: "terminal.command", metadataJson: JSON.stringify({ command, exitCode: result.exitCode }), ipAddress: req.ip } });
 
       return { terminalCommand: { ...terminalCmd, stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode }, result };
     } catch (e: any) {
       await prisma.terminalCommand.update({ where: { id: terminalCmd.id }, data: { stderr: e.message, exitCode: 1, completedAt: new Date() } });
+      if (toolCallId) {
+        await prisma.toolCall.update({ where: { id: toolCallId }, data: { executionStatus: "failed", errorMessage: e.message, completedAt: new Date() } });
+      }
+      await eventBus.emitEvent(sessionId, "tool.failed", {
+        toolCallId,
+        terminalCommandId: terminalCmd.id,
+        toolName: "terminal",
+        command,
+        cwd: cwd || workspaceRoot,
+        error: e.message,
+      });
       return reply.code(500).send({ error: e.message });
     }
   });
@@ -156,7 +179,7 @@ export async function terminalRoutes(app: FastifyInstance) {
     if (cmd.toolCallId) {
       await prisma.toolCall.update({ where: { id: cmd.toolCallId }, data: { executionStatus: "failed", errorMessage: "Stopped by user", completedAt: new Date() } });
       const tc = await prisma.toolCall.findUnique({ where: { id: cmd.toolCallId } });
-      if (tc) await eventBus.emitEvent(tc.agentRunId, "tool.failed", { toolCallId: tc.id, reason: "Stopped by user" });
+      if (tc && cmd.sessionId) await eventBus.emitEvent(cmd.sessionId, "tool.failed", { toolCallId: tc.id, terminalCommandId: cmd.id, toolName: "terminal", command: cmd.commandDisplay, error: "Stopped by user" });
     }
 
     return { message: "Stopped" };

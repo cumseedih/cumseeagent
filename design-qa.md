@@ -21,3 +21,15 @@
 ## Result
 
 **PASS** — visual and interaction QA completed against the supplied reference.
+
+## Command activity extension
+
+- Capture: `/workspace/scratch/delvin-command-activity-1790749441026.jpg`
+- A compact command card now appears between the latest user request and the assistant response.
+- Collapsed state preserves the minimal chat rhythm while still exposing the exact command and completion state.
+- Expanded state shows the working directory, streamed stdout/stderr, exit code, and a copy-command action.
+- Verified the expand/collapse interaction at 390 × 844 CSS pixels.
+- Verified that completed command output remains visible after the agent response arrives.
+- Browser console contained no application errors during the interaction check.
+
+**PASS** — the command lifecycle is legible, responsive, and consistent with the existing Delvin chat UI.

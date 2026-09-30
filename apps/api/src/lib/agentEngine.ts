@@ -102,17 +102,30 @@ class AgentEngine {
   }
 
   private async runTool(run: any, tc: any, args: any, workspaceRoot: string, approvalGranted = false) {
-    await eventBus.emitEvent(run.sessionId, "tool.started", { toolCallId: tc.id, toolName: tc.toolName });
     let result: any;
-    if (tc.toolName === "terminal") {
-      const terminal = await prisma.terminalCommand.create({ data: { toolCallId: tc.id, sessionId: run.sessionId, commandDisplay: args.command, workingDirectory: args.cwd || workspaceRoot } });
-      const output = await terminalRunner.runStreaming({ command: args.command, cwd: args.cwd, workspaceRoot, sessionId: run.sessionId, approvalGranted,
-        onStdout: (chunk) => { void eventBus.emitEvent(run.sessionId, "tool.stdout", { toolCallId: tc.id, chunk }); },
-        onStderr: (chunk) => { void eventBus.emitEvent(run.sessionId, "tool.stderr", { toolCallId: tc.id, chunk }); },
-      });
-      await prisma.terminalCommand.update({ where: { id: terminal.id }, data: { stdout: output.stdout, stderr: output.stderr, exitCode: output.exitCode, completedAt: new Date() } });
-      result = output;
-    } else if (tc.toolName === "read_file") {
+    let terminalCommandId: string | undefined;
+    try {
+      if (tc.toolName === "terminal") {
+        const terminal = await prisma.terminalCommand.findFirst({ where: { toolCallId: tc.id } })
+          || await prisma.terminalCommand.create({ data: { toolCallId: tc.id, sessionId: run.sessionId, commandDisplay: args.command, workingDirectory: args.cwd || workspaceRoot } });
+        terminalCommandId = terminal.id;
+        await eventBus.emitEvent(run.sessionId, "tool.started", {
+          toolCallId: tc.id,
+          terminalCommandId,
+          toolName: tc.toolName,
+          command: String(args.command || ""),
+          cwd: args.cwd || workspaceRoot,
+        });
+        const output = await terminalRunner.runStreaming({ command: args.command, cwd: args.cwd, workspaceRoot, sessionId: run.sessionId, approvalGranted,
+          onStdout: (chunk) => { void eventBus.emitEvent(run.sessionId, "tool.stdout", { toolCallId: tc.id, terminalCommandId, chunk }); },
+          onStderr: (chunk) => { void eventBus.emitEvent(run.sessionId, "tool.stderr", { toolCallId: tc.id, terminalCommandId, chunk }); },
+        });
+        await prisma.terminalCommand.update({ where: { id: terminal.id }, data: { stdout: output.stdout, stderr: output.stderr, exitCode: output.exitCode, completedAt: new Date() } });
+        result = output;
+      } else {
+        await eventBus.emitEvent(run.sessionId, "tool.started", { toolCallId: tc.id, toolName: tc.toolName });
+      }
+      if (tc.toolName === "read_file") {
       const absolute = validateWorkspacePath(workspaceRoot, args.path);
       const stat = await fs.stat(absolute);
       if (stat.size > MAX_FILE_BYTES) throw new Error("File exceeds 1MB limit");
@@ -156,12 +169,30 @@ class AgentEngine {
       await eventBus.emitEvent(run.sessionId, "artifact.created", { artifactId: artifact.id, name, kind: artifact.kind, path: relativePath });
       await eventBus.emitEvent(run.sessionId, "file.created", { path: relativePath });
       result = { artifactId: artifact.id, name, path: relativePath, bytesWritten: Buffer.byteLength(content) };
-    } else {
-      throw new Error(`Unknown tool: ${tc.toolName}`);
+      } else if (tc.toolName !== "terminal") {
+        throw new Error(`Unknown tool: ${tc.toolName}`);
+      }
+      const failed = tc.toolName === "terminal" && result.exitCode !== 0;
+      await prisma.toolCall.update({ where: { id: tc.id }, data: { executionStatus: failed ? "failed" : "completed", resultJson: JSON.stringify(result), exitCode: result.exitCode ?? null, errorMessage: failed ? result.stderr || `Exit ${result.exitCode}` : null, completedAt: new Date() } });
+      await eventBus.emitEvent(run.sessionId, failed ? "tool.failed" : "tool.completed", {
+        toolCallId: tc.id,
+        terminalCommandId,
+        toolName: tc.toolName,
+        command: tc.toolName === "terminal" ? String(args.command || "") : undefined,
+        cwd: tc.toolName === "terminal" ? args.cwd || workspaceRoot : undefined,
+        result,
+      });
+    } catch (error: any) {
+      await prisma.toolCall.update({ where: { id: tc.id }, data: { executionStatus: "failed", errorMessage: error.message, completedAt: new Date() } });
+      await eventBus.emitEvent(run.sessionId, "tool.failed", {
+        toolCallId: tc.id,
+        terminalCommandId,
+        toolName: tc.toolName,
+        command: tc.toolName === "terminal" ? String(args.command || "") : undefined,
+        error: error.message,
+      });
+      throw error;
     }
-    const failed = tc.toolName === "terminal" && result.exitCode !== 0;
-    await prisma.toolCall.update({ where: { id: tc.id }, data: { executionStatus: failed ? "failed" : "completed", resultJson: JSON.stringify(result), exitCode: result.exitCode ?? null, errorMessage: failed ? result.stderr || `Exit ${result.exitCode}` : null, completedAt: new Date() } });
-    await eventBus.emitEvent(run.sessionId, failed ? "tool.failed" : "tool.completed", { toolCallId: tc.id, toolName: tc.toolName, result });
   }
 
   async execute(runId: string) {

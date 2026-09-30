@@ -52,7 +52,6 @@ export async function toolCallRoutes(app: FastifyInstance) {
       update: { decision: "approved", resolvedBy: userId, resolvedAt: new Date() },
     });
     await eventBus.emitEvent(session.id, "tool.approved", { toolCallId, toolName: tc.toolName });
-    await eventBus.emitEvent(session.id, "tool.started", { toolCallId, toolName: tc.toolName });
     await prisma.auditLog.create({ data: { userId, sessionId: session.id, action: "tool.approve", metadataJson: JSON.stringify({ toolCallId }), ipAddress: req.ip } });
     agentEngine.start(tc.agentRunId);
     return { toolCall: { ...updated, argumentsJson: JSON.parse(updated.argumentsJson) } };

@@ -189,6 +189,8 @@ export class TerminalRunner {
       NODE_ENV: config.nodeEnv,
       ...(options.env || {}),
     };
+    delete (sanitizedEnv as any).LD_PRELOAD;
+    delete (sanitizedEnv as any).LD_LIBRARY_PATH;
 
     return new Promise(async (resolve) => {
       const child = spawn("bash", ["-c", command], {
