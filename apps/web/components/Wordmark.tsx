@@ -33,14 +33,22 @@ export function Wordmark({
   textClass?: string;
   showName?: boolean;
 }) {
+  if (showName) {
+    return (
+      <span className={`inline-flex items-center text-text-primary ${className}`}>
+        <img
+          src="/assets/delvin-saturn-lockup.svg"
+          alt={`${BRANDING.PRODUCT_NAME} logo`}
+          className="h-8 w-auto max-w-[132px] object-contain object-left"
+        />
+      </span>
+    );
+  }
+
   return (
     <span className={`inline-flex items-center gap-2 text-text-primary ${className}`}>
       <Mark className={`${glyphClass} ring-0`} />
-      {showName && (
-        <span className={`delvin-wordmark ${textClass}`} aria-label={BRANDING.PRODUCT_NAME}>
-          <span className="delvin-wordmark__text">{BRANDING.PRODUCT_NAME}</span>
-        </span>
-      )}
+      <span className={`sr-only ${textClass}`}>{BRANDING.PRODUCT_NAME}</span>
     </span>
   );
 }

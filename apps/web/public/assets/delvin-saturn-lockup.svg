@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 300" role="img" aria-labelledby="title desc">
+  <title id="title">Delvin Saturn</title>
+  <desc id="desc">Delvin wordmark with its ringed planet emblem.</desc>
+  <g transform="translate(20 20) scale(.508)">
+    <rect width="512" height="512" rx="120" fill="#F8F6EE"/>
+    <circle cx="256" cy="256" r="126" fill="#2E3A2F"/>
+    <path d="M150 226c39 13 80 19 122 17 39-2 76-10 108-24" fill="none" stroke="#6B7F5B" stroke-width="18" stroke-linecap="round" opacity=".72"/>
+    <path d="M149 281c53 19 111 23 164 12 25-5 48-13 69-24" fill="none" stroke="#D9C9B2" stroke-width="14" stroke-linecap="round" opacity=".92"/>
+    <path d="M172 329c42 12 88 13 131 3" fill="none" stroke="#C96F4F" stroke-width="9" stroke-linecap="round" opacity=".78"/>
+    <ellipse cx="256" cy="256" rx="211" ry="79" transform="rotate(-22 256 256)" fill="none" stroke="#6B7F5B" stroke-width="22"/>
+    <path d="M70 300c34 41 112 55 202 37 94-19 166-69 174-118" fill="none" stroke="#F8F6EE" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="414" cy="139" r="17" fill="#C96F4F"/>
+    <circle cx="414" cy="139" r="7" fill="#F8F6EE" opacity=".55"/>
+  </g>
+  <text x="345" y="178" fill="#2E3A2F" font-family="Georgia, 'Times New Roman', serif" font-size="150" font-weight="500" letter-spacing="-7">Delvin</text>
+  <text x="357" y="228" fill="#6B7F5B" font-family="Arial, sans-serif" font-size="19" font-weight="600" letter-spacing="9">AGENT WORKSPACE</text>
+</svg>
