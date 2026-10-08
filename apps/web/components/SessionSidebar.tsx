@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { BRANDING } from "../branding.config";
 import { SkeletonRows, cx } from "./ui";
-import { IconCheck, IconPanelLeft, IconPencil, IconPlusChat, IconRefresh, IconSearch, IconTrash, IconX } from "./icons";
+import { IconCheck, IconFile, IconFolder, IconPanelLeft, IconPencil, IconPlusChat, IconRefresh, IconSearch, IconSettings, IconShield, IconSparkle, IconTrash, IconX } from "./icons";
 import { Wordmark } from "./Wordmark";
+import type { WorkspaceSection } from "./WorkspaceHub";
 
 type Session = {
   id: string;
@@ -13,7 +14,14 @@ type Session = {
   status: string;
   createdAt: string;
   updatedAt?: string;
+  isPinned?: boolean;
+  agentProfileId?: string | null;
+  groupChatId?: string | null;
+  agentProfile?: { id: string; name: string } | null;
+  groupChat?: { id: string; name: string } | null;
 };
+type SidebarAgent = { id: string; name: string; isDefault: boolean; isPinned: boolean };
+type SidebarGroup = { id: string; name: string; isPinned: boolean; agents: Array<{ id: string; name: string }> };
 
 /** Group sessions into Today / Yesterday / Previous 7 days / Earlier buckets. */
 function bucketOf(iso: string) {
@@ -41,10 +49,12 @@ export function SessionSidebar({
   user,
   onRequestLogin,
   onOpenAccount,
+  activeSection = "chat",
+  onSectionChange,
 }: {
   selectedId?: string;
-  onSelect: (id: string) => void;
-  onNew: () => void;
+  onSelect: (id: string, association?: { agentProfileId?: string | null; groupChatId?: string | null }) => void;
+  onNew: (agentProfileId?: string, groupChatId?: string) => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   onOpenSearch?: () => void;
@@ -60,11 +70,17 @@ export function SessionSidebar({
   user?: { email: string; displayName?: string | null; avatarUrl?: string | null } | null;
   onRequestLogin?: () => void;
   onOpenAccount?: () => void;
+  activeSection?: WorkspaceSection;
+  onSectionChange?: (section: WorkspaceSection) => void;
 }) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [agents, setAgents] = useState<SidebarAgent[]>([]);
+  const [groupChats, setGroupChats] = useState<SidebarGroup[]>([]);
+  const [scope, setScope] = useState<{ type: "all" | "agent" | "group"; id?: string }>({ type: "all" });
+  const [savingPinId, setSavingPinId] = useState<string | null>(null);
   const [actionSessionId, setActionSessionId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -141,12 +157,24 @@ export function SessionSidebar({
     }
   }
 
+  async function togglePin(session: Session) {
+    setSavingPinId(session.id); setError(null);
+    try {
+      const result = await api.updateSession(session.id, { isPinned: !session.isPinned });
+      setSessions((current) => current.map((item) => item.id === session.id ? result.session as Session : item));
+      setActionSessionId(null);
+    } catch (e: any) { setError(e.message || "Unable to update pinned status"); }
+    finally { setSavingPinId(null); }
+  }
+
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.listSessions();
+      const [data, agentData, groupData]: any[] = await Promise.all([api.listSessions(), api.listAgents(), api.listGroups()]);
       setSessions(data.sessions || []);
+      setAgents(agentData.agents || []);
+      setGroupChats(groupData.groups || []);
     } catch (e: any) {
       setError(e.message || "Failed to load sessions");
     } finally {
@@ -157,6 +185,8 @@ export function SessionSidebar({
   useEffect(() => {
     if (guest) {
       setSessions([]);
+      setAgents([]);
+      setGroupChats([]);
       setLoading(false);
       return;
     }
@@ -164,23 +194,29 @@ export function SessionSidebar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey, guest]);
 
-  const filtered = useMemo(() => {
-    if (!query.trim()) return sessions;
-    const q = query.toLowerCase();
-    return sessions.filter((s) => (s.title || "").toLowerCase().includes(q));
-  }, [sessions, query]);
+  const filtered = useMemo(() => sessions.filter((session) => {
+    if (scope.type === "agent" && session.agentProfileId !== scope.id) return false;
+    if (scope.type === "group" && session.groupChatId !== scope.id) return false;
+    return !query.trim() || (session.title || "").toLowerCase().includes(query.toLowerCase());
+  }), [sessions, query, scope]);
 
-  const groups = useMemo(() => {
+  const groupedSessions = useMemo(() => {
     const map = new Map<string, Session[]>();
     for (const s of filtered) {
-      const key = bucketOf(s.updatedAt || s.createdAt);
+      const key = s.isPinned ? "Pinned" : bucketOf(s.updatedAt || s.createdAt);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(s);
     }
-    return ["Today", "Yesterday", "Previous 7 days", "Earlier"]
+    return ["Pinned", "Today", "Yesterday", "Previous 7 days", "Earlier"]
       .filter((k) => map.has(k))
       .map((k) => [k, map.get(k)!] as const);
   }, [filtered]);
+
+  function startScopedChat() {
+    if (scope.type === "agent") onNew(scope.id, undefined);
+    else if (scope.type === "group") onNew(undefined, scope.id);
+    else onNew();
+  }
 
   if (collapsed) {
     return (
@@ -192,6 +228,18 @@ export function SessionSidebar({
         >
           <IconPanelLeft className="h-[20px] w-[20px]" />
         </button>
+        <div className="mt-4 flex flex-col gap-1">
+          {([
+            ["projects", "Projects", <IconFolder key="projects" className="h-[18px] w-[18px]" />],
+            ["agents", "Agents", <IconSparkle key="agents" className="h-[18px] w-[18px]" />],
+            ["groups", "Group Chats", <IconPlusChat key="groups" className="h-[18px] w-[18px]" />],
+            ["artifacts", "Artifacts", <IconFile key="artifacts" className="h-[18px] w-[18px]" />],
+            ["skills", "Skills", <IconSparkle key="skills" className="h-[18px] w-[18px]" />],
+            ["workflows", "Workflows", <IconShield key="workflows" className="h-[18px] w-[18px]" />],
+            ["connections", "Integrations", <IconPlusChat key="connections" className="h-[18px] w-[18px]" />],
+            ["settings", "Settings", <IconSettings key="settings" className="h-[18px] w-[18px]" />],
+          ] as const).map(([section, label, icon]) => <button key={section} type="button" onClick={() => onSectionChange?.(section)} title={label} aria-label={label} className={cx("grid h-9 w-9 place-items-center rounded-lg transition-colors", activeSection === section ? "bg-sidebar-accent text-interactive-active" : "text-text-muted hover:bg-sidebar-accent hover:text-text-primary")}>{icon}</button>)}
+        </div>
       </nav>
     );
   }
@@ -215,10 +263,30 @@ export function SessionSidebar({
 
       {/* Primary nav */}
       <div className="px-2">
-        <SidebarLink icon={<IconPlusChat className="h-5 w-5" />} label="New Chat" onClick={guest ? onRequestLogin : onNew} />
+        <SidebarLink icon={<IconPlusChat className="h-5 w-5" />} label="New Chat" onClick={guest ? onRequestLogin : startScopedChat} />
         <SidebarLink icon={<IconSearch className="h-5 w-5" />} label="Search" onClick={onOpenSearch} />
       </div>
 
+      <div className="mt-2 px-2">
+        <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-text-muted">Workspace</div>
+        {([
+          ["projects", "Projects", <IconFolder key="projects" className="h-4 w-4" />],
+          ["agents", "Agents", <IconSparkle key="agents" className="h-4 w-4" />],
+          ["groups", "Group Chats", <IconPlusChat key="groups" className="h-4 w-4" />],
+          ["artifacts", "Artifacts", <IconFile key="artifacts" className="h-4 w-4" />],
+          ["skills", "Skills", <IconSparkle key="skills" className="h-4 w-4" />],
+          ["workflows", "Workflows", <IconShield key="workflows" className="h-4 w-4" />],
+          ["connections", "Integrations", <IconPlusChat key="connections" className="h-4 w-4" />],
+          ["settings", "Settings", <IconSettings key="settings" className="h-4 w-4" />],
+        ] as const).map(([section, label, icon]) => <button key={section} type="button" onClick={() => onSectionChange?.(section)} aria-current={activeSection === section ? "page" : undefined} className={cx("flex h-7 w-full items-center gap-2 rounded-md px-2 text-left transition-colors", activeSection === section ? "bg-sidebar-accent text-sidebar-foreground" : "text-text-tertiary hover:bg-sidebar-accent hover:text-sidebar-foreground")}><span className="shrink-0">{icon}</span><span className="truncate text-[12px]">{label}</span></button>)}
+      </div>
+
+      {!guest && <div className="mx-2 mt-2 max-h-[28dvh] overflow-y-auto border-y border-sidebar-border py-1.5">
+        <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-text-muted">Chats by Agent</div>
+        <button type="button" onClick={() => { setScope({ type: "all" }); onSectionChange?.("chat"); }} className={cx("flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-[11px]", scope.type === "all" ? "bg-sidebar-accent text-sidebar-foreground" : "text-text-muted hover:bg-sidebar-accent hover:text-sidebar-foreground")}><IconPlusChat className="h-3.5 w-3.5" /><span>All chats</span></button>
+        {agents.map((agent) => <button key={agent.id} type="button" onClick={() => { setScope({ type: "agent", id: agent.id }); onSectionChange?.("chat"); }} className={cx("flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-[11px]", scope.type === "agent" && scope.id === agent.id ? "bg-sidebar-accent text-sidebar-foreground" : "text-text-muted hover:bg-sidebar-accent hover:text-sidebar-foreground")}><IconSparkle className="h-3.5 w-3.5 shrink-0" /><span className="min-w-0 flex-1 truncate">{agent.name}</span>{agent.isDefault && <span className="text-[9px]">Default</span>}</button>)}
+        {groupChats.length > 0 && <div className="mt-1 border-t border-sidebar-border pt-1"><div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-text-muted">Group Chats</div>{groupChats.map((group) => <button key={group.id} type="button" onClick={() => { setScope({ type: "group", id: group.id }); onSectionChange?.("chat"); }} className={cx("flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-[11px]", scope.type === "group" && scope.id === group.id ? "bg-sidebar-accent text-sidebar-foreground" : "text-text-muted hover:bg-sidebar-accent hover:text-sidebar-foreground")}><IconPlusChat className="h-3.5 w-3.5 shrink-0" /><span className="min-w-0 flex-1 truncate">{group.name}</span></button>)}</div>}
+      </div>}
       {/* Session search */}
       <div className="mt-3 px-2">
         <div className="flex h-8 items-center gap-2 rounded-md border border-transparent bg-sidebar-accent/50 px-2 focus-within:border-border-medium">
@@ -258,7 +326,7 @@ export function SessionSidebar({
 
         {!loading &&
           !error &&
-          groups.map(([label, items]) => (
+          groupedSessions.map(([label, items]) => (
             <div key={label} className="mb-2">
               <div className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
                 {label}
@@ -310,14 +378,14 @@ export function SessionSidebar({
                           return;
                         }
                         setActionSessionId(null);
-                        onSelect(s.id);
+                        onSelect(s.id, { agentProfileId: s.agentProfileId, groupChatId: s.groupChatId });
                       }}
                       aria-label={`${s.title || "Untitled session"}. Hold for actions.`}
                       className="min-w-0 flex-1 select-none px-2 py-1.5 text-left touch-pan-y"
                     >
                       <span className="block truncate text-sm">{s.title || "Untitled session"}</span>
                       <span className="block truncate text-[11px] text-text-muted">
-                        {s.status || "idle"} ·{" "}
+                        {s.groupChat?.name || s.agentProfile?.name ? `${s.groupChat?.name || s.agentProfile?.name} · ` : ""}{s.status || "idle"} ·{" "}
                         {new Date(s.updatedAt || s.createdAt).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -326,6 +394,7 @@ export function SessionSidebar({
                     </button>}
                     {actionsOpen && (
                       <div className="animate-action-reveal flex shrink-0 border-l border-border-faint bg-sidebar-accent/50">
+                        <button type="button" onClick={() => void togglePin(s)} disabled={savingPinId === s.id} className="inline-flex w-[56px] items-center justify-center text-[11px] font-semibold text-text-secondary transition-colors hover:bg-sidebar-accent disabled:opacity-50" aria-label={`${s.isPinned ? "Unpin" : "Pin"} ${s.title || "session"}`}>{savingPinId === s.id ? "…" : s.isPinned ? "Unpin" : "Pin"}</button>
                         <button type="button" onClick={() => startRename(s)} className="inline-flex w-[70px] items-center justify-center gap-1 text-[11px] font-semibold text-text-secondary transition-colors hover:bg-sidebar-accent" aria-label={`Rename ${s.title || "session"}`}><IconPencil className="h-3.5 w-3.5" />Rename</button>
                         <button type="button" onClick={() => deleteSession(s)} disabled={deletingId === s.id} className="inline-flex w-[74px] items-center justify-center gap-1.5 border-l border-interactive-negative/15 bg-interactive-negative/[0.08] text-[11px] font-semibold text-interactive-negative transition-colors hover:bg-interactive-negative/[0.14] disabled:opacity-50" aria-label={`Delete ${s.title || "session"}`}><IconTrash className="h-3.5 w-3.5" />{deletingId === s.id ? "Deleting" : "Delete"}</button>
                       </div>

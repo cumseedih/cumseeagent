@@ -13,7 +13,16 @@ type Message = {
   content: string;
   status?: string;
   createdAt?: string;
+  metadataJson?: string | null;
 };
+
+function messageSpeaker(message: Message) {
+  if (!message.metadataJson) return null;
+  try {
+    const metadata = JSON.parse(message.metadataJson);
+    return typeof metadata.agentName === "string" ? metadata.agentName : null;
+  } catch { return null; }
+}
 
 function activityLabel(event: AgentEvent) {
   const payload = event.payload || {};
@@ -35,12 +44,14 @@ export function MessageList({
   streaming,
   thinking,
   streamingText = "",
+  streamingAgentName,
   events = [],
 }: {
   messages: Message[];
   streaming?: boolean;
   thinking?: boolean;
   streamingText?: string;
+  streamingAgentName?: string | null;
   events?: AgentEvent[];
 }) {
   const [rated, setRated] = useState<Record<string, "up" | "down" | undefined>>({});
@@ -85,20 +96,22 @@ export function MessageList({
         }
 
         const vote = rated[m.id];
+        const speaker = messageSpeaker(m);
         return (
           <Fragment key={m.id}>
             {messageIndex === answerIndex && commandBlock}
             <article className="animate-stage-in min-w-0">
               <WorkingPet className="ml-[5px] h-[22px] w-[22px] md:h-6 md:w-6" />
+              {speaker && <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">{speaker}</p>}
               <div className="mt-[18px] min-w-0 text-[14px] leading-[1.55] text-[#353535] [&_.agent-md]:text-[#353535] md:mt-4 md:text-[15px] md:leading-[1.75] md:text-text-primary md:[&_.agent-md]:text-text-secondary"><Markdown text={m.content} /></div>
               <div className="ml-[11px] mt-[17px] flex items-center gap-[21px] text-[#777] md:ml-0 md:mt-3 md:gap-2 md:text-text-muted" aria-label="Response actions">
-              <button type="button" aria-label="Good response" aria-pressed={vote === "up"} onClick={() => setRated((current) => ({ ...current, [m.id]: current[m.id] === "up" ? undefined : "up" }))} className={cx("grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary", vote === "up" && "text-[#222] md:bg-surface-raised md:text-text-primary")}><IconThumbUp className="h-[20px] w-[20px]" /></button>
-              <button type="button" aria-label="Bad response" aria-pressed={vote === "down"} onClick={() => setRated((current) => ({ ...current, [m.id]: current[m.id] === "down" ? undefined : "down" }))} className={cx("grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary", vote === "down" && "text-[#222] md:bg-surface-raised md:text-text-primary")}><IconThumbDown className="h-[20px] w-[20px]" /></button>
-              <button type="button" aria-label="Copy response" onClick={() => navigator.clipboard?.writeText(m.content)} className="grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary"><IconCopy className="h-[19px] w-[19px]" /></button>
-              <button type="button" aria-label="Share response" onClick={async () => {
-                if (navigator.share) await navigator.share({ text: m.content }).catch(() => undefined);
-                else await navigator.clipboard?.writeText(m.content);
-              }} className="grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary"><IconShare className="h-[19px] w-[19px]" /></button>
+                <button type="button" aria-label="Good response" aria-pressed={vote === "up"} onClick={() => setRated((current) => ({ ...current, [m.id]: current[m.id] === "up" ? undefined : "up" }))} className={cx("grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary", vote === "up" && "text-[#222] md:bg-surface-raised md:text-text-primary")}><IconThumbUp className="h-[20px] w-[20px]" /></button>
+                <button type="button" aria-label="Bad response" aria-pressed={vote === "down"} onClick={() => setRated((current) => ({ ...current, [m.id]: current[m.id] === "down" ? undefined : "down" }))} className={cx("grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary", vote === "down" && "text-[#222] md:bg-surface-raised md:text-text-primary")}><IconThumbDown className="h-[20px] w-[20px]" /></button>
+                <button type="button" aria-label="Copy response" onClick={() => navigator.clipboard?.writeText(m.content)} className="grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary"><IconCopy className="h-[19px] w-[19px]" /></button>
+                <button type="button" aria-label="Share response" onClick={async () => {
+                  if (navigator.share) await navigator.share({ text: m.content }).catch(() => undefined);
+                  else await navigator.clipboard?.writeText(m.content);
+                }} className="grid h-5 w-5 place-items-center rounded-full transition-colors hover:text-[#222] md:h-9 md:w-9 md:hover:bg-surface-raised md:hover:text-text-primary"><IconShare className="h-[19px] w-[19px]" /></button>
               </div>
             </article>
           </Fragment>
@@ -109,6 +122,7 @@ export function MessageList({
 
       {streamingText && (
         <div className="animate-stage-in min-w-0" aria-live="polite">
+          {streamingAgentName && <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">{streamingAgentName}</p>}
           <Markdown text={streamingText} />
         </div>
       )}
@@ -120,17 +134,8 @@ export function MessageList({
             const failed = event.eventType === "tool.failed";
             const done = event.eventType === "tool.completed";
             return (
-              <div
-                key={event.id}
-                className="animate-stage-in flex items-center gap-2.5 text-[12px] text-text-tertiary"
-                style={{ animationDelay: `${Math.min(index * 45, 180)}ms` }}
-              >
-                {current && !failed && !done ? <WorkingPet className="h-5 w-5" /> : <span
-                  className={cx(
-                    "h-2 w-2 shrink-0 rounded-full",
-                    failed ? "bg-interactive-negative" : done ? "bg-interactive-positive" : "bg-[hsl(var(--brand-secondary))]"
-                  )}
-                />}
+              <div key={event.id} className="animate-stage-in flex items-center gap-2.5 text-[12px] text-text-tertiary" style={{ animationDelay: `${Math.min(index * 45, 180)}ms` }}>
+                {current && !failed && !done ? <WorkingPet className="h-5 w-5" /> : <span className={cx("h-2 w-2 shrink-0 rounded-full", failed ? "bg-interactive-negative" : done ? "bg-interactive-positive" : "bg-[hsl(var(--brand-secondary))]")} />}
                 <span className={cx(current && !failed && "activity-shimmer-text")}>{label}</span>
                 {done && <span className="text-interactive-positive">✓</span>}
               </div>

@@ -2,7 +2,7 @@
 
 import { BRANDING } from "../branding.config";
 import { StatusPill, Chip, cx } from "./ui";
-import { IconBolt, IconChevronDown, IconDots, IconGitBranch, IconGithub, IconPanelLeft, IconPencil, IconShield, IconTerminal, IconFolder } from "./icons";
+import { IconBolt, IconChevronDown, IconDots, IconGitBranch, IconGithub, IconPanelLeft, IconPencil, IconShield, IconTerminal, IconFolder, IconSparkle } from "./icons";
 
 /**
  * Top bar: sidebar toggle, repo/branch context pickers, live status,
@@ -38,8 +38,8 @@ export function WorkspaceHeader({
   quota?: { remaining: number | null; limit: number; exhausted: boolean; unlimited: boolean } | null;
   railOpen: boolean;
   onToggleRail: () => void;
-  railTab: "terminal" | "files" | "activity";
-  onRailTabChange: (t: "terminal" | "files" | "activity") => void;
+  railTab: "terminal" | "files" | "activity" | "plan";
+  onRailTabChange: (t: "terminal" | "files" | "activity" | "plan") => void;
   sessionTitle?: string;
   onNewChat?: () => void;
 }) {
@@ -139,6 +139,7 @@ export function WorkspaceHeader({
               ["terminal", <IconTerminal key="t" className="h-3.5 w-3.5" />, "Terminal"],
               ["files", <IconFolder key="f" className="h-3.5 w-3.5" />, "Files"],
               ["activity", <IconGitBranch key="a" className="h-3.5 w-3.5" />, "Activity"],
+              ["plan", <IconSparkle key="p" className="h-3.5 w-3.5" />, "Plan"],
             ] as const
           ).map(([key, icon, title]) => (
             <button

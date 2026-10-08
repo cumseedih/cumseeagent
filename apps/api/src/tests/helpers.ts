@@ -9,6 +9,13 @@ export async function buildTestApp() {
 
 export async function cleanup() {
   // Clean relevant tables in order
+  await (prisma as any).workflowRun.deleteMany();
+  await (prisma as any).workflow.deleteMany();
+  await (prisma as any).agentSkill.deleteMany();
+  await prisma.groupChatMember.deleteMany();
+  await prisma.groupChat.deleteMany();
+  await prisma.agentProfile.deleteMany();
+  await (prisma as any).artifact.deleteMany();
   await prisma.terminalCommand.deleteMany();
   await prisma.approval.deleteMany();
   await prisma.toolCall.deleteMany();

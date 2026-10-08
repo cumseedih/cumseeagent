@@ -7,13 +7,15 @@ import { connectSSE, CumseeEvent } from "../lib/sse";
 import { SessionSidebar } from "../components/SessionSidebar";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { Composer, type AgentEffort, type PluginMention } from "../components/Composer";
-import { DelvinCore } from "../components/DelvinCore";
+import { CompanionPet } from "../components/Pet";
 import { IconChevronDown, IconPanelLeft, IconFolder, IconGitBranch, IconSettings, IconGithub, IconPencil, IconX } from "../components/icons";
 import { MessageList } from "../components/MessageList";
 import { ToolTimeline } from "../components/ToolTimeline";
 import { Terminal } from "../components/Terminal";
 import { FileViewer } from "../components/FileViewer";
 import { ApprovalBar } from "../components/ApprovalBar";
+import { TaskPlanPanel } from "../components/TaskPlanPanel";
+import { WorkspaceHub, type WorkspaceSection } from "../components/WorkspaceHub";
 import { ErrorNote, cx } from "../components/ui";
 import { TermsGate } from "../components/TermsGate";
 import { WorkspaceSheet } from "../components/WorkspaceSheet";
@@ -25,7 +27,7 @@ import {
   type Harness,
 } from "../components/Pickers";
 
-type RailTab = "terminal" | "files" | "activity";
+type RailTab = "terminal" | "files" | "activity" | "plan";
 type AuthUser = { id: string; email: string; username?: string | null; displayName?: string | null; avatarUrl?: string | null; createdAt?: string };
 
 function ProfileAvatar({ user, className = "h-8 w-8" }: { user?: Pick<AuthUser, "email" | "displayName" | "avatarUrl"> | null; className?: string }) {
@@ -46,12 +48,16 @@ function AgentWorkspace({
 }) {
   const [project, setProject] = useState<{ id: string; name: string; defaultBranch?: string } | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [groupChatActive, setGroupChatActive] = useState(false);
+  const [activeSection, setActiveSection] = useState<WorkspaceSection>("chat");
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState<string | undefined>();
   const [sessionsKey, setSessionsKey] = useState(0);
   const [messages, setMessages] = useState<any[]>([]);
   const [events, setEvents] = useState<CumseeEvent[]>([]);
   const [toolCalls, setToolCalls] = useState<any[]>([]);
   const [streamingText, setStreamingText] = useState("");
+  const [streamingAgentName, setStreamingAgentName] = useState<string | null>(null);
   const [failedRunId, setFailedRunId] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [harness, setHarness] = useState<Harness>("standard");
@@ -111,6 +117,7 @@ function AgentWorkspace({
         const s = await api.listSessions().catch(() => ({ sessions: [] as any[] }));
         if (s.sessions?.length) {
           setSessionId(s.sessions[0].id);
+          setGroupChatActive(Boolean(s.sessions[0].groupChatId));
           setSessionTitle(s.sessions[0].title);
         }
       } catch (e: any) {
@@ -139,6 +146,7 @@ function AgentWorkspace({
         setEvents(e.events || []);
         setToolCalls(t.toolCalls || []);
         const latestRun = r.runs?.[0];
+        setActiveRunId(latestRun?.id || null);
         setFailedRunId(latestRun?.status === "failed" ? latestRun.id : null);
         if (latestRun?.status) setStatus(latestRun.status);
       } catch (e: any) {
@@ -151,14 +159,18 @@ function AgentWorkspace({
       (ev) => {
         setEvents((prev) => [...prev.slice(-400), ev]);
         const type = ev.eventType;
-        if (type === "agent.started") { setStatus("running"); setStreamingText(""); setFailedRunId(null); setError(null); }
+    if (type === "agent.started") { setActiveRunId(typeof ev.payload?.agentRunId === "string" ? ev.payload.agentRunId : null); setStatus("running"); setStreamingText(""); setStreamingAgentName(null); setFailedRunId(null); setError(null); }
+        if (type === "agent.member.started") { setStreamingAgentName(typeof ev.payload?.agentName === "string" ? ev.payload.agentName : null); setStreamingText(""); }
+        if (type === "agent.member.completed") { setStreamingText(""); api.listMessages(sessionId).then((m) => setMessages(m.messages || [])); }
         if (type === "agent.thinking") {
           setStatus("thinking");
+          if (typeof ev.payload?.agentName === "string") setStreamingAgentName(ev.payload.agentName);
           if (typeof ev.payload?.delta === "string") setStreamingText((current) => `${current}${ev.payload.delta}`);
         }
         if (type === "agent.completed") {
           setStatus("completed");
           setStreamingText("");
+          setStreamingAgentName(null);
           api.getUsage().then(setQuota).catch(() => undefined);
           api.listMessages(sessionId).then((m) => setMessages(m.messages || []));
           api.listToolCalls(sessionId).then((t) => setToolCalls(t.toolCalls || []));
@@ -211,7 +223,7 @@ function AgentWorkspace({
   /* ----------------------------------------------------------------- actions */
   const refreshSessions = useCallback(() => setSessionsKey((k) => k + 1), []);
 
-  async function createSession(title?: string) {
+  async function createSession(title?: string, agentProfileId?: string, groupChatId?: string) {
     if (guest) {
       onRequestLogin?.();
       return null;
@@ -220,8 +232,13 @@ function AgentWorkspace({
       const res = await api.createSession({
         projectId: project?.id,
         title: title || "New session",
+        agentProfileId,
+        groupChatId,
       });
+      setActiveSection("chat");
       setSessionId(res.session.id);
+      setGroupChatActive(Boolean(groupChatId));
+      setActiveRunId(null);
       setSessionTitle(res.session.title);
       setMessages([]);
       setEvents([]);
@@ -285,6 +302,7 @@ function AgentWorkspace({
       }
       if (!runId) throw new Error("No failed run is available to retry.");
       const result = await api.retryRun(runId);
+      setActiveRunId(result.run.id);
       setFailedRunId(null);
       setError(null);
       setStreamingText("");
@@ -314,6 +332,26 @@ function AgentWorkspace({
       setError(e.message || "Could not stop run");
     }
   }, [sessionId]);
+
+  async function launchWorkflow(workflowId: string) {
+    try {
+      const result: any = await api.runWorkflow(workflowId);
+      setActiveSection("chat");
+      setSessionId(result.session.id);
+      setSessionTitle(result.session.title);
+      setActiveRunId(result.agentRun.id);
+      setMessages([result.message]);
+      setEvents([]);
+      setToolCalls([]);
+      setStatus("running");
+      setError(null);
+      setFailedRunId(null);
+      refreshSessions();
+    } catch (e: any) {
+      setError(e.message || "Could not start this workflow");
+      setActiveSection("chat");
+    }
+  }
 
   async function connectRepository() {
     if (!project) return;
@@ -405,6 +443,11 @@ function AgentWorkspace({
         )}
       >
         <SessionSidebar
+          activeSection={activeSection}
+          onSectionChange={(section) => {
+            setActiveSection(section);
+            if (isMobile) setMobileNav(false);
+          }}
           guest={guest}
           user={user}
           onRequestLogin={onRequestLogin}
@@ -417,6 +460,7 @@ function AgentWorkspace({
           onDeleted={(id) => {
             if (sessionId === id) {
               setSessionId(null);
+              setGroupChatActive(false);
               setSessionTitle(undefined);
               setMessages([]);
               setEvents([]);
@@ -430,14 +474,17 @@ function AgentWorkspace({
             refreshSessions();
           }}
           selectedId={sessionId || undefined}
-          onSelect={(id) => {
+          onSelect={(id, association) => {
+            setActiveSection("chat");
+            setGroupChatActive(Boolean(association?.groupChatId));
             setSessionId(id);
+            setActiveRunId(null);
             setSessionTitle(undefined);
             setStatus("idle");
             if (isMobile) setMobileNav(false);
           }}
-          onNew={() => {
-            createSession();
+          onNew={(agentProfileId, groupChatId) => {
+            createSession(undefined, agentProfileId, groupChatId);
             if (isMobile) setMobileNav(false);
           }}
           collapsed={isMobile ? false : sidebarCollapsed}
@@ -448,7 +495,7 @@ function AgentWorkspace({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {hasConversation ? <div className="shrink-0 animate-workspace-enter"><WorkspaceHeader
+        {activeSection !== "chat" ? <header className="flex h-[56px] shrink-0 items-center justify-between border-b border-border-faint bg-surface-primary/90 px-4 backdrop-blur"><div className="flex min-w-0 items-center gap-3"><button type="button" onClick={() => isMobile ? setMobileNav(true) : setActiveSection("chat")} aria-label={isMobile ? "Open workspace navigation" : "Return to chat"} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-text-muted hover:bg-surface-raised"><IconPanelLeft className="h-4 w-4" /></button><span className="truncate text-xs font-medium text-text-secondary">{project?.name || "Delvin workspace"}</span></div><button type="button" onClick={onOpenAccount} aria-label="Open account settings" className="rounded-full"><ProfileAvatar user={user} /></button></header> : hasConversation ? <div className="shrink-0 animate-workspace-enter"><WorkspaceHeader
           status={status}
           project={project}
           branch={branch}
@@ -479,6 +526,25 @@ function AgentWorkspace({
         )}
 
         <div className="flex min-h-0 flex-1 overflow-hidden">
+          {activeSection !== "chat" ? <WorkspaceHub
+            section={activeSection}
+            project={project}
+            user={user}
+            quota={quota}
+            guest={guest}
+            onSelectProject={(selected) => {
+              setProject(selected);
+              setBranch(selected.defaultBranch || "main");
+              setSelectedBranch(true);
+              localStorage.setItem("delvin_project_id", selected.id);
+            }}
+            onOpenRepository={() => setRepoPicker(true)}
+            onManageConnections={() => setConnections(true)}
+            onOpenAccount={() => onOpenAccount?.()}
+            onRequestLogin={() => onRequestLogin?.()}
+            onRunWorkflow={launchWorkflow}
+            reloadKey={sessionsKey}
+          /> : <>
           {/* Conversation column */}
           <div className="flex min-w-0 flex-1 flex-col">
             {hasConversation && (
@@ -486,7 +552,7 @@ function AgentWorkspace({
                 <div className="mx-auto w-full max-w-3xl py-[22px] md:py-6">
                   {errorNote}
                   {approvalNote}
-                  <MessageList messages={messages} events={events} thinking={status === "thinking"} streaming={status === "running"} streamingText={streamingText} />
+                  <MessageList messages={messages} events={events} thinking={status === "thinking"} streaming={status === "running"} streamingText={streamingText} streamingAgentName={streamingAgentName} />
                 </div>
               </div>
             )}
@@ -502,22 +568,21 @@ function AgentWorkspace({
             >
               {!hasConversation && (
                 <div className="pointer-events-none absolute inset-x-5 top-[37%] -translate-y-1/2 md:hidden">
-                  <DelvinCore status={status} className="mx-auto mb-5 h-[82px] w-[82px]" />
+                  <CompanionPet status={status} className="mx-auto mb-5 h-[88px] w-[88px]" />
                   <h1 className="animate-hero-breathe mx-auto max-w-[360px] text-center font-serif-display text-[42px] font-light leading-[1.02] tracking-[-0.045em] text-text-tertiary">
                     What would you like to do?
                   </h1>
                 </div>
               )}
+              {!hasConversation && (
+                <div className="pointer-events-none mb-6 hidden w-full flex-col items-center md:flex">
+                  <CompanionPet status={status} className="mb-5 h-[116px] w-[116px]" />
+                  <h1 className="font-serif-display animate-rise text-center text-[48px] font-light leading-[1.02] tracking-[-0.045em] text-text-tertiary md:text-[54px]">
+                    What would you like to do?
+                  </h1>
+                </div>
+              )}
               <div className="relative mx-auto w-full max-w-[720px]">
-                {!hasConversation && (
-                  <div className="pointer-events-none absolute bottom-full left-0 right-0 hidden flex-col items-center pb-6 md:flex">
-                    <DelvinCore status={status} className="mb-5 h-[112px] w-[112px]" />
-                    <h1 className="font-serif-display animate-rise text-center text-[48px] font-light leading-[1.02] tracking-[-0.045em] text-text-tertiary md:text-[54px]">
-                      What would you like to do?
-                    </h1>
-                  </div>
-                )}
-
                 {!hasConversation && errorNote}
                 {!hasConversation && approvalNote}
                 {!hasConversation && (
@@ -608,6 +673,7 @@ function AgentWorkspace({
                     ["activity", "Activity"],
                     ["terminal", "Terminal"],
                     ["files", "Files"],
+                    ["plan", "Plan"],
                   ] as const
                 ).map(([key, label]) => (
                   <button
@@ -679,8 +745,11 @@ function AgentWorkspace({
                 ) : (
                   <p className="p-3 text-xs text-text-muted">Connect a repository to browse workspace files.</p>
                 ))}
+
+              {railTab === "plan" && <TaskPlanPanel runId={activeRunId} events={events} status={status} groupChatMode={groupChatActive} />}
             </aside>
           )}
+          </>}
         </div>
       </div>
 
@@ -854,6 +923,6 @@ function AccountSheet({ open, user, onClose, onSignOut, onUserUpdated, onAccount
       <button type="button" disabled={busy} onClick={saveProfile} className="mt-5 h-12 w-full rounded-lg border border-border-faint bg-white text-[15px] font-medium text-text-primary hover:bg-surface-raised disabled:opacity-50">{busy ? "Saving…" : "Save profile"}</button>
       <button type="button" onClick={onSignOut} className="mt-2 h-12 w-full rounded-lg bg-interactive-cta text-[15px] font-medium text-interactive-on-cta hover:bg-interactive-cta-hover">Sign Out</button>
       <button type="button" disabled={busy} onClick={deleteAccount} className="mt-4 w-full text-xs text-red-600 hover:underline disabled:opacity-50">Delete account</button>
-    </div>
-  </div>;
-}
+      </div>
+    </div>;
+  }

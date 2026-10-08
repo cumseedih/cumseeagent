@@ -1,7 +1,7 @@
 # Deployment
 
 ## VPS (Debian 11, 2 vCPU, 7.8 GiB, 50 GiB)
-Initial host `sandbox` had miners via `/.mod` + `libgdi` + `dpkgd` rootkit — deploy isolates to `agent` user; **reinstall OS clean before production**.
+The initial VPS was compromised by miners/rootkit (`libgdi`, `dpkgd`). **Do not connect or deploy until the user explicitly confirms the VPS has been rebuilt with a clean OS.** After rebuild, rotate all potentially exposed credentials and verify hardening before production.
 
 ### 1. User & Workspace
 ```bash
@@ -27,7 +27,7 @@ tar -xzf cumsee-deploy.tar.gz  # → /home/agent/cumsee-platform
 NODE_ENV=production
 PORT=4000
 HOST=0.0.0.0
-DATABASE_URL=file:/home/agent/cumsee-platform/apps/api/prisma/prod.db
+DATABASE_URL=postgresql://cumsee_app:REPLACE_WITH_ROTATED_SECRET@127.0.0.1:5432/cumsee_prod?schema=public
 JWT_SECRET=$(openssl rand -base64 48)      # 64 hex or base64
 ENCRYPTION_KEY=$(openssl rand -hex 16)     # 32 hex
 WORKSPACE_ROOT=/home/agent/workspaces
@@ -46,8 +46,8 @@ NEXT_PUBLIC_API_URL="https://your.domain.com/api"
 ```bash
 cd /home/agent/cumsee-platform
 pnpm install --frozen-lockfile
-npx --filter @cumsee/api prisma generate
-npx --filter @cumsee/api prisma migrate deploy  # creates prod.db
+pnpm --filter @cumsee/api exec prisma generate
+pnpm --filter @cumsee/api exec prisma migrate deploy  # applies PostgreSQL migrations
 pnpm build  # api tsc + web next build
 ```
 
@@ -95,13 +95,13 @@ curl -X POST http://127.0.0.1:4000/api/auth/register -H "Content-Type: applicati
 ```
 
 ### 9. Hardening Checklist
-- [ ] Reinstall OS clean (snapshot workspaces/prod.db dump first)
+- [ ] Confirm the clean OS rebuild before connecting; restore only approved, scanned project/database backups and rotate all credentials first
 - [ ] `PasswordAuthentication no`, `PermitRootLogin prohibit-password`, port 22 → nonstandard, `fail2ban`/`ufw allow 22,80,443`
 - [ ] `iptables -P INPUT DROP` (was ACCEPT)
 - [ ] Rotate all tokens: `JWT_SECRET`, `ENCRYPTION_KEY`, `OMNIROUTE_API_KEY`, `OPENAI_API_KEY`, Telegram bot tokens
-- [ ] Switch DB to PostgreSQL: `DATABASE_URL=postgresql://agent:PASS@localhost:5432/cumsee_prod` + `prisma migrate deploy`
+- [ ] Provision PostgreSQL with a dedicated least-privilege service role; store the rotated connection secret only in the protected environment file
 - [ ] TLS via real domain (Caddy `tls { ca }`), not `tls internal` nip.io demo
-- [ ] Backups: nightly `sqlite3 prod.db .dump | gzip > /home/agent/backups/prod.db.$(date +%F).gz` (if staying SQLite)
+- [ ] Backups: encrypted, access-controlled `pg_dump -Fc` backups with restore tests
 - [ ] Monitoring: `systemd` watchdog, `caddy.log`, `prometheus` health
 
 ### 10. Rollback
@@ -111,4 +111,4 @@ cp /etc/caddy/Caddyfile.bak.* /etc/caddy/Caddyfile; systemctl reload caddy
 # rm -rf /home/agent/cumsee-platform; systemctl disable cumsee-*
 ```
 
-Backups: `Caddyfile.bak.*`, `prod.db` copy, `/home/agent/workspaces` tar.
+Backups: `Caddyfile.bak.*`, PostgreSQL dump, and `/home/agent/workspaces` archive.

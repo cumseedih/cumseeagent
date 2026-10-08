@@ -7,7 +7,9 @@ export interface PolicyRule {
   reason: string;
 }
 
-// Safe by default inside approved workspace
+// Auto-approved commands are read-only/basic operations. Arguments are checked
+// separately so a safe command name cannot make shell metacharacters or paths
+// outside the current project safe.
 export const SAFE_PATTERNS: RegExp[] = [
   /^pwd$/,
   /^ls(\s+.*)?$/,
@@ -36,10 +38,9 @@ export const SAFE_PATTERNS: RegExp[] = [
   /^python\s+-m\s+pytest.*$/,
 ];
 
-// Always require approval
+// Always require approval for operations with elevated impact.
 export const RISKY_RULES: PolicyRule[] = [
   { pattern: /^rm(\s+.*)?$/, risk: "critical", requiresApproval: true, reason: "File deletion requires approval" },
-  { pattern: /^rm\s+-rf.*/, risk: "critical", requiresApproval: true, reason: "Recursive deletion requires approval" },
   { pattern: /sudo/, risk: "critical", requiresApproval: true, reason: "sudo requires approval" },
   { pattern: /\bsu\b/, risk: "critical", requiresApproval: true, reason: "su requires approval" },
   { pattern: /chmod/, risk: "high", requiresApproval: true, reason: "chmod on sensitive paths requires approval" },
@@ -52,53 +53,60 @@ export const RISKY_RULES: PolicyRule[] = [
   { pattern: /yarn\s+add\b/, risk: "high", requiresApproval: true, reason: "yarn add requires approval" },
   { pattern: /pip\s+install/, risk: "high", requiresApproval: true, reason: "pip install requires approval" },
   { pattern: /docker/, risk: "critical", requiresApproval: true, reason: "Docker host operation requires approval" },
-  { pattern: /\/etc\//, risk: "critical", requiresApproval: true, reason: "Editing /etc requires approval" },
-  { pattern: /\/root\//, risk: "critical", requiresApproval: true, reason: "Access to /root requires approval" },
-  { pattern: /\/var\//, risk: "high", requiresApproval: true, reason: "Editing /var requires approval" },
+  { pattern: /git\s+branch\s+-(?:d|D)\b|git\s+branch\s+--delete\b/, risk: "high", requiresApproval: true, reason: "Deleting a Git branch requires approval" },
+  { pattern: /\/(?:etc|root|var|proc|sys)\//, risk: "critical", requiresApproval: true, reason: "Access to a sensitive system path requires approval" },
   { pattern: /git\s+push/, risk: "high", requiresApproval: true, reason: "git push requires approval" },
   { pattern: /curl.*\|\s*sh/, risk: "critical", requiresApproval: true, reason: "Piped curl to shell requires approval" },
 ];
 
+const UNSAFE_SHELL_SYNTAX = /[;&|`$()<>\\"'\r\n]/;
+const PARENT_PATH = /(?:^|[\/\s])\.\.(?:[\/\s]|$)/;
+const ABSOLUTE_OR_HOME_PATH = /(?:^|\s)(?:\/|~\/)/;
+const SENSITIVE_FILE = /(?:^|[\/\s])(?:\.env(?:\.[\w-]+)?|\.ssh(?:[\/\s]|$)|\.(?:aws|kube|docker|azure)(?:[\/\s]|$)|\.config\/gcloud(?:[\/\s]|$)|\.npmrc|\.netrc|\.pypirc|\.git\/config|[^/\s]+\.(?:pem|key|p12|pfx))(?:$|[\/\s])/i;
+
+function safeForAutomaticExecution(command: string): boolean {
+  const cmd = command.trim();
+  if (!cmd || UNSAFE_SHELL_SYNTAX.test(cmd) || PARENT_PATH.test(cmd) || ABSOLUTE_OR_HOME_PATH.test(cmd) || SENSITIVE_FILE.test(cmd)) return false;
+  return SAFE_PATTERNS.some((pattern) => pattern.test(cmd));
+}
+
 export function classifyRisk(command: string): { risk: RiskLevel; requiresApproval: boolean; reason?: string } {
   const cmd = command.trim();
 
-  // Check risky first
   for (const rule of RISKY_RULES) {
     if (rule.pattern.test(cmd)) {
       return { risk: rule.risk, requiresApproval: rule.requiresApproval, reason: rule.reason };
     }
   }
 
-  // Check safe patterns — but also check for chaining outside workspace
-  // Detect command chaining that might bypass safe check
-  if (/[;&|]{1,2}/.test(cmd) && !SAFE_PATTERNS.some((p) => p.test(cmd))) {
-    return { risk: "high", requiresApproval: true, reason: "Command chaining requires approval" };
-  }
-
-  // If matches safe pattern, allow auto
-  for (const p of SAFE_PATTERNS) {
-    if (p.test(cmd)) {
+  // Only a chain of independently safe commands joined with && can auto-run.
+  // Other operators and unsafe segments require explicit review.
+  if (cmd.includes("&&") || /[;|]/.test(cmd)) {
+    const segments = cmd.split("&&");
+    if (segments.length > 1 && !/[;|]/.test(cmd) && segments.every(safeForAutomaticExecution)) {
       return { risk: "low", requiresApproval: false };
     }
+    return { risk: "high", requiresApproval: true, reason: "Command chaining or shell operators require approval" };
   }
 
-  // Default: medium, requires approval for unknown commands outside safe list
-  // But if it's just file creation/editing inside workspace via tools, it's safe.
-  // For terminal commands, unknown = medium
+  if (safeForAutomaticExecution(cmd)) return { risk: "low", requiresApproval: false };
+
+  if (PARENT_PATH.test(cmd) || ABSOLUTE_OR_HOME_PATH.test(cmd) || SENSITIVE_FILE.test(cmd)) {
+    return { risk: "high", requiresApproval: true, reason: "Parent traversal, absolute paths, and sensitive files require approval" };
+  }
+  if (UNSAFE_SHELL_SYNTAX.test(cmd)) {
+    return { risk: "high", requiresApproval: true, reason: "Shell expansion and quoting require approval" };
+  }
+
   return { risk: "medium", requiresApproval: true, reason: "Unknown command requires approval" };
 }
 
 export function isCommandAllowed(command: string, workspaceRoot: string, cwd?: string): { allowed: boolean; reason?: string } {
-  // Check for null bytes
-  if (command.includes("\x00")) {
-    return { allowed: false, reason: "Null bytes not allowed" };
-  }
-  // Check for path traversal in command
-  if (command.includes("..")) {
-    // naive check — detailed path validation happens in validator
-    // but flag for review
-    // we don't block outright here, let pathValidator handle
-  }
-  // Check for writes outside workspace — handled by pathValidator
+  // The runner separately validates cwd against the workspace. Null bytes and
+  // parent traversal are rejected here instead of relying on shell parsing.
+  if (command.includes("\x00")) return { allowed: false, reason: "Null bytes not allowed" };
+  if (PARENT_PATH.test(command)) return { allowed: false, reason: "Parent traversal not allowed" };
+  void workspaceRoot;
+  void cwd;
   return { allowed: true };
 }

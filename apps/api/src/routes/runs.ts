@@ -55,7 +55,7 @@ export async function runRoutes(app: FastifyInstance) {
     const userId = await getUserId(req);
     const failedRun = await prisma.agentRun.findUnique({
       where: { id: runId },
-      include: { session: true, plans: { orderBy: { createdAt: "desc" }, take: 1 } },
+      include: { session: true },
     });
     if (!failedRun) return reply.code(404).send({ error: "Run not found" });
     if (failedRun.session.userId !== userId) return reply.code(403).send({ error: "Forbidden" });
@@ -68,21 +68,10 @@ export async function runRoutes(app: FastifyInstance) {
     if (activeRun) return reply.code(409).send({ error: "This session already has an active run" });
 
     const goal = failedRun.goal || "Retry agent task";
-    const planJson = failedRun.plans[0]?.planJson || JSON.stringify({
-      goal,
-      steps: [
-        { id: "1", title: "Analyze goal", status: "completed" },
-        { id: "2", title: "Create execution plan", status: "pending" },
-        { id: "3", title: "Execute tools", status: "pending" },
-        { id: "4", title: "Verify and complete", status: "pending" },
-      ],
-    });
-
     const retriedRun = await prisma.$transaction(async (tx) => {
       const created = await tx.agentRun.create({
-        data: { sessionId: failedRun.sessionId, status: "running", goal, currentStep: "analyzing" },
+        data: { sessionId: failedRun.sessionId, status: "running", goal, currentStep: "planning" },
       });
-      await tx.plan.create({ data: { agentRunId: created.id, planJson, status: "pending" } });
       await tx.session.update({
         where: { id: failedRun.sessionId },
         data: { status: "active", completedAt: null },
@@ -101,7 +90,6 @@ export async function runRoutes(app: FastifyInstance) {
 
     await eventBus.emitEvent(failedRun.sessionId, "agent.started", { agentRunId: retriedRun.id, goal, retryOf: failedRun.id });
     await eventBus.emitEvent(failedRun.sessionId, "agent.thinking", { agentRunId: retriedRun.id, step: "Retrying your request..." });
-    await eventBus.emitEvent(failedRun.sessionId, "agent.plan.created", { agentRunId: retriedRun.id, plan: JSON.parse(planJson) });
     agentEngine.start(retriedRun.id);
 
     return reply.code(201).send({ run: retriedRun });

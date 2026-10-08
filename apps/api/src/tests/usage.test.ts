@@ -85,6 +85,7 @@ describe("Usage & consent", () => {
     const usage = (await app.inject({ method: "GET", url: "/api/usage", headers: { authorization: `Bearer ${token}` } })).json();
     expect(usage.exhausted).toBe(true);
     expect(usage.remaining).toBe(0);
+    const messagesBefore = await prisma.message.count({ where: { sessionId } });
 
     const res = await app.inject({
       method: "POST",
@@ -95,6 +96,7 @@ describe("Usage & consent", () => {
     expect(res.statusCode).toBe(429);
     expect(res.json().error).toBe("Out of credits for today");
     expect(res.json().code).toBe("quota_exhausted");
+    expect(await prisma.message.count({ where: { sessionId } })).toBe(messagesBefore);
   });
 
   it("records and reports Terms of Use consent", async () => {

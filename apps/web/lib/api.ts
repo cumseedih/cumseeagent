@@ -39,7 +39,7 @@ export const api = {
   listSessions: () => request("/sessions"),
   createSession: (body: any) => request("/sessions", { method: "POST", body: JSON.stringify(body) }),
   getSession: (id: string) => request(`/sessions/${id}`),
-  updateSession: (id: string, body: { title?: string; status?: string }) => request(`/sessions/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  updateSession: (id: string, body: { title?: string; status?: string; isPinned?: boolean }) => request(`/sessions/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   deleteSession: (id: string) => request(`/sessions/${id}`, { method: "DELETE" }),
   stopSession: (id: string) => request(`/sessions/${id}/stop`, { method: "POST" }),
 
@@ -92,6 +92,32 @@ export const api = {
   githubDisconnect: () => request("/github/connection", { method: "DELETE" }),
   googleStatus: () => request("/integrations/google/status"),
   googleDisconnect: () => request("/integrations/google/connection", { method: "DELETE" }),
+
+  // Agent library
+  listAgents: () => request("/agents"),
+  createAgent: (body: { name: string; instructions?: string; memory?: string; avatarUrl?: string | null }) => request("/agents", { method: "POST", body: JSON.stringify(body) }),
+  updateAgent: (id: string, body: { name?: string; instructions?: string; memory?: string; avatarUrl?: string | null; isPinned?: boolean }) => request(`/agents/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteAgent: (id: string) => request(`/agents/${id}`, { method: "DELETE" }),
+  listGroups: () => request("/groups"),
+  createGroup: (body: { name: string; agentIds: string[] }) => request("/groups", { method: "POST", body: JSON.stringify(body) }),
+  updateGroup: (id: string, body: { name?: string; agentIds?: string[]; isPinned?: boolean }) => request(`/groups/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteGroup: (id: string) => request(`/groups/${id}`, { method: "DELETE" }),
+  listArtifacts: (filters: { projectId?: string; sessionId?: string } = {}) => {
+    const query = new URLSearchParams();
+    if (filters.projectId) query.set("projectId", filters.projectId);
+    if (filters.sessionId) query.set("sessionId", filters.sessionId);
+    return request(`/artifacts${query.size ? `?${query}` : ""}`);
+  },
+  getArtifactContent: (id: string) => request(`/artifacts/${id}/content`),
+  listSkills: () => request("/skills"),
+  createSkill: (body: { name: string; description?: string; instructions: string }) => request("/skills", { method: "POST", body: JSON.stringify(body) }),
+  updateSkill: (id: string, body: { name?: string; description?: string | null; instructions?: string; enabled?: boolean }) => request(`/skills/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteSkill: (id: string) => request(`/skills/${id}`, { method: "DELETE" }),
+  listWorkflows: () => request("/workflows"),
+  createWorkflow: (body: { name: string; description?: string; prompt: string; projectId?: string | null }) => request("/workflows", { method: "POST", body: JSON.stringify(body) }),
+  updateWorkflow: (id: string, body: { name?: string; description?: string | null; prompt?: string; projectId?: string | null; enabled?: boolean }) => request(`/workflows/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteWorkflow: (id: string) => request(`/workflows/${id}`, { method: "DELETE" }),
+  runWorkflow: (id: string) => request(`/workflows/${id}/run`, { method: "POST" }),
 
   // Models
   listModels: () => request("/models"),

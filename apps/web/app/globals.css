@@ -307,12 +307,44 @@
 .delvin-core-scene--working .delvin-core-satellite--one { animation-duration: 3.2s; }
 .delvin-core-scene--working .delvin-core-satellite--two { animation-duration: 4.2s; }
 
-/* A tiny Pluto-like work companion. It only appears inline beside the current
-   agent status; the main hero core keeps its original treatment. */
+/* A small original Delvin pet, with calm idle movement and an alert work state. */
 .delvin-working-pet {
   filter: drop-shadow(0 2px 3px hsl(225 34% 15% / .22));
-  animation: delvin-pluto-hop 2.8s cubic-bezier(.37, .01, .24, 1) infinite;
 }
+.delvin-companion {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  isolation: isolate;
+  filter: drop-shadow(0 8px 9px hsl(30 22% 31% / .12));
+  animation: delvin-companion-float 3.8s cubic-bezier(.37, .01, .24, 1) infinite;
+}
+.delvin-companion svg { overflow: visible; }
+.delvin-companion__tail {
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+  animation: delvin-companion-tail 2.7s ease-in-out infinite;
+}
+.delvin-companion__eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: delvin-companion-blink 5.4s ease-in-out infinite;
+}
+.delvin-companion__sparkle {
+  position: absolute;
+  top: 8%;
+  right: 4%;
+  width: 18%;
+  aspect-ratio: 1;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  background: hsl(var(--accent));
+  color: hsl(var(--accent));
+  opacity: 0;
+  transform: scale(.5) rotate(-20deg);
+}
+.delvin-companion--working { animation: delvin-companion-work .78s ease-in-out infinite; }
+.delvin-companion--working .delvin-companion__tail { animation-duration: .55s; }
+.delvin-companion--working .delvin-companion__sparkle { animation: delvin-companion-sparkle 1.2s ease-in-out infinite; }
 .delvin-core-scene--pluto { --core-speed: 6s; }
 .delvin-core-scene--pluto .delvin-core-aura {
   inset: 18%;
@@ -345,6 +377,11 @@
   45% { transform: translateY(-2px) rotate(2deg); }
   58% { transform: translateY(-1px) rotate(1deg); }
 }
+@keyframes delvin-companion-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes delvin-companion-work { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-5px) rotate(1deg); } }
+@keyframes delvin-companion-tail { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(12deg); } }
+@keyframes delvin-companion-blink { 0%, 45%, 49%, 100% { transform: scaleY(1); } 47% { transform: scaleY(.12); } }
+@keyframes delvin-companion-sparkle { 0%, 100% { opacity: 0; transform: scale(.55) rotate(-20deg); } 45%, 68% { opacity: .85; transform: scale(1) rotate(10deg); } }
 
 @keyframes delvin-orbit { from { rotate: 0deg; } to { rotate: 360deg; } }
 @keyframes delvin-core-breathe { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
@@ -397,7 +434,7 @@
 button:hover .plugin-sigil { transform: translateY(-1px) rotateX(9deg); box-shadow: 0 3px 6px hsl(32 22% 31% / 0.12), inset 0 1px 0 hsl(0 0% 100% / 0.9); }
 
 @media (prefers-reduced-motion: reduce) {
-  .delvin-core-scene, .delvin-core-orbit, .delvin-core-sphere, .delvin-core-satellite, .delvin-working-pet { animation: none !important; }
+  .delvin-core-scene, .delvin-core-orbit, .delvin-core-sphere, .delvin-core-satellite, .delvin-working-pet, .delvin-companion, .delvin-companion__tail, .delvin-companion__eye, .delvin-companion__sparkle { animation: none !important; }
 }
 
 html,

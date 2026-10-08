@@ -27,7 +27,9 @@ const DEFAULT_TIMEOUT = 30_000;
 const DEFAULT_MAX_OUTPUT = 1_000_000;
 
 function redactSecrets(input: string): string {
+  const assignment = /(^|\n)([ \t]*[a-z0-9_.-]*(?:API[_-]?KEY|ACCESS[_-]?TOKEN|REFRESH[_-]?TOKEN|JWT[_-]?SECRET|ENCRYPTION[_-]?KEY|CLIENT[_-]?SECRET|PRIVATE[_-]?KEY|DATABASE_URL|DB_URL|CONNECTION_STRING|PASSWORD|PASS|TOKEN|SECRET)[a-z0-9_.-]*\s*[:=]\s*)([^\r\n]*)(?=\r?\n|$)/gim;
   return input
+    .replace(assignment, "$1$2***REDACTED***")
     .replace(/sk-[a-zA-Z0-9_\-]{20,}/g, "sk-***REDACTED***")
     .replace(/ghp_[a-zA-Z0-9]{36}/g, "ghp-***REDACTED***")
     .replace(/Bearer\s+[a-zA-Z0-9_\-\.]{20,}/gi, "Bearer ***REDACTED***")
@@ -193,34 +195,49 @@ export class TerminalRunner {
     delete (sanitizedEnv as any).LD_LIBRARY_PATH;
 
     return new Promise(async (resolve) => {
-      const child = spawn("bash", ["-c", command], {
-        cwd: validatedCwd,
-        env: sanitizedEnv,
-        detached: true,
-      });
-
+      const child = spawn("bash", ["-c", command], { cwd: validatedCwd, env: sanitizedEnv, detached: true });
       let stdout = "";
       let stderr = "";
+      let pendingStdout = "";
+      let pendingStderr = "";
+      let discardStdoutLine = false;
+      let discardStderrLine = false;
       let truncated = false;
       let timedOut = false;
 
-      const handleChunk = (chunk: string, isStdout: boolean) => {
-        const redacted = redactSecrets(chunk);
+      const emitLine = (line: string, isStdout: boolean) => {
+        const redacted = redactSecrets(line);
         if (isStdout) {
-          if (stdout.length + redacted.length > maxOutputBytes) {
-            truncated = true;
-          } else {
-            stdout += redacted;
-            onStdout?.(redacted);
-          }
+          const safe = redacted.slice(0, Math.max(0, maxOutputBytes - stdout.length));
+          if (safe.length < redacted.length) truncated = true;
+          if (safe) { stdout += safe; onStdout?.(safe); }
         } else {
-          if (stderr.length + redacted.length > maxOutputBytes) {
-            truncated = true;
-          } else {
-            stderr += redacted;
-            onStderr?.(redacted);
-          }
+          const safe = redacted.slice(0, Math.max(0, maxOutputBytes - stderr.length));
+          if (safe.length < redacted.length) truncated = true;
+          if (safe) { stderr += safe; onStderr?.(safe); }
         }
+      };
+
+      const handleChunk = (chunk: string, isStdout: boolean) => {
+        let pending = isStdout ? pendingStdout : pendingStderr;
+        let discarding = isStdout ? discardStdoutLine : discardStderrLine;
+        if (discarding) {
+          const newline = chunk.indexOf("\n");
+          if (newline < 0) return;
+          chunk = chunk.slice(newline + 1);
+          discarding = false;
+        }
+        const combined = pending + chunk;
+        const lines = combined.split(/(?<=\n)/);
+        pending = lines.pop() || "";
+        for (const line of lines) emitLine(line, isStdout);
+        if (pending.length > maxOutputBytes) {
+          pending = "";
+          discarding = true;
+          truncated = true;
+        }
+        if (isStdout) { pendingStdout = pending; discardStdoutLine = discarding; }
+        else { pendingStderr = pending; discardStderrLine = discarding; }
       };
 
       child.stdout?.on("data", (d: Buffer) => handleChunk(d.toString(), true));
@@ -228,31 +245,19 @@ export class TerminalRunner {
 
       const timeout = setTimeout(() => {
         timedOut = true;
-        try {
-          if (child.pid) process.kill(-child.pid, "SIGTERM");
-        } catch {}
+        try { if (child.pid) process.kill(-child.pid, "SIGTERM"); } catch {}
       }, timeoutMs);
 
       child.on("close", (code) => {
         clearTimeout(timeout);
-        resolve({
-          stdout: redactSecrets(stdout),
-          stderr: redactSecrets(stderr),
-          exitCode: timedOut ? 124 : code,
-          timedOut,
-          truncated,
-        });
+        if (pendingStdout && !discardStdoutLine) emitLine(pendingStdout, true);
+        if (pendingStderr && !discardStderrLine) emitLine(pendingStderr, false);
+        resolve({ stdout: redactSecrets(stdout), stderr: redactSecrets(stderr), exitCode: timedOut ? 124 : code, timedOut, truncated });
       });
 
       child.on("error", (err) => {
         clearTimeout(timeout);
-        resolve({
-          stdout,
-          stderr: err.message,
-          exitCode: 1,
-          timedOut: false,
-          truncated: false,
-        });
+        resolve({ stdout: redactSecrets(stdout), stderr: redactSecrets(err.message), exitCode: 1, timedOut: false, truncated: false });
       });
     });
   }

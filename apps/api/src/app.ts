@@ -20,6 +20,8 @@ import { modelRoutes } from "./routes/models.js";
 import { eventRoutes } from "./routes/events.js";
 import { githubRoutes } from "./routes/github.js";
 import { googleIntegrationRoutes } from "./routes/googleIntegrations.js";
+import { libraryRoutes } from "./routes/library.js";
+import { agentRoutes } from "./routes/agents.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -65,6 +67,8 @@ export async function buildApp() {
       // shorter /api/github endpoints internally.
       await api.register(githubRoutes, { prefix: "/integrations/github" });
       await api.register(googleIntegrationRoutes, { prefix: "/integrations/google" });
+      await api.register(libraryRoutes);
+      await api.register(agentRoutes);
       // Also expose health under /api
       await api.register(healthRoutes);
       await api.register(usageRoutes);

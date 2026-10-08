@@ -26,16 +26,16 @@ All JSON, `credentials: include`, rate limit `100/min` (`x-ratelimit-*`), CORS `
 - `DELETE /api/projects/:id` → 204
 
 ## Sessions
-- `POST /api/sessions` `{projectId?, title?, selectedModel?, selectedProvider?}` → 201 `{session}` (emits `session.created`)
+- `POST /api/sessions` `{projectId?, title?, selectedModel?, selectedProvider?, agentProfileId?, groupChatId?}` → 201 `{session}`; a chat can target either an owned Agent or Group Chat (emits `session.created`)
 - `GET /api/sessions` → `{sessions}` (own only, 403 else)
 - `GET /api/sessions/:id` → `{session}`
-- `PATCH /api/sessions/:id` `{title?, status?}` → `{session}`
+- `PATCH /api/sessions/:id` `{title?, status?, isPinned?}` → `{session}`
 - `DELETE /api/sessions/:id` → 204
 - `POST /api/sessions/:id/stop` → pauses run
 
 ## Messages
 - `GET /api/sessions/:id/messages` → `{messages}`
-- `POST /api/sessions/:id/messages` `{role:"user", content}` → 201 `{message}` + async mock assistant (posts `agent.started` → `agent.completed` events)
+- `POST /api/sessions/:id/messages` `{role:"user", content, effort?}` → 201 `{message, agentRun}`; starts a provider-backed asynchronous agent run and emits plan/tool/progress events
 
 ## Runs / Plans
 - `GET /api/sessions/:id/runs` → `{runs}`
@@ -55,7 +55,7 @@ All JSON, `credentials: include`, rate limit `100/min` (`x-ratelimit-*`), CORS `
 - `GET /api/sessions/:id/terminal` → `{commands}`
 - `POST /api/terminal/:id/stop` → stops
 
-Safe: `pwd`, `ls`, `cat`, `git status/diff/log`, `npm test`, `echo`, `sleep`. High-risk: `rm -rf`, `sudo`, `systemctl`, `chmod 777`, `curl|bash` → approval.
+Auto-approved commands are limited to the basic allowlist (for example `pwd`, workspace-relative `ls`/`cat`, `git status/diff/log`, tests, `echo`, and `sleep`); only `&&` chains whose every segment is independently safe are allowed. Parent traversal, absolute/home paths, sensitive files (`.env`, SSH/cloud/Git credentials, private keys), shell expansion/operators, branch deletion, and unknown/high-risk commands require approval. This approval gate is not an OS/container sandbox.
 
 Redaction: `sk-*`, `ghp_*`, `Bearer`, `password=`, `api_key=`, `token=` → `***REDACTED***`.
 
@@ -77,7 +77,7 @@ Path validation: blocks `..`, absolute outside workspace, null bytes; `"/"` → 
 - `POST /api/projects/:id/git/pull` → `{result}`
 
 ## Models / Providers
-- `GET /api/models` → `{models:[{id, name, displayName, providerId, contextLength}]}` (mock + opencode + omniroute; omniroute 401 fallback still returns mock)
+- `GET /api/models` → configured provider models; agent runs require a real production provider (mock selections are not used for execution)
 - `GET /api/providers` → `{providers}`
 - `GET /api/providers/:id/health` → `{status:"ok"}` or error
 
@@ -85,7 +85,19 @@ Path validation: blocks `..`, absolute outside workspace, null bytes; `"/"` → 
 - `GET /api/sessions/:id/events?limit=100` → `{events:[{id, sessionId, eventType, payload, createdAt}]}` (auth: 403 if not owner)
 - `GET /api/sessions/:id/stream?token=&lastEventId=` → `200 text/event-stream` (SSE), headers `Cache-Control: no-cache, Connection: keep-alive, X-Accel-Buffering: no`, frames `id: | event: | data: {...}\n\n`, history replay since `lastEventId`, heartbeat `: heartbeat` every 15s, subscribe via `eventBus`.
 
-Named events: `session.created`, `agent.started/thinking/plan.created/updated/completed/failed`, `tool.created/approval_required/approved/rejected/started/stdout/stderr/completed/failed`, `file.created/modified/deleted`, `notification.created`.
+Named events include `session.created`, `agent.started/thinking/plan.generating/plan.created/plan.updated/plan.unavailable/member.started/member.completed/completed/failed`, tool lifecycle events, file events, and `notification.created`.
+
+## Agent Library
+- `GET /api/agents` → user-owned Agent profiles (creates the user’s default Agent if needed); `POST /api/agents` `{name, instructions?, memory?}`; `PATCH /api/agents/:id` edits owned profiles; `DELETE /api/agents/:id` (the default Agent is protected).
+- `GET /api/groups` → owned Group Chats; `POST /api/groups` `{name, agentIds}` and `PATCH /api/groups/:id` require a nonempty list of owned Agent profiles; `DELETE /api/groups/:id`. Group sessions produce ordered, attributed conversational replies without workspace tools.
+- `GET /api/artifacts?projectId=&sessionId=` → up to 100 artifacts owned by the signed-in user.
+- `GET /api/artifacts/:id/content` → `{artifact, content}`; verifies ownership, resolves only inside the artifact workspace, and rejects files over 2 MB.
+- `GET /api/skills` → user-owned Skills with plain-text `instructions` (implementation JSON remains private).
+- `POST /api/skills` `{name, description?, instructions}`; `PATCH /api/skills/:id` `{name?, description?, instructions?, enabled?}`; `DELETE /api/skills/:id`.
+- Enabled Skills are appended as user-level guidance to new agent-run system context; executable skill code is not accepted.
+- `GET /api/workflows` → user-owned reusable manual workflows and the three most recent run summaries.
+- `POST /api/workflows` `{name, description?, prompt, projectId?}`; `PATCH /api/workflows/:id` supports the same fields plus `enabled`; `DELETE /api/workflows/:id`.
+- `POST /api/workflows/:id/run` starts a fresh session and audited agent run from the saved prompt, checks the daily run allowance, and updates the workflow-run status on completion or failure. Scheduled triggers are not enabled.
 
 Frontend uses `connectSSE` (EventSource with `?token=` + `lastEventId`).
 

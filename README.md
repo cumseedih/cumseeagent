@@ -1,6 +1,6 @@
 # Delvin — AI Coding Agent Platform
 
-Branded AI coding-agent workspace built from an Arena-style frontend, now powered by your own backend/services. Full-stack, isolated VPS terminal, approval-gated dangerous commands, SSE streaming, and provider-agnostic LLM routing.
+Branded AI coding-agent workspace powered by its own backend and services. Full-stack agent workspace with workspace-rooted terminal tools, approval-gated dangerous commands, SSE streaming, and provider-agnostic LLM routing.
 
 > **Branding:** Delvin keeps its own logo, Oswald/Roboto Slab/Roboto brand fonts and yellow accent, now
 > presented through the agent-workspace visual language: warm graphite dark surfaces, an editorial serif
@@ -10,7 +10,7 @@ Branded AI coding-agent workspace built from an Arena-style frontend, now powere
 ## Monorepo
 
 ```
-apps/api   Fastify 4 + Prisma SQLite (PostgreSQL-ready) + JWT + SSE + terminal + approval
+apps/api   Fastify 4 + Prisma PostgreSQL + JWT + SSE + terminal + approval
 apps/web   Next.js 14 + React 18 + Tailwind 3 + branding.config.ts + SSE client
 packages/* (reserved)
 pnpm-workspace.yaml  — pnpm 9.12.3, Node >=20
@@ -33,7 +33,7 @@ Build & test:
 
 ```bash
 pnpm build          # tsc + next build
-pnpm test           # vitest 36 tests (health/auth/sessions/terminal/path/approval/providers)
+pnpm test           # API integration and provider tests
 pnpm typecheck
 ```
 
@@ -105,25 +105,27 @@ See `docs/API.md` and `docs/ARCHITECTURE.md`. Highlights:
 
 - `GET /api/health`, `/api/ready`, `/api/version`
 - `POST /api/auth/register|login`, `GET /api/auth/me`
-- `GET/POST /api/projects`, `/api/sessions`, `/api/sessions/:id/messages` (+ mock streaming)
+- `GET/POST /api/projects`, `/api/sessions`, `/api/sessions/:id/messages` (+ provider-backed agent runs)
+- User-scoped `GET/POST/PATCH/DELETE /api/agents` and `/api/groups`; sessions can be pinned and assigned to one Agent or a nonempty Group Chat
 - `GET/POST /api/sessions/:id/terminal/command` (safe → 200, risky → 202 approval_required)
 - `POST /api/tool-calls/:id/approve|reject`
 - `GET /api/sessions/:id/events` (JSON history) + `/api/sessions/:id/stream?token=...` (SSE, `lastEventId` replay, heartbeat)
 - `GET /api/models` (mock + opencode + omniroute compat with 401 fallback)
 - Files/git with `validateWorkspacePath` (blocks `..`, `//`, null bytes)
+- User-scoped Agent profiles and conversational Group Chats; Skills (plain-text instructions added to future agent context), Artifacts (workspace-path validated previews), and reusable manual Workflows that start fresh, audited agent sessions
 
 Approval policy: `apps/api/src/lib/approvalPolicy.ts` (high-risk: `rm -rf`, `sudo`, `systemctl`, `curl|bash`, etc. → approval; safe: `ls`, `cat`, `git status`, `echo`, `sleep` → auto).
 
-Agent engine: `apps/api/src/lib/agentEngine.ts` runs an iterative OpenAI-compatible tool loop with persistent tool calls/results, terminal approvals, file tools, SSE progress, bounded iterations, and restart recovery for interrupted runs.
+Agent engine: `apps/api/src/lib/agentEngine.ts` generates task plans through the selected LLM, tracks plan-step progress, includes the newest conversation context plus the selected Agent’s instructions and saved memory, and runs an iterative tool loop with persistent results, approvals, SSE progress, bounded iterations, and recovery. Group Chats produce sequential, attributed, tool-free replies from their selected Agent profiles.
 
-Terminal: `apps/api/src/lib/terminalRunner.ts` (spawn `bash -c`, 30s timeout, 1M output cap, secret redaction `sk-*`, `ghp_*`, `Bearer`, `password`, `api_key`, `token`, sandboxed `HOME=workspaceRoot`). Approved high-risk commands run only after the approval endpoint resumes the agent.
+Terminal: `apps/api/src/lib/terminalRunner.ts` runs commands with a workspace working directory and workspace-scoped `HOME`, a 30s timeout, 1MB output cap, and secret redaction. High-risk commands wait for approval. This is not a container/VM boundary; use a clean, hardened host and least-privilege service account.
 
 ## Frontend
 
 - `apps/web/lib/api.ts` — fetch wrapper (`credentials: include`, `/api` base, `NEXT_PUBLIC_API_URL` override)
 - `apps/web/lib/sse.ts` — `EventSource` with `?token=` + `lastEventId` replay + fetch fallback + exponential backoff
-- `apps/web/app/page.tsx` — AgentPage (session bootstrap, SSE tool timeline, approvals, terminal, file viewer)
-- Components: `SessionSidebar`, `ModelSelector`, `Composer`, `MessageList`, `ToolTimeline`, `Terminal`, `ApprovalBar`, `FileViewer`
+- `apps/web/app/page.tsx` — AgentPage (session bootstrap, SSE tool timeline, approvals, task plan, terminal, file viewer)
+- Components: `SessionSidebar`, `WorkspaceHub` (Agents, Group Chats, projects, artifacts, Skills, manual workflows, integrations, settings), `Composer`, `MessageList`, `ToolTimeline`, generated `TaskPlanPanel`, `Terminal`, `ApprovalBar`, `FileViewer`
 
 ## Deployment
 
@@ -131,7 +133,7 @@ See `deployment/` and `docs/DEPLOYMENT.md`:
 
 - `deployment/systemd/cumsee-api.service`, `cumsee-web.service` (User `agent`, `ProtectSystem full`, `ReadWritePaths` limited)
 - `deployment/caddy/Caddyfile.example` + `cumsee.caddy` (nip.io example)
-- Workspace isolation: `/home/agent/workspaces` (per-project dirs), Prisma `file:prod.db` (PostgreSQL-ready)
+- Workspace directories: `/home/agent/workspaces` (per-project dirs); PostgreSQL is configured through `DATABASE_URL`.
 
 Build on VPS (as `agent`):
 
@@ -146,7 +148,7 @@ caddy validate && systemctl reload caddy
 ## Security
 
 - No secrets in repo — only `.env.example`. Real JWT/encryption/provider keys in `EnvironmentFile` (600) on VPS.
-- Terminal jailed, path traversal blocked, secrets redacted, rate-limited (100/min), audit logs.
+- Workspace paths are validated, risky commands require approval, secrets are redacted, requests are rate-limited (100/min), and actions are audit-logged. Shell commands are not container-isolated.
 - VPS was compromised (Go loader `libgdi`, miners `.sshd`/`bsd-port/getty` via `dpkgd` rootkit) — deployment isolates to `agent` user; **reinstall OS clean before production** and harden SSH/firewall.
 
 ## License / Source

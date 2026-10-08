@@ -15,7 +15,6 @@ const pluginMentionSchema = z.object({
 const createSchema = z.object({
   role: z.enum(["user", "assistant", "system"]).default("user"),
   content: z.string().min(1).max(50000),
-  // Optional: if client wants to trigger agent immediately
   selectedModel: z.string().optional(),
   selectedProvider: z.string().optional(),
   // Mention identities are sent separately from visible text so tool routing can
@@ -37,8 +36,23 @@ export async function messageRoutes(app: FastifyInstance) {
     if (session.userId !== userId) return reply.code(403).send({ error: "Forbidden" });
 
     const { role, content, selectedModel, selectedProvider, mentions, effort } = parsed.data;
-    const metadataJson = JSON.stringify({ mentions, effort });
+    if (role === "user" && config.dailyRunLimit > 0) {
+      const dayStart = new Date();
+      dayStart.setUTCHours(0, 0, 0, 0);
+      const usedToday = await prisma.agentRun.count({
+        where: { startedAt: { gte: dayStart }, session: { userId } },
+      });
+      if (usedToday >= config.dailyRunLimit) {
+        return reply.code(429).send({
+          error: "Out of credits for today",
+          code: "quota_exhausted",
+          used: usedToday,
+          limit: config.dailyRunLimit,
+        });
+      }
+    }
 
+    const metadataJson = JSON.stringify({ mentions, effort });
     const message = await prisma.message.create({
       // The generated client is refreshed by `prisma generate` during deploy.
       // Keep this cast so source typechecks also work before that generated
@@ -46,64 +60,31 @@ export async function messageRoutes(app: FastifyInstance) {
       data: { sessionId, role, content, metadataJson, status: "completed" } as any,
     });
 
-    // Also create an agent run if user message — start orchestration
     let agentRun = null;
     if (role === "user") {
-      // Daily allowance check — mirrors the "Out of credits for today" gate
-      if (config.dailyRunLimit > 0) {
-        const dayStart = new Date();
-        dayStart.setUTCHours(0, 0, 0, 0);
-        const usedToday = await prisma.agentRun.count({
-          where: { startedAt: { gte: dayStart }, session: { userId } },
-        });
-        if (usedToday >= config.dailyRunLimit) {
-          return reply.code(429).send({
-            error: "Out of credits for today",
-            code: "quota_exhausted",
-            used: usedToday,
-            limit: config.dailyRunLimit,
-          });
-        }
-      }
-
       agentRun = await prisma.agentRun.create({
         data: {
           sessionId,
           status: "running",
-          goal: content.slice(0, 500),
-          currentStep: "analyzing",
+          goal: content,
+          currentStep: "planning",
         },
       });
 
-      // Create a plan
-      const planJson = JSON.stringify({
-        steps: [
-          { id: "1", title: "Analyze goal", status: "completed" },
-          { id: "2", title: "Create execution plan", status: "pending" },
-          { id: "3", title: "Execute tools", status: "pending" },
-          { id: "4", title: "Verify and complete", status: "pending" },
-        ],
-        goal: content,
-        mentions,
-      });
-      await prisma.plan.create({ data: { agentRunId: agentRun.id, planJson, status: "pending" } });
-
       await eventBus.emitEvent(sessionId, "agent.started", { agentRunId: agentRun.id, goal: content, effort });
       await eventBus.emitEvent(sessionId, "agent.thinking", { agentRunId: agentRun.id, step: "Analyzing your request..." });
-      await eventBus.emitEvent(sessionId, "agent.plan.created", { agentRunId: agentRun.id, plan: JSON.parse(planJson) });
 
-      // Update session title if first message
-      if (session.title === "New Session") {
-        const title = content.slice(0, 60);
-        await prisma.session.update({ where: { id: sessionId }, data: { title, selectedModel, selectedProvider, status: "active", completedAt: null } });
-      } else if (selectedModel || selectedProvider) {
-        await prisma.session.update({ where: { id: sessionId }, data: { selectedModel, selectedProvider, status: "active", completedAt: null } });
-      }
+      // Every follow-up reactivates a completed session; preserve the current
+      // provider/model unless the request explicitly changes one.
+      const sessionUpdate: Record<string, any> = { status: "active", completedAt: null };
+      if (session.title === "New Session") sessionUpdate.title = content.slice(0, 60);
+      if (selectedModel !== undefined) sessionUpdate.selectedModel = selectedModel;
+      if (selectedProvider !== undefined) sessionUpdate.selectedProvider = selectedProvider;
+      await prisma.session.update({ where: { id: sessionId }, data: sessionUpdate });
       agentEngine.start(agentRun.id);
     }
 
     await prisma.auditLog.create({ data: { userId, sessionId, action: "message.create", ipAddress: req.ip } });
-
     return reply.code(201).send({ message, agentRun });
   });
 
